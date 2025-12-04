@@ -1,0 +1,16 @@
+.profile-root { display:flex; flex-direction:column; min-height:100vh; background:#f6f6f6 }
+.profile-header { background:#6b9b8a; color:white; padding:18px 16px 20px 16px; display:flex; flex-direction:column; align-items:center }
+.profile-logo { font-weight:700; letter-spacing:8px; margin-bottom:8px }
+.profile-subtitle { color:rgba(255,255,255,0.95); margin-bottom:12px }
+.profile-main { padding:18px; padding-bottom:96px }
+.card { background:white; border-radius:16px; padding:16px; margin-bottom:18px }
+.profile-summary-title { display:flex; align-items:center; gap:10px; margin-bottom:12px }
+.summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px }
+.summary-item { border:1px solid #eee; border-radius:12px; padding:12px }
+.summary-label { color:#888; font-size:0.9rem; margin-bottom:6px }
+.summary-value { font-weight:700 }
+.section-title { display:flex; align-items:center; gap:10px; margin-bottom:12px; font-weight:700 }
+.section-content { border:1px solid #eee; border-radius:12px; padding:12px; color:#444 }
+.bottom-nav { position:fixed; left:0; right:0; bottom:0; height:62px; display:flex; gap:4px; padding:8px 12px; background:white; border-top-left-radius:18px; border-top-right-radius:18px; box-shadow:0 -6px 20px rgba(0,0,0,0.06); }
+.nav-item { flex:1; background:transparent; border:none; border-radius:12px; padding:8px; font-weight:600; color:#666 }
+.nav-item.active { background:#ffffff; color:#111; box-shadow:0 2px 6px rgba(0,0,0,0.04); }

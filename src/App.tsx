@@ -1,9 +1,51 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AppProvider } from './context/AppContext';
+
+import SplashScreen from './components/SplashScreen';
 import WelcomeScreen from './components/WelcomeScreen';
+import WelcomeLayout from './components/WelcomeLayout';
+import WelcomeScreen2 from './components/WelcomeScreen2';
+import LoginScreen from './components/LoginScreen';
+import RegisterScreen from './components/RegisterScreen';
+import AccountTypeScreen from './components/AccountTypeScreen';
+import PersonalInfoScreen from './components/PersonalInfoScreen';
+import HealthConditionsScreen from './components/HealthConditionsScreen';
+import DietaryInfoScreen from './components/DietaryInfoScreen';
+import GoalsScreen from './components/GoalsScreen';
+import TermsScreen from './components/TermsScreen';
+import HomeScreen from './components/HomeScreen';
+import KitsScreen from './components/KitsScreen';
+import OrderScreen from './components/OrderScreen';
+import ProfileScreen from './components/ProfileScreen';
+import CollectionScreen from './components/CollectionScreen';
 import './App.css';
 
 function App() {
   return (
-    <WelcomeScreen />
+    <AppProvider>
+      <BrowserRouter>
+        <Routes>
+        <Route path="/" element={<SplashScreen />} />
+        <Route element={<WelcomeLayout />}>
+          <Route path="/welcome" element={<WelcomeScreen />} />
+          <Route path="/welcome-2" element={<WelcomeScreen2 />} />
+        </Route>
+        <Route path="/login" element={<LoginScreen />} />
+        <Route path="/register" element={<RegisterScreen />} />
+        <Route path="/register/account-type" element={<AccountTypeScreen />} />
+        <Route path="/register/personal-info" element={<PersonalInfoScreen />} />
+        <Route path="/register/health-conditions" element={<HealthConditionsScreen />} />
+        <Route path="/register/dietary-info" element={<DietaryInfoScreen />} />
+        <Route path="/register/goals" element={<GoalsScreen />} />
+        <Route path="/terms" element={<TermsScreen />} />
+        <Route path="/home" element={<HomeScreen />} />
+        <Route path="/kits" element={<KitsScreen />} />
+        <Route path="/collection" element={<CollectionScreen />} />
+        <Route path="/orders" element={<OrderScreen />} />
+        <Route path="/profile" element={<ProfileScreen />} />
+        </Routes>
+      </BrowserRouter>
+    </AppProvider>
   );
 }
 export default App;

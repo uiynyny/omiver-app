@@ -1,34 +1,71 @@
-.welcome-screen {
+.welcome-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
+  height: calc(100vh - 64px); /* Adjust height for the fixed header */
   width: 100vw;
-  text-align: center;
+  background-color: #f0f2f5;
 }
 
-.omiver-logo {
-  height: auto;
-  margin-bottom: 20px;
-}
-
-.welcome-screen.page-1 {
-  background-color: #67997D;
-  background-image: url('../assets/logo-transparent.svg');
-  background-size: contain;
-  background-repeat: no-repeat;
+.top-section {
+  flex: 1;
+  background-image: url('https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?q=80&w=2070');
+  background-size: cover;
   background-position: center;
 }
 
-.welcome-content {
+.bottom-card {
+  flex-grow: 1;
+  background-color: white;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  margin-top: -24px; /* Overlap the top section slightly */  
+}
+
+.welcome-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   margin-bottom: 20px;
 }
 
-button {
+.welcome-header img {
+  height: 2em;
+}
+
+.card-image {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.welcome-paragraph {
+  color: #555;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.continue-button {
+  background-color: #67997D;
+  color: white;
+  border: none;
   border-radius: 25px;
-  color: #67997D;
-  padding: 10px 20px;
+  padding: 15px 20px;
   font-size: 16px;
+  font-weight: bold;
   cursor: pointer;
+  width: 100%;
+  margin-top: auto; /* Pushes the button to the bottom */
+  transition: background-color 0.2s;
+}
+
+.continue-button:hover {
+  background-color: #57836a;
 }
