@@ -5,6 +5,7 @@ import './RegisterScreen.css';
 
 import omiverIcon from '../assets/omiver-icon.svg';
 import { useAppContext } from '../context/AppContext';
+import { login } from '../api/user';
 
 const LoginScreen = () => {
   const navigate = useNavigate();
@@ -17,8 +18,15 @@ const LoginScreen = () => {
     // Implement login logic here
     console.log('Login attempt', { email, password, stayLoggedIn });
     // Mark user authenticated in context and navigate to home
-    dispatch({ type: 'SET_AUTH', payload: { isAuthenticated: true, userId: email } });
-    navigate('/home');
+    login(email, password).then((data) => {
+      console.log('Login successful', data);
+      
+      dispatch({ type: 'SET_AUTH', payload: { isAuthenticated: true, userId: email } });
+      navigate('/home');
+    }).catch((error) => {
+      console.error('Login error', error);
+      alert('Login failed. Please check your credentials and try again.');
+    });
   };
 
   const handleCreateAccount = () => {
