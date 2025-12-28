@@ -13,7 +13,7 @@ const ProfileScreen: React.FC = () => {
   const dietary = state?.registration?.dietary || { allergies: 'None', preferences: 'None' }
   const goals = state?.registration?.goals || { nutritionGoals: 'None', fitnessGoals: 'None' }
 
-  const name =  `${personal.firstName || ''} ${personal.lastName || ''}`.trim() || 'Sneha J'
+  const name =  `${personal.firstName || ''} ${personal.lastName || ''}`.trim() || ''
   const age = personal.birthday || '25'
   const height = personal.height || `63"`
   const weight = personal.weight || '153 lbs'

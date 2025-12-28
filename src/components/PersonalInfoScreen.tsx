@@ -24,7 +24,7 @@ const PersonalInfoScreen = () => {
     dispatch({
       type: 'UPDATE_REGISTRATION',
       payload: {
-        personalInfo: { firstName, lastName, birthday, biologicalSex, height, weight },
+        personalInfo: { firstName, lastName, birthday, biologicalSex, height, weight, ethnicity },
       },
     });
     navigate('/register/health-conditions');
