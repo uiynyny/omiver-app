@@ -2,14 +2,21 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, CheckCircle } from 'lucide-react';
 import './AccountTypeScreen.css';
 import { useAppContext } from '../context/AppContext';
+import { register } from '../api/user';
 
 const TermsScreen = () => {
   const navigate = useNavigate();
-  const { dispatch } = useAppContext();
+  const { state, dispatch } = useAppContext();
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     // Persist acceptance and mark user authenticated for this demo
     dispatch({ type: 'UPDATE_REGISTRATION', payload: { acceptedTerms: true } });
+    const response = await register(state.registration)
+    console.log(response)
+    if (!response) {
+      alert('Registration failed: ' + response);
+      return;
+    }
     dispatch({ type: 'SET_AUTH', payload: { isAuthenticated: true, userId: 'local-user' } });
     navigate('/home');
   };

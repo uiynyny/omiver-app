@@ -7,12 +7,11 @@ import { useAppContext } from '../context/AppContext';
 const DietaryInfoScreen = () => {
   const navigate = useNavigate();
   const { state, dispatch } = useAppContext();
-  const dietary = state.registration.dietary ?? {};
-  const [allergies, setAllergies] = useState(dietary.allergies ?? '');
-  const [preferences, setPreferences] = useState(dietary.preferences ?? '');
+  const [allergies, setAllergies] = useState(state.registration.allergies ?? '');
+  const [preferences, setPreferences] = useState(state.registration.dietary_preferences ?? '');
 
   const handleContinue = () => {
-    dispatch({ type: 'UPDATE_REGISTRATION', payload: { dietary: { allergies, preferences } } });
+    dispatch({ type: 'UPDATE_REGISTRATION', payload: { allergies, dietary_preferences: preferences } });
     navigate('/register/goals');
   };
 

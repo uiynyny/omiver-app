@@ -1,23 +1,23 @@
 import React, { createContext, useContext, useReducer, type ReactNode } from 'react';
 
-type PersonalInfo = {
-  firstName?: string;
-  lastName?: string;
-  birthday?: string;
-  biologicalSex?: string;
-  ethnicity?: string;
-  height?: string;
-  weight?: string;
-};
 
 type RegistrationData = {
+  username?: string;
   email?: string;
   password?: string;
   accountType?: 'individual' | 'healthcare' | null;
-  personalInfo?: PersonalInfo;
+  firstName?: string;
+  lastName?: string;
+  date_of_birth?: string;
+  gender?: string;
+  ethnicity?: string;
+  height?: string;
+  weight?: string;
   healthConditions?: string;
-  dietary?: { allergies?: string; preferences?: string };
-  goals?: { nutritionGoals?: string; fitnessGoals?: string };
+  allergies?: string;
+  dietary_preferences?: string;
+  fitness_goal?: string;
+  nutritional_goal?: string;
   acceptedTerms?: boolean;
 };
 

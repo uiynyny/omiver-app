@@ -7,24 +7,22 @@ import { useAppContext } from '../context/AppContext';
 const PersonalInfoScreen = () => {
   const navigate = useNavigate();
   const { state, dispatch } = useAppContext();
-  const personal = state.registration.personalInfo ?? {};
-  const [firstName, setFirstName] = useState(personal.firstName ?? '');
-  const [lastName, setLastName] = useState(personal.lastName ?? '');
-  const [birthday, setBirthday] = useState(personal.birthday ?? '');
-  const [biologicalSex, setBiologicalSex] = useState(personal.biologicalSex ?? 'Male');
-  const [ethnicity, setEthnicity] = useState(personal.ethnicity ?? '');
-  const [height, setHeight] = useState(personal.height ?? '');
-  const [weight, setWeight] = useState(personal.weight ?? '');
-
+  const [firstName, setFirstName] = useState(state.registration.firstName ?? '');
+  const [lastName, setLastName] = useState(state.registration.lastName ?? '');
+  const [date_of_birth, setDateOfBirth] = useState(state.registration.date_of_birth ?? '');
+  const [gender, setGender] = useState(state.registration.gender ?? 'Male');
+  const [ethnicity, setEthnicity] = useState(state.registration.ethnicity ?? '');
+  const [height, setHeight] = useState(state.registration.height ?? '');
+  const [weight, setWeight] = useState(state.registration.weight ?? '');
   const handleContinue = () => {
-    if (!firstName || !lastName || !birthday || !ethnicity || !biologicalSex || !height || !weight) {
+    if (!firstName || !lastName || !date_of_birth || !ethnicity || !gender || !height || !weight) {
       alert('Please fill in all required fields');
       return;
     }
     dispatch({
       type: 'UPDATE_REGISTRATION',
       payload: {
-        personalInfo: { firstName, lastName, birthday, biologicalSex, height, weight, ethnicity },
+        firstName, lastName, date_of_birth, gender, ethnicity, height, weight,
       },
     });
     navigate('/register/health-conditions');
@@ -77,16 +75,16 @@ const PersonalInfoScreen = () => {
             <input
               type="date"
               placeholder="Birthday:"
-              value={birthday}
-              onChange={(e) => setBirthday(e.target.value)}
+              value={date_of_birth}
+              onChange={(e) => setDateOfBirth(e.target.value)}
               className="form-input"
             />
           </div>
 
           <div className="input-group">
             <select
-              value={biologicalSex}
-              onChange={(e) => setBiologicalSex(e.target.value)}
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
               className="form-input form-select"
             >
               <option value="Male">Male</option>

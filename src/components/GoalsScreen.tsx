@@ -7,12 +7,11 @@ import { useAppContext } from '../context/AppContext';
 const GoalsScreen = () => {
   const navigate = useNavigate();
   const { state, dispatch } = useAppContext();
-  const goalsState = state.registration.goals ?? {};
-  const [nutritionGoals, setNutritionGoals] = useState(goalsState.nutritionGoals ?? '');
-  const [fitnessGoals, setFitnessGoals] = useState(goalsState.fitnessGoals ?? '');
+  const [nutritionGoals, setNutritionGoals] = useState(state.registration.nutritional_goal ?? '');
+  const [fitnessGoals, setFitnessGoals] = useState(state.registration.fitness_goal ?? '');
 
   const handleContinue = () => {
-    dispatch({ type: 'UPDATE_REGISTRATION', payload: { goals: { nutritionGoals, fitnessGoals } } });
+    dispatch({ type: 'UPDATE_REGISTRATION', payload: { nutritional_goal: nutritionGoals, fitness_goal: fitnessGoals } });
     navigate('/terms');
   };
 

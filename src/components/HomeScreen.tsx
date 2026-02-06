@@ -1,10 +1,11 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Album, Bell, ChartPie, CircleUserRound, Cog, HeartPulse, ListChecks, LocateFixed } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 import './HomeScreen.css';
 import omiver from '../assets/omiver.svg';
+import { login } from '../api/user';
 
 const sampleBiomarkers = [
   {
@@ -39,16 +40,26 @@ const sampleBiomarkers = [
 const HomeScreen = () => {
   const navigate = useNavigate();
   const { state } = useAppContext();
-  const personal = state.registration.personalInfo || {};
-  const displayName = `${personal.firstName ?? ''} ${personal.lastName ?? ''}`.trim();
+  const personal = state.registration;
+  const displayName = `${state.registration.firstName ?? ''} ${state.registration.lastName ?? ''}`.trim();
   console.log('state', state);
+  
+  useEffect(() => {
+    if (state.registration.email && state.registration.password) {
+      login(state.registration.email, state.registration.password).then((res) => {
+        console.log('login response', res);
+      });
+    }
+  },[])
+
+
 
   const age = useMemo(() => {
-    if (!personal.birthday) return undefined;
-    const b = new Date(personal.birthday);
+    if (!personal.date_of_birth) return undefined;
+    const b = new Date(personal.date_of_birth);
     const diff = Date.now() - b.getTime();
     return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
-  }, [personal.birthday]);
+  }, [personal.date_of_birth]);
 
   return (
     <div className="screen-root">
@@ -144,11 +155,11 @@ const HomeScreen = () => {
       </main>
 
       <nav className="bottom-nav">
-        <button className="nav-item active" onClick={()=>navigate('/home')}><ChartPie size={28}/>Dashboard</button>
-        <button className="nav-item" onClick={()=>navigate('/kits')}><Album size={28} />Kits</button>
-        <button className="nav-item" onClick={()=>navigate('/collection')}><LocateFixed size={28} />Collection</button>
-        <button className="nav-item" onClick={()=>navigate('/orders')}><ListChecks size={28} />Orders</button>
-        <button className="nav-item" onClick={()=>navigate('/profile')}><CircleUserRound size={28} />Profile</button>
+        <button className="nav-item active" onClick={() => navigate('/home')}><ChartPie size={28} />Dashboard</button>
+        <button className="nav-item" onClick={() => navigate('/kits')}><Album size={28} />Kits</button>
+        <button className="nav-item" onClick={() => navigate('/collection')}><LocateFixed size={28} />Collection</button>
+        <button className="nav-item" onClick={() => navigate('/orders')}><ListChecks size={28} />Orders</button>
+        <button className="nav-item" onClick={() => navigate('/profile')}><CircleUserRound size={28} />Profile</button>
       </nav>
     </div>
   );

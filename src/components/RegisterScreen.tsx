@@ -4,6 +4,7 @@ import { ChevronRight } from 'lucide-react';
 import './RegisterScreen.css';
 import omiverIcon from '../assets/omiver-icon.svg';
 import { useAppContext } from '../context/AppContext';
+import { emailExist } from '../api/user';
 
 const RegisterScreen = () => {
   const navigate = useNavigate();
@@ -12,14 +13,19 @@ const RegisterScreen = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     // Validate passwords match
     if (password !== confirmPassword) {
       alert('Passwords do not match');
       return;
     }
+    const res = await emailExist(email)
+    if (res) {
+      alert('Email already exists');
+      return;
+    }
     // Save email/password to registration context then continue
-    dispatch({ type: 'UPDATE_REGISTRATION', payload: { email, password } });
+    dispatch({ type: 'UPDATE_REGISTRATION', payload: { email, password, username: email } });
     navigate('/register/account-type');
   };
 

@@ -20,7 +20,6 @@ const LoginScreen = () => {
     // Mark user authenticated in context and navigate to home
     login(email, password).then((data) => {
       console.log('Login successful', data);
-      
       dispatch({ type: 'SET_AUTH', payload: { isAuthenticated: true, userId: email } });
       navigate('/home');
     }).catch((error) => {

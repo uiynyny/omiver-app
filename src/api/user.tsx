@@ -33,16 +33,10 @@ export const register = async (user: any): Promise<string> => {
 }
 
 export const emailExist = async (email: string): Promise<boolean> => {
-    const response = await fetch(`${API_URL}/email-exist`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-    });
+    const response = await fetch(`${API_URL}/check_email?email=${encodeURIComponent(email)}`)
 
     if (!response.ok) {
-        throw new Error('Email existence check failed');
+        throw new Error('Email existence check failed' + response);
     }
 
     const data = await response.json();

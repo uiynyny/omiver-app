@@ -8,15 +8,16 @@ const ProfileScreen: React.FC = () => {
   const { state } = useAppContext()
   const navigate = useNavigate()
 
-  const personal = state?.registration?.personalInfo || {}
   const health = state?.registration?.healthConditions || 'None'
-  const dietary = state?.registration?.dietary || { allergies: 'None', preferences: 'None' }
-  const goals = state?.registration?.goals || { nutritionGoals: 'None', fitnessGoals: 'None' }
+  const allergies = state?.registration?.allergies || 'None'
+  const preferences = state?.registration?.dietary_preferences || 'None'
+  const nutritional_goal = state?.registration?.nutritional_goal || 'None'
+  const fitness_goal = state?.registration?.fitness_goal || 'None'
 
-  const name =  `${personal.firstName || ''} ${personal.lastName || ''}`.trim() || ''
-  const age = personal.birthday || '25'
-  const height = personal.height || `63"`
-  const weight = personal.weight || '153 lbs'
+  const name = `${state?.registration?.firstName || ''} ${state?.registration?.lastName || ''}`.trim() || ''
+  const age = state?.registration?.date_of_birth || '25'
+  const height = state?.registration?.height || `63"`
+  const weight = state?.registration?.weight || '153'
 
   return (
     <div className="profile-root">
@@ -55,16 +56,16 @@ const ProfileScreen: React.FC = () => {
 
         <section style={{ marginTop: 18 }}>
           <div className="section-title"><Apple color="#d98252" /> Dietary Information</div>
-          <div className="section-content">Food Allergies & Sensitivities: {dietary.allergies || 'None'}</div>
+          <div className="section-content">Food Allergies & Sensitivities: {allergies || 'None'}</div>
           <div style={{ height: 10 }} />
-          <div className="section-content">Dietary Preferences: {dietary.preferences || 'None'}</div>
+          <div className="section-content">Dietary Preferences: {preferences || 'None'}</div>
         </section>
 
         <section style={{ marginTop: 18 }}>
           <div className="section-title"><Target color="#6b9b8a" /> Your Goals</div>
-          <div className="section-content">Nutrition Goals: {goals.nutritionGoals || 'None'}</div>
+          <div className="section-content">Nutrition Goals: {nutritional_goal || 'None'}</div>
           <div style={{ height: 10 }} />
-          <div className="section-content">Fitness Goals: {goals.fitnessGoals || 'None'}</div>
+          <div className="section-content">Fitness Goals: {fitness_goal || 'None'}</div>
         </section>
       </main>
 

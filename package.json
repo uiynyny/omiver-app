@@ -11,13 +11,12 @@
   },
   "dependencies": {
     "@capacitor-community/safe-area": "^7.0.0-beta.5",
-    "@capacitor/app": "7.1.0",
-    "@capacitor/cli": "7.4.3",
-    "@capacitor/core": "7.4.3",
-    "@capacitor/haptics": "7.0.2",
-    "@capacitor/ios": "7.4.3",
-    "@capacitor/keyboard": "7.0.3",
-    "@capacitor/status-bar": "7.0.3",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/haptics": "^8.0.0",
+    "@capacitor/ios": "^8.0.0",
+    "@capacitor/keyboard": "^8.0.0",
+    "@capacitor/status-bar": "^8.0.0",
     "@react-navigation/bottom-tabs": "^7.8.8",
     "lucide-react": "^0.544.0",
     "react": "^19.1.1",
@@ -25,6 +24,7 @@
     "react-router-dom": "^7.9.3"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.0.0",
     "@eslint/js": "^9.36.0",
     "@types/node": "^24.6.0",
     "@types/react": "^19.1.16",
