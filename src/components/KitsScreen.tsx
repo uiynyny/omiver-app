@@ -91,7 +91,7 @@ const KitsScreen: React.FC = () => {
                 <button
                   className="kit-cta"
                   style={{ background: k.color }}
-                  onClick={() => navigate('/register')}
+                  onClick={() => navigate('/payment', { state: { kit: k } })}
                 >
                   Continue to Billing ➜
                 </button>

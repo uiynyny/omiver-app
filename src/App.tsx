@@ -20,6 +20,7 @@ import ProfileScreen from './components/ProfileScreen';
 import CollectionScreen from './components/CollectionScreen';
 import ScanKitScreen from './components/ScanKitScreen';
 import CollectionStepsScreen from './components/CollectionStepsScreen';
+import PaymentScreen from './components/PaymentScreen';
 import './App.css';
 
 function App() {
@@ -45,6 +46,7 @@ function App() {
         <Route path="/collection" element={<CollectionScreen />} />
           <Route path="/collection/scan" element={<ScanKitScreen />} />
           <Route path="/collection/steps" element={<CollectionStepsScreen />} />
+          <Route path="/payment" element={<PaymentScreen />} />
         <Route path="/orders" element={<OrderScreen />} />
         <Route path="/profile" element={<ProfileScreen />} />
         </Routes>
