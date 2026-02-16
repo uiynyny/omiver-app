@@ -15,7 +15,7 @@ const CollectionScreen: React.FC = () => {
     if (!url) return
     // in real app we'd validate and save to context/backend
     console.log('Linking kit url', url)
-    navigate('/home')
+    navigate('/collection/steps')
   }
 
   return (

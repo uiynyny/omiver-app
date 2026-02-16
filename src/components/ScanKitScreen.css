@@ -1,0 +1,208 @@
+.scan-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #000;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.scan-header {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+}
+
+.scan-back-btn {
+  background: none;
+  border: none;
+  color: white;
+  padding: 8px;
+  cursor: pointer;
+}
+
+.scan-title {
+  flex: 1;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-right: 40px; /* Balance the back button */
+}
+
+.camera-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  background-color: #1a1a1a; 
+}
+
+/* Simulated Camera Feed Background */
+.camera-feed-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.5;
+}
+
+.scan-overlay {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.scan-reticle {
+  width: 250px;
+  height: 250px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5); /* Dimming outside */
+}
+
+/* Corner markers */
+.scan-reticle::before,
+.scan-reticle::after,
+.scan-reticle-inner::before,
+.scan-reticle-inner::after {
+  content: '';
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-color: #D27644; /* Brand orange/brown */
+  border-style: solid;
+  border-width: 4px;
+}
+
+.scan-reticle::before {
+  top: -2px;
+  left: -2px;
+  border-right: none;
+  border-bottom: none;
+  border-top-left-radius: 20px;
+}
+
+.scan-reticle::after {
+  top: -2px;
+  right: -2px;
+  border-left: none;
+  border-bottom: none;
+  border-top-right-radius: 20px;
+}
+
+.scan-reticle-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.scan-reticle-inner::before {
+  bottom: -2px;
+  left: -2px;
+  border-right: none;
+  border-top: none;
+  border-bottom-left-radius: 20px;
+}
+
+.scan-reticle-inner::after {
+  bottom: -2px;
+  right: -2px;
+  border-left: none;
+  border-top: none;
+  border-bottom-right-radius: 20px;
+}
+
+.scan-line {
+  width: 90%;
+  height: 2px;
+  background-color: #D27644;
+  box-shadow: 0 0 4px #D27644;
+  animation: scan-move 2s infinite linear;
+}
+
+@keyframes scan-move {
+  0% { transform: translateY(-100px); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(100px); opacity: 0; }
+}
+
+.scan-controls {
+  position: absolute;
+  bottom: 40px;
+  display: flex;
+  gap: 24px;
+  z-index: 10;
+}
+
+.scan-control-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  color: white;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+
+.scan-control-btn.active {
+  background-color: rgba(210, 118, 68, 0.8);
+  color: white;
+}
+
+.scan-capture-btn {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background-color: white;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.scan-capture-inner {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: white;
+  border: 2px solid #000;
+}
+
+.scan-instruction-text {
+  position: absolute;
+  top: 15%; /* Above reticle */
+  color: white;
+  text-align: center;
+  width: 100%;
+  font-size: 0.9rem;
+  opacity: 0.8;
+  z-index: 10;
+}

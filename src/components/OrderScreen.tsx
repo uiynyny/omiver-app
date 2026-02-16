@@ -87,7 +87,7 @@ const OrderScreen: React.FC = () => {
           <section className="next-card">
             <h3>Next Steps</h3>
             <div style={{ color: '#777' }}>Your test kit has been delivered! Please proceed to the Sample Collection section to link your kit and begin the testing process.</div>
-            <button className="next-cta" onClick={() => navigate('/collection')}>Start Sample Collection</button>
+            <button className="next-cta" onClick={() => navigate('/collection/steps')}>Start Sample Collection</button>
           </section>
         </div>
       </main>

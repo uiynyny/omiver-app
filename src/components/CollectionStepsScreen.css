@@ -1,0 +1,248 @@
+.steps-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.steps-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background-color: #6b9b8a; /* Sage green from designs */
+  color: white;
+}
+
+.steps-header h1 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.steps-back-btn, .steps-settings-btn {
+  background: none;
+  border: none;
+  color: white;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.steps-content {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.steps-intro {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.step-item {
+  display: flex;
+  gap: 16px;
+  position: relative;
+}
+
+.step-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 32px;
+}
+
+.step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  z-index: 2;
+}
+
+.step-circle.completed {
+  background-color: #6b9b8a;
+}
+
+.step-circle.active {
+  background-color: #6b9b8a;
+  box-shadow: 0 0 0 4px rgba(107, 155, 138, 0.2);
+}
+
+.step-line {
+  width: 2px;
+  flex: 1;
+  background-color: #e0e0e0;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.step-item:last-child .step-line {
+  display: none;
+}
+
+.step-details {
+  flex: 1;
+  padding-bottom: 32px;
+}
+
+.step-title {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 4px;
+  color: #333;
+}
+
+.step-desc {
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+
+.step-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  margin-top: 8px;
+  border: 1px solid #eee;
+}
+
+.kit-linked-box {
+  background-color: #f0f7f4;
+  border: 1px solid #d1e7dd;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #0f5132;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.video-placeholder {
+  background-color: #242424;
+  border-radius: 12px;
+  aspect-ratio: 16/9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+.play-button {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  border: 2px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.confirm-btn {
+  width: 100%;
+  padding: 14px;
+  background-color: #C7A1BC; /* Lilac/Purple from design */
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.confirm-btn:hover {
+  opacity: 0.9;
+}
+
+.sample-shipped-box {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.tracking-info {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: #555;
+  font-family: monospace;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #eaf5ec;
+  color: #6b9b8a;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.info-card {
+  background-color: #fffaf5; /* Light creamy background */
+  border: 1px solid #fcefe6;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 10px;
+}
+
+.info-card h3 {
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+  color: #333;
+}
+
+.info-card p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.5;
+}
+
+.dashboard-btn {
+  width: 100%;
+  padding: 16px;
+  background-color: #D27644; /* Brand orange/brown */
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-top: 16px;
+  cursor: pointer;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.step-card {
+  animation: fadeIn 0.4s ease-out;
+}

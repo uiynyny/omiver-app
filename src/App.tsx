@@ -18,6 +18,8 @@ import KitsScreen from './components/KitsScreen';
 import OrderScreen from './components/OrderScreen';
 import ProfileScreen from './components/ProfileScreen';
 import CollectionScreen from './components/CollectionScreen';
+import ScanKitScreen from './components/ScanKitScreen';
+import CollectionStepsScreen from './components/CollectionStepsScreen';
 import './App.css';
 
 function App() {
@@ -41,6 +43,8 @@ function App() {
         <Route path="/home" element={<HomeScreen />} />
         <Route path="/kits" element={<KitsScreen />} />
         <Route path="/collection" element={<CollectionScreen />} />
+          <Route path="/collection/scan" element={<ScanKitScreen />} />
+          <Route path="/collection/steps" element={<CollectionStepsScreen />} />
         <Route path="/orders" element={<OrderScreen />} />
         <Route path="/profile" element={<ProfileScreen />} />
         </Routes>
