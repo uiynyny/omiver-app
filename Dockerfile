@@ -12,6 +12,9 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# This tell Vite to build using the /app/ path
+ENV VITE_WEB=true
+
 # Build the application
 RUN npm run build
 
@@ -19,10 +22,10 @@ RUN npm run build
 FROM nginx:alpine
 
 # Copy built assets from build stage
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=build /app/dist /usr/share/nginx/html/app
 
 # Copy nginx configuration to listen on port 3000
-RUN echo 'server { listen 3000; location / { root /usr/share/nginx/html; try_files $uri $uri/ /index.html; } }' > /etc/nginx/conf.d/default.conf
+RUN echo 'server { listen 3000; location / { root /usr/share/nginx/html; try_files $uri $uri/ /app/index.html; } }' > /etc/nginx/conf.d/default.conf
 
 # Expose port 3000
 EXPOSE 3000

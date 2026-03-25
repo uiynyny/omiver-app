@@ -23,10 +23,11 @@ import CollectionStepsScreen from './components/CollectionStepsScreen';
 import PaymentScreen from './components/PaymentScreen';
 import './App.css';
 
+const baseRoute = import.meta.env.VITE_WEB ? '/app':'/';
 function App() {
   return (
     <AppProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={baseRoute}>
         <Routes>
         <Route path="/" element={<SplashScreen />} />
         <Route element={<WelcomeLayout />}>
