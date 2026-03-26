@@ -23,33 +23,33 @@ import CollectionStepsScreen from './components/CollectionStepsScreen';
 import PaymentScreen from './components/PaymentScreen';
 import './App.css';
 
-const baseRoute = import.meta.env.VITE_WEB ? '/app':'/';
+const baseRoute = import.meta.env.VITE_WEB ? '/app' : '/';
 function App() {
   return (
     <AppProvider>
       <BrowserRouter basename={baseRoute}>
         <Routes>
-        <Route path="/" element={<SplashScreen />} />
-        <Route element={<WelcomeLayout />}>
-          <Route path="/welcome" element={<WelcomeScreen />} />
-          <Route path="/welcome-2" element={<WelcomeScreen2 />} />
-        </Route>
-        <Route path="/login" element={<LoginScreen />} />
-        <Route path="/register" element={<RegisterScreen />} />
-        <Route path="/register/account-type" element={<AccountTypeScreen />} />
-        <Route path="/register/personal-info" element={<PersonalInfoScreen />} />
-        <Route path="/register/health-conditions" element={<HealthConditionsScreen />} />
-        <Route path="/register/dietary-info" element={<DietaryInfoScreen />} />
-        <Route path="/register/goals" element={<GoalsScreen />} />
-        <Route path="/terms" element={<TermsScreen />} />
-        <Route path="/home" element={<HomeScreen />} />
-        <Route path="/kits" element={<KitsScreen />} />
-        <Route path="/collection" element={<CollectionScreen />} />
+          <Route path="/" element={<SplashScreen />} />
+          <Route element={<WelcomeLayout />}>
+            <Route path="/welcome" element={<WelcomeScreen />} />
+            <Route path="/welcome-2" element={<WelcomeScreen2 />} />
+          </Route>
+          <Route path="/login" element={<LoginScreen />} />
+          <Route path="/register" element={<RegisterScreen />} />
+          <Route path="/register/account-type" element={<AccountTypeScreen />} />
+          <Route path="/register/personal-info" element={<PersonalInfoScreen />} />
+          <Route path="/register/health-conditions" element={<HealthConditionsScreen />} />
+          <Route path="/register/dietary-info" element={<DietaryInfoScreen />} />
+          <Route path="/register/goals" element={<GoalsScreen />} />
+          <Route path="/terms" element={<TermsScreen />} />
+          <Route path="/home" element={<HomeScreen />} />
+          <Route path="/kits" element={<KitsScreen />} />
+          <Route path="/collection" element={<CollectionScreen />} />
           <Route path="/collection/scan" element={<ScanKitScreen />} />
           <Route path="/collection/steps" element={<CollectionStepsScreen />} />
           <Route path="/payment" element={<PaymentScreen />} />
-        <Route path="/orders" element={<OrderScreen />} />
-        <Route path="/profile" element={<ProfileScreen />} />
+          <Route path="/orders" element={<OrderScreen />} />
+          <Route path="/profile" element={<ProfileScreen />} />
         </Routes>
       </BrowserRouter>
     </AppProvider>
