@@ -1,41 +1,11 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Album, Bell, ChartPie, CircleUserRound, Cog, HeartPulse, ListChecks, LocateFixed } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 import './HomeScreen.css';
 import omiver from '../assets/omiver.svg';
-import { login } from '../api/user';
-
-const sampleBiomarkers = [
-  {
-    section: 'Metabolic Health',
-    count: 3,
-    items: [
-      { value: '92', unit: 'mg/DL', name: 'Glucose (Fasting)', note: 'Normal: 70-100', tag: 'Optimal' },
-      { value: '5.4', unit: '%', name: 'Hba1c', note: 'Normal: <5.7%', tag: 'Optimal' },
-      { value: '8.5', unit: 'uIU/mL', name: 'Insulin', note: 'Normal: 70-100', tag: 'Normal' },
-    ],
-  },
-  {
-    section: 'Cardiovascular Health',
-    count: 4,
-    items: [
-      { value: '185', unit: 'mg/DL', name: 'Total Cholesterol', note: 'Normal: 70-100', tag: 'Optimal' },
-      { value: '98', unit: 'mg/DL', name: 'LDL Cholesterol', note: 'Normal: <5.7%', tag: 'Optimal' },
-      { value: '2.5', unit: 'uIU/mL', name: 'Thyroid (TSH)', note: 'Normal: 70-100', tag: 'Normal' },
-      { value: '15', unit: 'uIU/mL', name: 'Cortisol', note: 'Normal: 70-100', tag: 'Normal' },
-    ],
-  },
-  {
-    section: 'Inflammation',
-    count: 2,
-    items: [
-      { value: '1.2', unit: 'mg/DL', name: 'C-Reactive Protein', note: 'Normal: 70-100', tag: 'Optimal' },
-      { value: '8.5', unit: 'uIU/mL', name: 'Homocysteine', note: 'Normal: <5.7%', tag: 'Optimal' },
-    ],
-  },
-];
+import { login, fetchDashboard } from '../api/user';
 
 const HomeScreen = () => {
   const navigate = useNavigate();
@@ -44,15 +14,31 @@ const HomeScreen = () => {
   const displayName = `${state.registration.firstName ?? ''} ${state.registration.lastName ?? ''}`.trim();
   console.log('state', state);
   
+  const clientId = state.auth.clientId;
+  const [dashboardData, setDashboardData] = useState<any>(null);
+
   useEffect(() => {
-    if (state.registration.email && state.registration.password) {
-      login(state.registration.email, state.registration.password).then((res) => {
-        console.log('login response', res);
-      });
+    if (clientId) {
+      fetchDashboard(clientId).then((data) => {
+        setDashboardData(data);
+      }).catch((error) => console.error(error));
     }
-  },[])
+  }, [clientId]);
 
-
+  const biomarkers = useMemo(() => {
+    if (!dashboardData?.biomarker_results) return [];
+    return Object.entries(dashboardData.biomarker_results).map(([section, data]: [string, any]) => ({
+      section,
+      count: data.biomarker_count,
+      items: data.results.map((r: any) => ({
+        value: r.value,
+        unit: r.unit,
+        name: r.biomarker_name,
+        note: r.normal_range,
+        tag: r.status,
+      })),
+    }));
+  }, [dashboardData]);
 
   const age = useMemo(() => {
     if (!personal.date_of_birth) return undefined;
@@ -79,7 +65,7 @@ const HomeScreen = () => {
             <div className='score' >
               <div className="score-left">
                 <div className="score-label">Overall Health Score</div>
-                <div className="score-value">60%</div>
+                <div className="score-value">{dashboardData?.health_score ?? 0}%</div>
               </div>
               <div className="score-right">
                 <HeartPulse className='score-circle' size={36} strokeWidth={1} />
@@ -87,8 +73,8 @@ const HomeScreen = () => {
             </div>
 
             <div className="score-bar">
-              <div className="score-fill" style={{ width: '60%' }} />
-              <div className="score-sub">10 out of 16 biomarkers in optimal range</div>
+              <div className="score-fill" style={{ width: `${dashboardData?.health_score ?? 0}%` }} />
+              <div className="score-sub">{dashboardData?.optimal_biomarkers ?? 0} out of {dashboardData?.total_biomarkers ?? 0} biomarkers in optimal range</div>
             </div>
           </section>
         </div>
@@ -115,7 +101,7 @@ const HomeScreen = () => {
             </div>
           </section>
 
-          {sampleBiomarkers.map((section) => (
+          {biomarkers.map((section) => (
             <section className="biomarker-section" key={section.section}>
               <div className="section-header">
                 <div className="section-title">{section.section}</div>

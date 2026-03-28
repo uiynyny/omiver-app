@@ -1,19 +1,14 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Album, Bell, ChartPie, CircleUserRound, Cog, ListChecks, LocateFixed } from 'lucide-react';
 
 import './KitsScreen.css';
 import omiver from '../assets/omiver.svg';
+import { fetchKits } from '../api/user';
 
-const kits = [
-  {
-    id: 'basic',
-    title: 'Basic Test',
-    subtitle: 'Essential Biomarker analysis',
-    price: '$199',
-    frequency: 'one-time',
+const kitDefaults: Record<string, { color: string; features: string[] }> = {
+  'Basic Test': {
     color: '#d98252',
-    badge: '150',
     features: [
       'Complete blood panel analysis',
       'Essential vitamin and mineral levels',
@@ -22,14 +17,8 @@ const kits = [
       'Personalized recommendations',
     ],
   },
-  {
-    id: 'premium',
-    title: 'Premium Test',
-    subtitle: 'Comprehensive health analysis',
-    price: '$499',
-    frequency: 'one-time',
+  'Premium Test': {
     color: '#c99bb9',
-    badge: '150',
     features: [
       'Advanced hormone panel',
       'Inflammatory markers analysis',
@@ -39,11 +28,30 @@ const kits = [
       'Priority processing & support',
     ],
   },
-];
+};
 
 const KitsScreen: React.FC = () => {
   const navigate = useNavigate();
-  // keep call to context in case we later show user-specific discounts
+  const [kits, setKits] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchKits().then((data) => {
+      const mappedKits = data.map((k: any) => ({
+        id: k.id,
+        title: k.name,
+        subtitle: k.description,
+        price: `$${k.price}`,
+        frequency: 'one-time',
+        color: kitDefaults[k.name]?.color || '#6b9b8a',
+        badge: k.biomarker_count.toString(),
+        features: kitDefaults[k.name]?.features || [
+          'Biomarker analysis',
+          'Personalized recommendations',
+        ],
+      }));
+      setKits(mappedKits);
+    }).catch((error) => console.error(error));
+  }, []);
 
   return (
     <div className="screen-root">

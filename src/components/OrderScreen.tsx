@@ -1,20 +1,56 @@
-import React from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Box, Truck, CheckCircle, CircleUserRound, ListChecks, LocateFixed, ChartPie, Album, Bell, Cog, Package } from 'lucide-react'
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Box, Truck, CheckCircle, CircleUserRound, ListChecks, LocateFixed, ChartPie, Album, Bell, Cog, Package } from 'lucide-react';
+import { useAppContext } from '../context/AppContext';
+import { fetchOrders, fetchOrderDetail } from '../api/user';
 
-import './OrderScreen.css'
+import './OrderScreen.css';
 import omiver from '../assets/omiver.svg';
 
 const OrderScreen: React.FC = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const { state } = useAppContext();
+  const clientId = state.auth.clientId;
+  const [order, setOrder] = useState<any>(null);
+  const [events, setEvents] = useState<any[]>([]);
 
-  const order = {
+  const mockOrder = {
     id: '182u0572572283',
     testName: 'Premium Test',
     date: '10/02/2025',
     tracking: 'TK19283JEJT',
     biomarkers: 650,
-  }
+  };
+
+  const mockEvents = [
+    { id: 1, event_type: 'ORDER_PLACED', title: 'Order Placed', description: 'Your order has been received', is_completed: true },
+    { id: 2, event_type: 'IN_TRANSIT', title: 'Metabolic Health', description: 'Your kit is on its way', is_completed: true },
+    { id: 3, event_type: 'DELIVERED', title: 'Kit Delivered', description: 'Ready for sample collection', is_completed: false },
+  ];
+
+  useEffect(() => {
+    if (clientId) {
+      fetchOrders(clientId).then((orders) => {
+        if (orders.length > 0) {
+          const latestOrder = orders[0];
+          setOrder({
+            id: latestOrder.order_number || latestOrder.id,
+            testName: latestOrder.test_kit_name,
+            date: latestOrder.order_date || latestOrder.created_at,
+            tracking: latestOrder.tracking_number,
+            biomarkers: latestOrder.biomarker_count,
+          });
+
+          fetchOrderDetail(latestOrder.id).then((detail) => {
+            setEvents(detail.delivery_events || []);
+          }).catch((error) => console.error(error));
+        }
+      }).catch((error) => console.error(error));
+    }
+  }, [clientId]);
+
+  const displayOrder = order || mockOrder;
+  const displayEvents = events.length > 0 ? events : mockEvents;
 
   return (
     <div className="order-root">
@@ -34,14 +70,14 @@ const OrderScreen: React.FC = () => {
           <div className="order-card">
             <div className='collection-card-group'>
               <div className='collection-card-text-group'>
-                <div style={{ opacity: 0.85, marginBottom: 6 }}>{order.biomarkers} biomarkers</div>
-                <h2>{order.testName}</h2>
+                <div style={{ opacity: 0.85, marginBottom: 6 }}>{displayOrder.biomarkers} biomarkers</div>
+                <h2>{displayOrder.testName}</h2>
               </div>
               <div className='order-card-icon'><Package size={48} color='#fff' /></div>
             </div>
             <div className="order-meta">
-              <div>ID: {order.id}</div>
-              <div>Order Date: {order.date}</div>
+              <div>ID: {displayOrder.id}</div>
+              <div>Order Date: {displayOrder.date}</div>
             </div>
           </div>
         </div>
@@ -51,37 +87,31 @@ const OrderScreen: React.FC = () => {
             <div className="tracking-label">Tracking Number</div>
             <div style={{ color: '#777', marginBottom: 10 }}>Track your order</div>
             <div className="tracking-number">
-              <div style={{ fontWeight: 700 }}>{order.tracking}</div>
-              <button className="copy-btn" onClick={() => navigator.clipboard?.writeText(order.tracking)}>Copy</button>
+              <div style={{ fontWeight: 700 }}>{displayOrder.tracking}</div>
+              <button className="copy-btn" onClick={() => navigator.clipboard?.writeText(displayOrder.tracking)}>Copy</button>
             </div>
           </section>
 
           <section className="progress-card">
             <h3 style={{ marginTop: 0 }}>Delivery Progress</h3>
 
-            <div className="progress-row">
-              <div className="progress-icon"><CheckCircle color="#6b9b8a" /></div>
-              <div>
-                <div className="progress-title">Order Placed</div>
-                <div style={{ color: '#777' }}>Your order has been received</div>
+            {displayEvents.map((event: any) => (
+              <div className="progress-row" key={event.id}>
+                <div className="progress-icon">
+                  {event.event_type === 'ORDER_PLACED' && <CheckCircle color="#6b9b8a" />}
+                  {event.event_type === 'IN_TRANSIT' && <Truck color="#6b9b8a" />}
+                  {event.event_type === 'DELIVERED' && <Box color="#6b9b8a" />}
+                  {![ 'ORDER_PLACED', 'IN_TRANSIT', 'DELIVERED' ].includes(event.event_type) && <CheckCircle color="#6b9b8a" />}
+                </div>
+                <div>
+                  <div className="progress-title">
+                    {event.title}
+                    {!event.is_completed && <span style={{ background: '#eaf5ec', color: '#6b9b8a', marginLeft: 8, padding: '4px 8px', borderRadius: 12, fontSize: 12 }}>In Progress</span>}
+                  </div>
+                  <div style={{ color: '#777' }}>{event.description}</div>
+                </div>
               </div>
-            </div>
-
-            <div className="progress-row">
-              <div className="progress-icon"><Truck color="#6b9b8a" /></div>
-              <div>
-                <div className="progress-title">Metabolic Health</div>
-                <div style={{ color: '#777' }}>Your kit is on its way</div>
-              </div>
-            </div>
-
-            <div className="progress-row">
-              <div className="progress-icon"><Box color="#6b9b8a" /></div>
-              <div>
-                <div className="progress-title">Kit Delivered <span style={{ background: '#eaf5ec', color: '#6b9b8a', marginLeft: 8, padding: '4px 8px', borderRadius: 12, fontSize: 12 }}>In Progress</span></div>
-                <div style={{ color: '#777' }}>Ready for sample collection</div>
-              </div>
-            </div>
+            ))}
           </section>
 
           <section className="next-card">

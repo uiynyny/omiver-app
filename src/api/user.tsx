@@ -1,6 +1,6 @@
-const API_URL = 'https://www.omiver.me/api';
+const API_URL = 'http://localhost:8000/api'; // origin
 
-export const login = async (username: string, password: string): Promise<string> => {
+export const login = async (username: string, password: string): Promise<any> => {
     const response = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: {
@@ -12,11 +12,10 @@ export const login = async (username: string, password: string): Promise<string>
     if (!response.ok) {
         throw new Error('Login failed');
     }
-    console.log(response)
-    return response.text();
+    return response.json();
 }
 
-export const register = async (user: any): Promise<string> => {
+export const register = async (user: any): Promise<any> => {
     const response = await fetch(`${API_URL}/register`, {
         method: 'POST',
         headers: {
@@ -29,7 +28,7 @@ export const register = async (user: any): Promise<string> => {
         throw new Error('Registration failed');
     }
 
-    return response.text();
+    return response.json();
 }
 
 export const emailExist = async (email: string): Promise<boolean> => {
@@ -41,4 +40,36 @@ export const emailExist = async (email: string): Promise<boolean> => {
 
     const data = await response.json();
     return data.exists;
+}
+
+export const fetchDashboard = async (clientId: string | number): Promise<any> => {
+    const response = await fetch(`${API_URL}/dashboard?client_id=${clientId}`);
+    if (!response.ok) {
+        throw new Error('Failed to fetch dashboard data');
+    }
+    return response.json();
+}
+
+export const fetchKits = async (): Promise<any> => {
+    const response = await fetch(`${API_URL}/kits`);
+    if (!response.ok) {
+        throw new Error('Failed to fetch kits');
+    }
+    return response.json();
+}
+
+export const fetchOrders = async (clientId: string | number): Promise<any> => {
+    const response = await fetch(`${API_URL}/orders?client_id=${clientId}`);
+    if (!response.ok) {
+        throw new Error('Failed to fetch orders');
+    }
+    return response.json();
+}
+
+export const fetchOrderDetail = async (orderId: string | number): Promise<any> => {
+    const response = await fetch(`${API_URL}/orders/${orderId}`);
+    if (!response.ok) {
+        throw new Error('Failed to fetch order detail');
+    }
+    return response.json();
 }

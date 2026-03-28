@@ -24,6 +24,7 @@ type RegistrationData = {
 type AuthState = {
   isAuthenticated: boolean;
   userId?: string | null;
+  clientId?: string | number | null;
 };
 
 type AppState = {
@@ -32,7 +33,7 @@ type AppState = {
 };
 
 const initialState: AppState = {
-  auth: { isAuthenticated: false, userId: null },
+  auth: { isAuthenticated: false, userId: null, clientId: null },
   registration: {},
 };
 
