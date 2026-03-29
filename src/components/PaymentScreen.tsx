@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { fetchPayments, checkout } from '../api/user';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { X, Lock, CreditCard, ChevronRight } from 'lucide-react';
+import { useAppContext } from '../context/AppContext';
 import './PaymentScreen.css';
 
 const PaymentScreen: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { state } = useAppContext();
+  const clientId = state.auth.clientId;
+  
   const kit = location.state?.kit || {
     title: 'Premium Test',
     price: '$499',
@@ -13,18 +18,65 @@ const PaymentScreen: React.FC = () => {
   };
 
   const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    cardholderName: '',
+    cardNumber: '',
+    expiryDate: '',
+    cvv: '',
+    streetAddress: '',
+    city: '',
+    state: '',
+    zipCode: ''
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  useEffect(() => {
+    if (clientId) {
+      fetchPayments(clientId).then((data) => {
+        if (data && data.length > 0) {
+          const latestPayment = data[0]; // Most recent payment
+          setFormData((prev) => ({
+            ...prev,
+            cardholderName: latestPayment.cardholder_name || '',
+            streetAddress: latestPayment.billing_address?.street_address || '',
+            city: latestPayment.billing_address?.city || '',
+            state: latestPayment.billing_address?.state || '',
+            zipCode: latestPayment.billing_address?.zip_code || '',
+            // We don't store full card number or cvv, so leave them empty
+          }));
+        }
+      }).catch((error) => console.error(error));
+    }
+  }, [clientId]);
 
   const handlePay = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
+
+    const payload = {
+      client_id: clientId,
+      test_kit_id: kit.id || 1, // Fallback to 1 if missing for testing
+      cardholder_name: formData.cardholderName,
+      card_number: formData.cardNumber,
+      expiry_date: formData.expiryDate,
+      cvv: formData.cvv,
+      street_address: formData.streetAddress,
+      city: formData.city,
+      state: formData.state,
+      zip_code: formData.zipCode,
+    };
+
+    checkout(payload).then((data) => {
       setLoading(false);
-      // Navigate to order confirmation or orders list
-      // For now, let's go to orders to show "it's done"
-      navigate('/orders'); 
-    }, 1500);
+      navigate('/orders');
+    }).catch((error) => {
+      setLoading(false);
+      console.error(error);
+      alert(error.message || 'Payment failed');
+    });
   };
 
   return (
@@ -40,7 +92,7 @@ const PaymentScreen: React.FC = () => {
         </header>
 
         <form className="payment-content" onSubmit={handlePay}>
-          
+
           <div className="order-summary-card">
             <div className="order-summary-info">
               <h3>{kit.title}</h3>
@@ -50,45 +102,48 @@ const PaymentScreen: React.FC = () => {
           </div>
 
           <div className="form-section">
-            <label className="form-label">Card Information</label>
-            
-            <div className="input-group">
-              <input type="text" className="text-input" placeholder="Cardholder Name" required />
-            </div>
-            
-            <div className="input-group card-input-container">
-              <input type="text" className="text-input" placeholder="Card Number" required />
-              <CreditCard className="card-icon" size={20} />
-            </div>
-            
-            <div className="form-row">
+            <label className="form-label">
+              <h3>Card Information</h3>
               <div className="input-group">
-                <input type="text" className="text-input" placeholder="Expiry Date (MM/YY)" required />
+                <input type="text" name="cardholderName" className="text-input" placeholder="Cardholder Name" autoComplete='cc-name' value={formData.cardholderName} onChange={handleInputChange} required />
               </div>
-              <div className="input-group">
-                <input type="text" className="text-input" placeholder="CVV" required />
+
+              <div className="input-group card-input-container">
+                <input type="text" name="cardNumber" className="text-input" placeholder="Card Number" autoComplete='cc-number' inputMode="numeric" pattern="[0-9]*" value={formData.cardNumber} onChange={handleInputChange} required />
+                <CreditCard className="card-icon" size={20} />
               </div>
-            </div>
+
+              <div className="form-row">
+                <div className="input-group">
+                  <input type="text" name="expiryDate" className="text-input" placeholder="Expiry Date (MM/YY)" autoComplete='cc-exp' value={formData.expiryDate} onChange={handleInputChange} required />
+                </div>
+                <div className="input-group">
+                  <input type="text" name="cvv" className="text-input" placeholder="CVV" autoComplete='cc-csc' inputMode="numeric" pattern="[0-9]*" value={formData.cvv} onChange={handleInputChange} required />
+                </div>
+              </div>
+            </label>
           </div>
 
           <div className="form-section">
-            <label className="form-label">Billing Address</label>
-            
-            <div className="input-group">
-              <input type="text" className="text-input" placeholder="Street Address" required />
-            </div>
-            <div className="input-group">
-              <input type="text" className="text-input" placeholder="City" required />
-            </div>
-            
-            <div className="form-row">
+            <label className="form-label">
+              <h3>Billing Address</h3>
+
               <div className="input-group">
-                <input type="text" className="text-input" placeholder="State" required />
+                <input type="text" name="streetAddress" className="text-input" placeholder="Street Address" value={formData.streetAddress} onChange={handleInputChange} required />
               </div>
               <div className="input-group">
-                <input type="text" className="text-input" placeholder="Zip Code" required />
+                <input type="text" name="city" className="text-input" placeholder="City" value={formData.city} onChange={handleInputChange} required />
               </div>
-            </div>
+
+              <div className="form-row">
+                <div className="input-group">
+                  <input type="text" name="state" className="text-input" placeholder="State" value={formData.state} onChange={handleInputChange} required />
+                </div>
+                <div className="input-group">
+                  <input type="text" name="zipCode" className="text-input" placeholder="Zip Code" value={formData.zipCode} onChange={handleInputChange} required />
+                </div>
+              </div>
+            </label>
           </div>
 
           <div className="security-note">
@@ -96,7 +151,7 @@ const PaymentScreen: React.FC = () => {
             <span>Your payment information is encrypted and secure</span>
           </div>
 
-           <div className="payment-footer">
+          <div className="payment-footer">
             <button type="submit" className="pay-btn" disabled={loading}>
               {loading ? 'Processing...' : `Pay ${kit.price}`}
               {!loading && <ChevronRight size={20} />}

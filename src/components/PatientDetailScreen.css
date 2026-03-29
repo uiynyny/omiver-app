@@ -1,0 +1,121 @@
+.detail-main {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.patient-header-card {
+  background: linear-gradient(135deg, rgba(201, 155, 185, 0.2), rgba(107, 155, 138, 0.2));
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.patient-header-info h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.patient-header-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #777;
+  margin-top: 4px;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 600px) {
+  .grid-container {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.detail-section {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid rgba(224, 224, 224, 0.5);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.detail-section h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.info-item .info-label {
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 4px;
+}
+
+.info-item .info-value {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.summary-title {
+  font-size: 12px;
+  color: #aaa;
+}
+
+.summary-value {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.error-container {
+  display: flex;
+  flex-direction: column;
+  items: center;
+  justify-content: center;
+  height: 50vh;
+  gap: 16px;
+  text-align: center;
+}
+
+.icon-btn-back {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #333;
+}

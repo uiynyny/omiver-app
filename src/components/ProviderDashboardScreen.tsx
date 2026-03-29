@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Copy, CheckCheck, Users, Link2, LogOut, Share2,
@@ -126,6 +126,9 @@ const ProviderDashboardScreen = () => {
   const [loading, setLoading] = useState(true);
   const [shareSupported] = useState(() => typeof navigator.share === 'function');
   const [activeTab, setActiveTab] = useState<'patients' | 'referral'>('patients');
+  const [refreshing, setRefreshing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [startY, setStartY] = useState(0);
 
   const providerName = [state.registration.firstName, state.registration.lastName]
     .filter(Boolean)
@@ -133,19 +136,51 @@ const ProviderDashboardScreen = () => {
 
   const referralUrl = referralCode ? buildReferralUrl(referralCode) : '';
 
-  useEffect(() => {
+  const loadData = useCallback(async () => {
     if (!clientId) { setLoading(false); return; }
-
-    Promise.all([
-      getReferralLink(clientId).then((d) => {
-        setReferralCode(d.referral_code);
-        dispatch({ type: 'UPDATE_REGISTRATION', payload: { referralCode: d.referral_code } });
-      }),
-      getProviderPatients(clientId).then(setPatients),
-    ])
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    try {
+      await Promise.all([
+        getReferralLink(clientId).then((d) => {
+          setReferralCode(d.referral_code);
+          dispatch({ type: 'UPDATE_REGISTRATION', payload: { referralCode: d.referral_code } });
+        }),
+        getProviderPatients(clientId).then(setPatients),
+      ]);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   }, [clientId, dispatch]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (window.scrollY === 0) {
+      setStartY(e.touches[0].pageY);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (window.scrollY === 0) {
+      const currentY = e.touches[0].pageY;
+      const diff = currentY - startY;
+      if (diff > 0) {
+        setPullDistance(Math.min(diff, 100)); // Limit distance to 100px
+      }
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (pullDistance > 60) {
+      setRefreshing(true);
+      await loadData();
+      setRefreshing(false);
+    }
+    setPullDistance(0);
+  };
 
   const handleShare = async () => {
     if (shareSupported) {
@@ -174,11 +209,27 @@ const ProviderDashboardScreen = () => {
   const handleLogout = () => {
     dispatch({ type: 'CLEAR_AUTH' });
     dispatch({ type: 'RESET_REGISTRATION' });
-    navigate('/welcome');
+    navigate('/');
   };
 
   return (
-    <div className="provider-dashboard">
+    <div
+      className="provider-dashboard"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      <div className={`pull-to-refresh-indicator ${pullDistance > 0 ? 'visible' : ''}`} style={{ height: `${pullDistance}px` }}>
+        <div className="pull-to-refresh-content">
+          {refreshing ? (
+            <span className="refresh-status">Refreshing...</span>
+          ) : pullDistance > 60 ? (
+            <span className="refresh-status">Release to refresh</span>
+          ) : (
+            <span className="refresh-status">Pull to refresh</span>
+          )}
+        </div>
+      </div>
       {/* ── Header ─────────────────────────────────────────── */}
       <header className="provider-header">
         <div className="provider-header-left">

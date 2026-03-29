@@ -5,8 +5,13 @@ import { useNavigate } from 'react-router-dom'
 import { User, Heart, Apple, Target, CircleUserRound, Album, ChartPie, LocateFixed, ListChecks } from 'lucide-react'
 
 const ProfileScreen: React.FC = () => {
-  const { state } = useAppContext()
+  const { state, dispatch } = useAppContext()
   const navigate = useNavigate()
+
+  const handleLogout = () => {
+    dispatch({ type: 'CLEAR_AUTH' });
+    navigate('/login');
+  };
 
   const health = state?.registration?.healthConditions || 'None'
   const allergies = state?.registration?.allergies || 'None'
@@ -50,7 +55,7 @@ const ProfileScreen: React.FC = () => {
         </section>
 
         <section>
-          <div className="section-title"><Heart color="#6b9b8a" /> Health Conditions</div>
+          <div className="section-title"><Heart color="#6b9b8a" /> <p>Health Conditions</p></div>
           <div className="section-content">{health || 'None'}</div>
         </section>
 
@@ -67,6 +72,12 @@ const ProfileScreen: React.FC = () => {
           <div style={{ height: 10 }} />
           <div className="section-content">Fitness Goals: {fitness_goal || 'None'}</div>
         </section>
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24, marginBottom: 20 }}>
+          <button className="logout-button" onClick={handleLogout}>
+            Logout
+          </button>
+        </div>
       </main>
 
       <nav className="bottom-nav">

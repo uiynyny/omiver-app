@@ -84,19 +84,19 @@ const HomeScreen = () => {
             <div className="profile-grid">
               <div className="profile-card">
                 <div className="card-label">Name</div>
-                <div className="card-value">{displayName ?? '—'}</div>
+                <div className="card-value">{dashboardData?.profile?.name || displayName || '—'}</div>
               </div>
               <div className="profile-card">
                 <div className="card-label">Age</div>
-                <div className="card-value">{age ?? '—'}</div>
+                <div className="card-value">{dashboardData?.profile?.age || age || '—'}</div>
               </div>
               <div className="profile-card">
                 <div className="card-label">Height</div>
-                <div className="card-value">{personal.height ?? '—'}</div>
+                <div className="card-value">{dashboardData?.profile?.height || personal.height || '—'}</div>
               </div>
               <div className="profile-card">
                 <div className="card-label">Weight</div>
-                <div className="card-value">{personal.weight ?? '—'}</div>
+                <div className="card-value">{dashboardData?.profile?.weight || personal.weight || '—'}</div>
               </div>
             </div>
           </section>

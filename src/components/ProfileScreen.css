@@ -1,4 +1,10 @@
-.profile-root { display:flex; flex-direction:column; min-height:100vh; background:#f6f6f6 }
+.profile-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f6f6f6;
+  color: #303030
+}
 .profile-header { background:#6b9b8a; color:white; padding:18px 16px 20px 16px; display:flex; flex-direction:column; align-items:center }
 .profile-logo { font-weight:700; letter-spacing:8px; margin-bottom:8px }
 .profile-subtitle { color:rgba(255,255,255,0.95); margin-bottom:12px }
@@ -14,3 +20,18 @@
 .bottom-nav { position:fixed; left:0; right:0; bottom:0; height:62px; display:flex; gap:4px; padding:8px 12px; background:white; border-top-left-radius:18px; border-top-right-radius:18px; box-shadow:0 -6px 20px rgba(0,0,0,0.06); }
 .nav-item { flex:1; background:transparent; border:none; border-radius:12px; padding:8px; font-weight:600; color:#666 }
 .nav-item.active { background:#ffffff; color:#111; box-shadow:0 2px 6px rgba(0,0,0,0.04); }
+
+.logout-button {
+  background: #fff;
+  color: #ff4d4f;
+  border: 1px solid #ff4d4f;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logout-button:hover {
+  background: #fff1f0;
+}

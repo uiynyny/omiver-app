@@ -67,6 +67,7 @@
   align-items: center;
   transition: background 0.2s, color 0.2s;
 }
+
 .logout-btn:hover {
   background: rgba(239, 68, 68, 0.15);
   color: #f87171;
@@ -98,7 +99,10 @@
   margin: 0 0.5rem;
 }
 
-.stat-icon { color: #60a5fa; flex-shrink: 0; }
+.stat-icon {
+  color: #60a5fa;
+  flex-shrink: 0;
+}
 
 .stat-value {
   display: block;
@@ -156,9 +160,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
-  max-width: 560px;
-  width: 100%;
-  margin-inline: auto;
 }
 
 /* ── Patient list ─────────────────────────────────────────── */
@@ -240,7 +241,10 @@
   margin-top: 0.15rem;
 }
 
-.expand-icon { color: #64748b; flex-shrink: 0; }
+.expand-icon {
+  color: #64748b;
+  flex-shrink: 0;
+}
 
 /* ── Patient detail (expanded) ────────────────────────────── */
 .patient-detail {
@@ -263,7 +267,10 @@
   color: #94a3b8;
 }
 
-.detail-item svg { color: #60a5fa; flex-shrink: 0; }
+.detail-item svg {
+  color: #60a5fa;
+  flex-shrink: 0;
+}
 
 .detail-section {
   margin-top: 0.7rem;
@@ -299,9 +306,9 @@
   height: 64px;
   border-radius: 14px;
   background: linear-gradient(90deg,
-    rgba(255,255,255,0.05) 25%,
-    rgba(255,255,255,0.1) 50%,
-    rgba(255,255,255,0.05) 75%);
+      rgba(255, 255, 255, 0.05) 25%,
+      rgba(255, 255, 255, 0.1) 50%,
+      rgba(255, 255, 255, 0.05) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.6s infinite;
 }
@@ -316,7 +323,9 @@
   gap: 0.6rem;
 }
 
-.empty-icon { color: #334155; }
+.empty-icon {
+  color: #334155;
+}
 
 .empty-state h3 {
   margin: 0;
@@ -431,20 +440,24 @@
   height: 96px;
   border-radius: 10px;
   background: linear-gradient(90deg,
-    rgba(255,255,255,0.05) 25%,
-    rgba(255,255,255,0.1) 50%,
-    rgba(255,255,255,0.05) 75%);
+      rgba(255, 255, 255, 0.05) 25%,
+      rgba(255, 255, 255, 0.1) 50%,
+      rgba(255, 255, 255, 0.05) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.6s infinite;
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .copy-btn {
-  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -467,14 +480,19 @@
   box-shadow: 0 8px 24px rgba(79, 142, 247, 0.5);
 }
 
-.copy-btn:active:not(:disabled) { transform: translateY(0); }
+.copy-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
 
 .copy-btn.copied {
   background: linear-gradient(135deg, #10b981 0%, #047857 100%);
   box-shadow: 0 4px 18px rgba(16, 185, 129, 0.4);
 }
 
-.copy-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.copy-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 /* ── Instructions ─────────────────────────────────────────── */
 .instructions-card {
@@ -506,4 +524,29 @@
   font-size: 0.84rem;
   color: #64748b;
   line-height: 1.5;
+}
+/* ── Pull to refresh indicator ──────────────────────────── */
+.pull-to-refresh-indicator {
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: height 0.1s ease, opacity 0.2s ease;
+  width: 100%;
+}
+
+.pull-to-refresh-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+.refresh-status {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #60a5fa;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }

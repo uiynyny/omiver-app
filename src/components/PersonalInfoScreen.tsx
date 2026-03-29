@@ -94,13 +94,21 @@ const PersonalInfoScreen = () => {
           </div>
 
           <div className="input-group">
-            <input
-              type="text"
-              placeholder="ethnicity:"
+            <select
               value={ethnicity}
               onChange={(e) => setEthnicity(e.target.value)}
-              className="form-input"
-            />
+              className="form-input form-select"
+            >
+              <option value="" disabled>Select Ethnicity</option>
+              <option value="White">White</option>
+              <option value="Black or African American">Black or African American</option>
+              <option value="Asian">Asian</option>
+              <option value="Hispanic or Latino">Hispanic or Latino</option>
+              <option value="American Indian or Alaska Native">American Indian or Alaska Native</option>
+              <option value="Native Hawaiian or Other Pacific Islander">Native Hawaiian or Other Pacific Islander</option>
+              <option value="Other">Other</option>
+              <option value="Prefer not to say">Prefer not to say</option>
+            </select>
           </div>
 
           <div className="input-group">

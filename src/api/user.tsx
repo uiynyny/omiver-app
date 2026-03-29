@@ -73,7 +73,6 @@ export const fetchOrderDetail = async (orderId: string | number): Promise<any> =
     }
     return response.json();
 }
-
 export const getReferralLink = async (clientId: string | number): Promise<{
     referral_code: string;
     patient_count: number;
@@ -108,6 +107,29 @@ export const getProviderPatients = async (clientId: string | number): Promise<Pa
     const response = await fetch(`${API_URL}/provider/patients?client_id=${clientId}`);
     if (!response.ok) {
         throw new Error('Failed to fetch provider patients');
+    }
+    return response.json();
+}
+
+export const fetchPayments = async (clientId: string | number): Promise<any> => {
+    const response = await fetch(`${API_URL}/payments?client_id=${clientId}`);
+    if (!response.ok) {
+        throw new Error('Failed to fetch payment history');
+    }
+    return response.json();
+}
+
+export const checkout = async (data: any): Promise<any> => {
+    const response = await fetch(`${API_URL}/checkout`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Checkout failed');
     }
     return response.json();
 }

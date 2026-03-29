@@ -1,26 +1,176 @@
-.order-root { display:flex; flex-direction:column; min-height:100vh; background:#f6f6f6 }
-.order-header { background:#67997D; color:white; padding:18px 16px 20px 16px; display:flex; align-items:center; justify-content:space-between }
-.order-logo { font-weight:700; letter-spacing:8px }
-.order-icons { display:flex; gap:10px; align-items:center }
-.order-title { font-weight:700; font-size:1.1rem; text-align: center;}
-.order-main { padding-bottom:96px }
-.order-top { display:flex; justify-content:center; flex-direction: column; padding:16px; background-color:#67997D }
-.order-card { background:#67997D; color:white; border: 0.5px solid #fff5f0; border-radius:16px; padding:18px; margin-bottom:14px; justify-content:space-between; box-shadow:0 4px 12px rgba(0,0,0,0.1) }
-.order-card h2 { margin:6px 0 12px 0; font-size:1.5rem }
-.order-meta { display:flex; justify-content:space-between; color:rgba(255,255,255,0.9); font-size:0.9rem }
-.tracking-panel { background:white; border-radius:14px; padding:18px; margin-bottom:18px }
-.tracking-label { font-weight:700; margin-bottom:6px }
-.tracking-number { background:#f6f6f6; padding:12px 16px; border-radius:999px; display:flex; justify-content:space-between; align-items:center }
-.copy-btn { background:#D27644; color:white; border:none; padding:8px 12px; border-radius:999px }
-.progress-card { background:white; border-radius:14px; padding:18px; margin-bottom:18px }
-.progress-row { display:flex; gap:12px; align-items:flex-start; margin-bottom:14px }
-.progress-icon { width:48px; height:48px; border-radius:12px; background:#e9f2ed; display:flex; align-items:center; justify-content:center }
-.progress-title { font-weight:700 }
-.next-card { background:#fff7f4; border-radius:14px; padding:18px; border:1px solid #f1d7cc }
-.next-cta { margin-top:12px; background:#D27644; color:white; border:none; padding:12px 16px; border-radius:999px; font-weight:700 }
-.bottom-nav { position:fixed; left:0; right:0; bottom:0; height:62px; display:flex; gap:4px; padding:8px 12px; background:white; border-top-left-radius:18px; border-top-right-radius:18px; box-shadow:0 -6px 20px rgba(0,0,0,0.06); }
-.nav-item { flex:1; background:transparent; border:none; border-radius:12px; padding:8px; font-weight:600; color:#666 }
-.nav-item.active { background:#ffffff; color:#111; box-shadow:0 2px 6px rgba(0,0,0,0.04); }
+.order-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f6f6f6;
+  color: #303030
+}
+
+.order-header {
+  background: #67997D;
+  color: white;
+  padding: 18px 16px 20px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between
+}
+
+.order-logo {
+  font-weight: 700;
+  letter-spacing: 8px
+}
+
+.order-icons {
+  display: flex;
+  gap: 10px;
+  align-items: center
+}
+
+.order-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.order-main {
+  padding-bottom: 96px
+}
+
+.order-top {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  padding: 16px;
+  color: #fff;
+  background-color: #67997D
+}
+
+.order-card {
+  background: #67997D;
+  border: 0.5px solid #fff5f0;
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 14px;
+  justify-content: space-between;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
+}
+
+.order-card h2 {
+  margin: 6px 0 12px 0;
+  font-size: 1.5rem
+}
+
+.order-meta {
+  display: flex;
+  justify-content: space-between;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem
+}
+
+.tracking-panel {
+  background: white;
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 18px
+}
+
+.tracking-label {
+  font-weight: 700;
+  margin-bottom: 6px
+}
+
+.tracking-number {
+  background: #f6f6f6;
+  padding: 12px 16px;
+  border-radius: 999px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center
+}
+
+.copy-btn {
+  background: #D27644;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 999px
+}
+
+.progress-card {
+  background: white;
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 18px
+}
+
+.progress-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 14px
+}
+
+.progress-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #e9f2ed;
+  display: flex;
+  align-items: center;
+  justify-content: center
+}
+
+.progress-title {
+  font-weight: 700
+}
+
+.next-card {
+  background: #fff7f4;
+  border-radius: 14px;
+  padding: 18px;
+  border: 1px solid #f1d7cc
+}
+
+.next-cta {
+  margin-top: 12px;
+  background: #D27644;
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 999px;
+  font-weight: 700
+}
+
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 62px;
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  background: white;
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.06);
+}
+
+.nav-item {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  padding: 8px;
+  font-weight: 600;
+  color: #666
+}
+
+.nav-item.active {
+  background: #ffffff;
+  color: #111;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
 .order-card-icon {
   display: flex;
   align-items: center;
