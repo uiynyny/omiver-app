@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bell, Cog, CircleUserRound, Calendar, Weight, Ruler, Mail, Package } from 'lucide-react';
+import { ArrowLeft, Cog, CircleUserRound, Calendar, Mail, Package } from 'lucide-react';
 import omiver from '../assets/omiver.svg';
 
 import './PatientDetailScreen.css';
@@ -23,8 +23,8 @@ const PatientDetailScreen: React.FC = () => {
     );
   }
 
-  const age = patient.date_of_birth ? 
-    Math.floor((Date.now() - new Date(patient.date_of_birth).getTime()) / (1000 * 60 * 60 * 24 * 365.25)) 
+  const age = patient.date_of_birth ?
+    Math.floor((Date.now() - new Date(patient.date_of_birth).getTime()) / (1000 * 60 * 60 * 24 * 365.25))
     : 'N/A';
 
   return (

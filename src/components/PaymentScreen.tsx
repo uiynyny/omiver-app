@@ -10,7 +10,7 @@ const PaymentScreen: React.FC = () => {
   const location = useLocation();
   const { state } = useAppContext();
   const clientId = state.auth.clientId;
-  
+
   const kit = location.state?.kit || {
     title: 'Premium Test',
     price: '$499',
@@ -70,6 +70,7 @@ const PaymentScreen: React.FC = () => {
     };
 
     checkout(payload).then((data) => {
+      console.log(data);
       setLoading(false);
       navigate('/orders');
     }).catch((error) => {
