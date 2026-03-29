@@ -15,13 +15,30 @@ const LoginScreen = () => {
   const { dispatch } = useAppContext();
 
   const handleLogin = () => {
-    // Implement login logic here
-    console.log('Login attempt', { email, password, stayLoggedIn });
-    // Mark user authenticated in context and navigate to home
     login(email, password).then((data) => {
       console.log('Login successful', data);
-      dispatch({ type: 'SET_AUTH', payload: { isAuthenticated: true, userId: email, clientId: data.id } });
-      navigate('/home');
+      const userType: 'PROVIDER' | 'INDIVIDUAL' =
+        data.type === 'PROVIDER' ? 'PROVIDER' : 'INDIVIDUAL';
+
+      // Persist profile data so provider dashboard can show the name
+      dispatch({
+        type: 'UPDATE_REGISTRATION',
+        payload: {
+          firstName: data.first_name,
+          lastName: data.last_name,
+          referralCode: data.referral_code ?? undefined,
+        },
+      });
+      dispatch({
+        type: 'SET_AUTH',
+        payload: { isAuthenticated: true, userId: email, clientId: data.id, userType },
+      });
+
+      if (userType === 'PROVIDER') {
+        navigate('/provider/dashboard');
+      } else {
+        navigate('/home');
+      }
     }).catch((error) => {
       console.error('Login error', error);
       alert('Login failed. Please check your credentials and try again.');

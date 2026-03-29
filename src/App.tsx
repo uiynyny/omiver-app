@@ -9,6 +9,8 @@ import LoginScreen from './components/LoginScreen';
 import RegisterScreen from './components/RegisterScreen';
 import AccountTypeScreen from './components/AccountTypeScreen';
 import PersonalInfoScreen from './components/PersonalInfoScreen';
+import ProviderInfoScreen from './components/ProviderInfoScreen';
+import ProviderDashboardScreen from './components/ProviderDashboardScreen';
 import HealthConditionsScreen from './components/HealthConditionsScreen';
 import DietaryInfoScreen from './components/DietaryInfoScreen';
 import GoalsScreen from './components/GoalsScreen';
@@ -37,10 +39,14 @@ function App() {
           <Route path="/login" element={<LoginScreen />} />
           <Route path="/register" element={<RegisterScreen />} />
           <Route path="/register/account-type" element={<AccountTypeScreen />} />
+          {/* Individual registration flow */}
           <Route path="/register/personal-info" element={<PersonalInfoScreen />} />
           <Route path="/register/health-conditions" element={<HealthConditionsScreen />} />
           <Route path="/register/dietary-info" element={<DietaryInfoScreen />} />
           <Route path="/register/goals" element={<GoalsScreen />} />
+          {/* Provider registration flow */}
+          <Route path="/register/provider-info" element={<ProviderInfoScreen />} />
+          {/* Shared */}
           <Route path="/terms" element={<TermsScreen />} />
           <Route path="/home" element={<HomeScreen />} />
           <Route path="/kits" element={<KitsScreen />} />
@@ -50,6 +56,8 @@ function App() {
           <Route path="/payment" element={<PaymentScreen />} />
           <Route path="/orders" element={<OrderScreen />} />
           <Route path="/profile" element={<ProfileScreen />} />
+          {/* Provider dashboard */}
+          <Route path="/provider/dashboard" element={<ProviderDashboardScreen />} />
         </Routes>
       </BrowserRouter>
     </AppProvider>

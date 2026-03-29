@@ -7,18 +7,59 @@ import { register } from '../api/user';
 const TermsScreen = () => {
   const navigate = useNavigate();
   const { state, dispatch } = useAppContext();
+  const isProvider = state.registration.accountType === 'healthcare';
 
   const handleContinue = async () => {
-    // Persist acceptance and mark user authenticated for this demo
     dispatch({ type: 'UPDATE_REGISTRATION', payload: { acceptedTerms: true } });
-    const response = await register(state.registration)
-    console.log(response)
+
+    // Build the payload mapping frontend field names to backend field names
+    const reg = state.registration;
+    const payload: Record<string, any> = {
+      username: reg.username,
+      password: reg.password,
+      email: reg.email,
+      first_name: reg.firstName,
+      last_name: reg.lastName,
+      type: reg.accountType === 'healthcare' ? 'PROVIDER' : 'INDIVIDUAL',
+    };
+
+    // Individual-only fields
+    if (!isProvider) {
+      payload.date_of_birth = reg.date_of_birth;
+      payload.gender = reg.gender;
+      payload.ethnicity = reg.ethnicity;
+      payload.height = reg.height;
+      payload.weight = reg.weight;
+      payload.health_conditions = reg.healthConditions;
+      payload.allergies = reg.allergies;
+      payload.dietary_preferences = reg.dietary_preferences;
+      payload.fitness_goal = reg.fitness_goal;
+      payload.nutritional_goal = reg.nutritional_goal;
+    }
+
+    // Include referral code if patient came via provider link
+    if (reg.referredByCode) {
+      payload.referred_by_code = reg.referredByCode;
+    }
+
+    const response = await register(payload);
     if (!response) {
       alert('Registration failed: ' + response);
       return;
     }
-    dispatch({ type: 'SET_AUTH', payload: { isAuthenticated: true, userId: 'local-user' } });
-    navigate('/home');
+
+    // Persist referral code in context for provider dashboard
+    if (response.referral_code) {
+      dispatch({ type: 'UPDATE_REGISTRATION', payload: { referralCode: response.referral_code } });
+    }
+
+    dispatch({ type: 'SET_AUTH', payload: { isAuthenticated: true, userId: response.id, clientId: response.id } });
+
+    if (isProvider) {
+      navigate('/provider/dashboard');
+    } else {
+      navigate('/home');
+    }
   };
 
   const handleBack = () => {
@@ -38,26 +79,29 @@ const TermsScreen = () => {
         <div className="terms-notice">
           <h2>Important Notice</h2>
           <p>
-            We will be collecting personal health information to provide you with accurate and
-            personalized biomarker analysis.
+            {isProvider
+              ? 'By registering as a healthcare provider, you agree to our terms and privacy policy. You will be able to generate referral links for your patients.'
+              : 'We will be collecting personal health information to provide you with accurate and personalized biomarker analysis.'}
           </p>
         </div>
 
         <div className="terms-section">
-          <h3>The information you provide will be used to:</h3>
+          <h3>{isProvider ? 'As a provider you can:' : 'The information you provide will be used to:'}</h3>
           <ul className="terms-list">
-            <li>
-              <span className="bullet-icon">⦿</span> Customize your biomarker testing recommendations
-            </li>
-            <li>
-              <span className="bullet-icon">⦿</span> Generate personalized health insights
-            </li>
-            <li>
-              <span className="bullet-icon">⦿</span> Create targeted nutrition and fitness plans
-            </li>
-            <li>
-              <span className="bullet-icon">⦿</span> Track your health progress over time
-            </li>
+            {isProvider ? (
+              <>
+                <li><span className="bullet-icon">⦿</span> Generate a unique referral link for your patients</li>
+                <li><span className="bullet-icon">⦿</span> Track and monitor your referred patients</li>
+                <li><span className="bullet-icon">⦿</span> Access your provider dashboard</li>
+              </>
+            ) : (
+              <>
+                <li><span className="bullet-icon">⦿</span> Customize your biomarker testing recommendations</li>
+                <li><span className="bullet-icon">⦿</span> Generate personalized health insights</li>
+                <li><span className="bullet-icon">⦿</span> Create targeted nutrition and fitness plans</li>
+                <li><span className="bullet-icon">⦿</span> Track your health progress over time</li>
+              </>
+            )}
           </ul>
         </div>
 
@@ -68,18 +112,22 @@ const TermsScreen = () => {
               <CheckCircle className="check-icon" size={20} />
               <span>Personal Information</span>
             </div>
-            <div className="collected-item">
-              <CheckCircle className="check-icon" size={20} />
-              <span>Health Conditions</span>
-            </div>
-            <div className="collected-item">
-              <CheckCircle className="check-icon" size={20} />
-              <span>Dietary Information</span>
-            </div>
-            <div className="collected-item">
-              <CheckCircle className="check-icon" size={20} />
-              <span>Fitness Goals</span>
-            </div>
+            {!isProvider && (
+              <>
+                <div className="collected-item">
+                  <CheckCircle className="check-icon" size={20} />
+                  <span>Health Conditions</span>
+                </div>
+                <div className="collected-item">
+                  <CheckCircle className="check-icon" size={20} />
+                  <span>Dietary Information</span>
+                </div>
+                <div className="collected-item">
+                  <CheckCircle className="check-icon" size={20} />
+                  <span>Fitness Goals</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

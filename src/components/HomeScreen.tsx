@@ -5,7 +5,7 @@ import { useAppContext } from '../context/AppContext';
 
 import './HomeScreen.css';
 import omiver from '../assets/omiver.svg';
-import { login, fetchDashboard } from '../api/user';
+import { fetchDashboard } from '../api/user';
 
 const HomeScreen = () => {
   const navigate = useNavigate();
@@ -109,7 +109,7 @@ const HomeScreen = () => {
               </div>
 
               <div className="biomarker-cards">
-                {section.items.map((item) => (
+                {section.items.map((item: { value: number; unit: string; name: string; note: string; tag: string }) => (
                   <div className="biomarker-card" key={item.name}>
                     <div className="biomarker-left">
                       <div className="biomarker-value">{item.value}</div>

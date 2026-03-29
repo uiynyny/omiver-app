@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8000/api'; // origin
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'; // origin
 
 export const login = async (username: string, password: string): Promise<any> => {
     const response = await fetch(`${API_URL}/login`, {
@@ -70,6 +70,44 @@ export const fetchOrderDetail = async (orderId: string | number): Promise<any> =
     const response = await fetch(`${API_URL}/orders/${orderId}`);
     if (!response.ok) {
         throw new Error('Failed to fetch order detail');
+    }
+    return response.json();
+}
+
+export const getReferralLink = async (clientId: string | number): Promise<{
+    referral_code: string;
+    patient_count: number;
+}> => {
+    const response = await fetch(`${API_URL}/provider/referral-link?client_id=${clientId}`);
+    if (!response.ok) {
+        throw new Error('Failed to fetch referral link');
+    }
+    return response.json();
+}
+
+export interface Patient {
+    id: number;
+    email: string;
+    full_name: string;
+    first_name: string;
+    last_name: string;
+    date_of_birth: string | null;
+    gender: string;
+    height: number | null;
+    weight: number | null;
+    ethnicity: string;
+    health_conditions: string;
+    dietary_preferences: string;
+    fitness_goal: string;
+    created_at: string;
+    latest_test_date: string | null;
+    total_orders: number;
+}
+
+export const getProviderPatients = async (clientId: string | number): Promise<Patient[]> => {
+    const response = await fetch(`${API_URL}/provider/patients?client_id=${clientId}`);
+    if (!response.ok) {
+        throw new Error('Failed to fetch provider patients');
     }
     return response.json();
 }

@@ -19,12 +19,16 @@ type RegistrationData = {
   fitness_goal?: string;
   nutritional_goal?: string;
   acceptedTerms?: boolean;
+  // Referral system
+  referralCode?: string;      // provider's code (populated after registration)
+  referredByCode?: string;    // code from URL ?ref= param (passed by patient)
 };
 
 type AuthState = {
   isAuthenticated: boolean;
   userId?: string | null;
   clientId?: string | number | null;
+  userType?: 'PROVIDER' | 'INDIVIDUAL' | null;
 };
 
 type AppState = {
@@ -33,7 +37,7 @@ type AppState = {
 };
 
 const initialState: AppState = {
-  auth: { isAuthenticated: false, userId: null, clientId: null },
+  auth: { isAuthenticated: false, userId: null, clientId: null, userType: null },
   registration: {},
 };
 
@@ -48,7 +52,7 @@ function reducer(state: AppState, action: Action): AppState {
     case 'SET_AUTH':
       return { ...state, auth: { ...state.auth, ...action.payload } };
     case 'CLEAR_AUTH':
-      return { ...state, auth: { isAuthenticated: false, userId: null } };
+      return { ...state, auth: { isAuthenticated: false, userId: null, clientId: null, userType: null } };
     case 'UPDATE_REGISTRATION':
       return {
         ...state,

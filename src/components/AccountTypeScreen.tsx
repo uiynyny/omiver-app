@@ -20,7 +20,11 @@ const AccountTypeScreen = () => {
       return;
     }
     dispatch({ type: 'UPDATE_REGISTRATION', payload: { accountType: selectedType } });
-    navigate('/register/personal-info');
+    if (selectedType === 'healthcare') {
+      navigate('/register/provider-info');
+    } else {
+      navigate('/register/personal-info');
+    }
   };
 
   const handleBack = () => {

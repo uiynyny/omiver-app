@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import './RegisterScreen.css';
 import omiverIcon from '../assets/omiver-icon.svg';
@@ -8,10 +8,20 @@ import { emailExist } from '../api/user';
 
 const RegisterScreen = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { dispatch } = useAppContext();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Read referral code from URL (?ref=CODE) and persist in context
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      dispatch({ type: 'UPDATE_REGISTRATION', payload: { referredByCode: ref } });
+    }
+  }, [location.search, dispatch]);
 
   const handleRegister = async () => {
     // Validate passwords match

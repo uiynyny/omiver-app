@@ -91,7 +91,7 @@ const KitsScreen: React.FC = () => {
                 </div>
 
                 <ul className="kit-features">
-                  {k.features.map((f) => (
+                  {k.features.map((f: string) => (
                     <li key={f} className="kit-feature"><span className="check">✓</span>{f}</li>
                   ))}
                 </ul>
