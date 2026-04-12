@@ -9,7 +9,7 @@ import { emailExist } from '../api/user';
 const RegisterScreen = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { dispatch } = useAppContext();
+  const { state, dispatch } = useAppContext();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -34,9 +34,22 @@ const RegisterScreen = () => {
       alert('Email already exists');
       return;
     }
-    // Save email/password to registration context then continue
-    dispatch({ type: 'UPDATE_REGISTRATION', payload: { email, password, username: email } });
-    navigate('/register/account-type');
+    
+    const params = new URLSearchParams(location.search);
+    const refCode = params.get('ref') || state.registration.referredByCode;
+
+    if (refCode) {
+      // Skip account type selection and default to individual user with referral
+      dispatch({ 
+        type: 'UPDATE_REGISTRATION', 
+        payload: { email, password, username: email, accountType: 'individual', referredByCode: refCode } 
+      });
+      navigate('/register/personal-info');
+    } else {
+      // Save email/password to registration context then ask for account type
+      dispatch({ type: 'UPDATE_REGISTRATION', payload: { email, password, username: email } });
+      navigate('/register/account-type');
+    }
   };
 
   const handleLoginRedirect = () => {

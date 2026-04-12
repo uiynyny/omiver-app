@@ -20,12 +20,9 @@ const kitDefaults: Record<string, { color: string; features: string[] }> = {
   'Premium Test': {
     color: '#c99bb9',
     features: [
-      'Advanced hormone panel',
-      'Inflammatory markers analysis',
-      'Food sensitivity testing',
-      'Genetic predisposition markers',
-      'Metabolic health insights',
+      'Test kits delivered quarterly for a year',
       'Priority processing & support',
+      'Discounted price for annual bundles',
     ],
   },
 };

@@ -14,15 +14,17 @@ const PersonalInfoScreen = () => {
   const [ethnicity, setEthnicity] = useState(state.registration.ethnicity ?? '');
   const [height, setHeight] = useState(state.registration.height ?? '');
   const [weight, setWeight] = useState(state.registration.weight ?? '');
+  const [referredByCode, setReferredByCode] = useState(state.registration.referredByCode ?? '');
+
   const handleContinue = () => {
-    if (!firstName || !lastName || !date_of_birth || !ethnicity || !gender || !height || !weight) {
-      alert('Please fill in all required fields');
+    if (!firstName || !lastName || !date_of_birth || !ethnicity || !gender || !height || !weight || !referredByCode.trim()) {
+      alert('Please fill in all required fields, including your referral code');
       return;
     }
     dispatch({
       type: 'UPDATE_REGISTRATION',
       payload: {
-        firstName, lastName, date_of_birth, gender, ethnicity, height, weight,
+        firstName, lastName, date_of_birth, gender, ethnicity, height, weight, referredByCode: referredByCode.trim(),
       },
     });
     navigate('/register/health-conditions');
@@ -51,6 +53,17 @@ const PersonalInfoScreen = () => {
         </h1>
 
         <div className="form-fields">
+          <div className="input-group">
+            <input
+              type="text"
+              placeholder="Referral Code (Required):"
+              value={referredByCode}
+              onChange={(e) => setReferredByCode(e.target.value)}
+              className="form-input"
+              style={{ border: '1px solid #67997D' }}
+            />
+          </div>
+
           <div className="input-group">
             <input
               type="text"

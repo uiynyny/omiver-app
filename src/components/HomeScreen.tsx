@@ -129,13 +129,23 @@ const HomeScreen = () => {
           ))}
 
           <section className="recommendations">
-            <h3>Personalized Recommendations</h3>
-            <p className="rec-lead">Based on your biomarker results and health goals, we recommend:</p>
-            <ul className="rec-list">
-              <li>Continue maintaining your current metabolic health practices</li>
-              <li>Consider increasing omega-3 intake for cardiovascular support</li>
-              <li>Maintain your current exercise routine for optimal hormone balance</li>
-            </ul>
+            {biomarkers.length === 0 ? (
+              <div className="no-data-cta">
+                <h3>Unlock Your Insights</h3>
+                <p className="rec-lead">You haven't taken any biomarker tests yet. Order a test kit to begin tracking your health and receive personalized recommendations.</p>
+                <button className="order-kit-btn" onClick={() => navigate('/kits')}>Order Test Kit</button>
+              </div>
+            ) : (
+              <>
+                <h3>Personalized Recommendations</h3>
+                <p className="rec-lead">Based on your biomarker results and health goals, we recommend:</p>
+                <ul className="rec-list">
+                  {(dashboardData?.recommendations || []).map((rec: string, index: number) => (
+                    <li key={index}>{rec}</li>
+                  ))}
+                </ul>
+              </>
+            )}
           </section>
         </div>
       </main>
