@@ -31,7 +31,7 @@ function calcAge(dob: string | null): string {
 }
 
 // ── Patient card ─────────────────────────────────────────────────────────────
-const PatientCard = ({ patient }: { patient: Patient }) => {
+const PatientCard = ({ patient, onReview }: { patient: Patient; onReview: (patient: Patient) => void }) => {
   const [expanded, setExpanded] = useState(false);
   const initials = patient.full_name
     .split(' ')
@@ -109,6 +109,10 @@ const PatientCard = ({ patient }: { patient: Patient }) => {
               <p className="detail-section-text">{patient.fitness_goal}</p>
             </div>
           )}
+
+          <button className="primary-action-btn" onClick={() => onReview(patient)}>
+            Review / Edit Intake
+          </button>
         </div>
       )}
     </div>
@@ -211,6 +215,10 @@ const ProviderDashboardScreen = () => {
     dispatch({ type: 'CLEAR_AUTH' });
     dispatch({ type: 'RESET_REGISTRATION' });
     navigate('/');
+  };
+
+  const handleReviewPatient = (patient: Patient) => {
+    navigate(`/provider/patient/${patient.id}`, { state: { patient } });
   };
 
   return (
@@ -319,7 +327,7 @@ const ProviderDashboardScreen = () => {
                   <span>{patients.length} patient{patients.length !== 1 ? 's' : ''}</span>
                 </div>
                 {patients.map((p) => (
-                  <PatientCard key={p.id} patient={p} />
+                  <PatientCard key={p.id} patient={p} onReview={handleReviewPatient} />
                 ))}
               </div>
             )}

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useReducer, type ReactNode } from 'react';
 
 
@@ -15,6 +16,15 @@ type RegistrationData = {
   weight?: string;
   healthConditions?: string;
   allergies?: string;
+  dietary_recall?: string;
+  dietary_typicality?: string;
+  dietary_preference_mode?: string;
+  preferred_cuisines?: string;
+  avoided_cuisines?: string;
+  weekly_exercise_routine?: string;
+  exercise_days_per_week?: string;
+  exercise_types?: string;
+  provider_notes?: string;
   dietary_preferences?: string;
   fitness_goal?: string;
   nutritional_goal?: string;

@@ -7,11 +7,21 @@ import { useAppContext } from '../context/AppContext';
 const GoalsScreen = () => {
   const navigate = useNavigate();
   const { state, dispatch } = useAppContext();
-  const [nutritionGoals, setNutritionGoals] = useState(state.registration.nutritional_goal ?? '');
-  const [fitnessGoals, setFitnessGoals] = useState(state.registration.fitness_goal ?? '');
+  const [weeklyRoutine, setWeeklyRoutine] = useState(state.registration.weekly_exercise_routine ?? '');
+  const [exerciseDays, setExerciseDays] = useState(state.registration.exercise_days_per_week ?? '3');
+  const [exerciseTypes, setExerciseTypes] = useState(state.registration.exercise_types ?? '');
+  const [providerNotes, setProviderNotes] = useState(state.registration.provider_notes ?? '');
 
   const handleContinue = () => {
-    dispatch({ type: 'UPDATE_REGISTRATION', payload: { nutritional_goal: nutritionGoals, fitness_goal: fitnessGoals } });
+    dispatch({
+      type: 'UPDATE_REGISTRATION',
+      payload: {
+        weekly_exercise_routine: weeklyRoutine,
+        exercise_days_per_week: exerciseDays,
+        exercise_types: exerciseTypes,
+        provider_notes: providerNotes,
+      },
+    });
     navigate('/terms');
   };
 
@@ -34,34 +44,56 @@ const GoalsScreen = () => {
 
       <div className="registration-content">
         <h1 className="registration-title">
-          What are you hoping <span className="highlight">to achieve?</span>
+          Tell us about your <span className="highlight">exercise routine</span>
         </h1>
 
         <div className="form-fields">
           <div className="input-group">
             <textarea
-              placeholder="Nutrition Goals..."
-              value={nutritionGoals}
-              onChange={(e) => setNutritionGoals(e.target.value)}
+              placeholder="Describe your weekly exercise routine..."
+              value={weeklyRoutine}
+              onChange={(e) => setWeeklyRoutine(e.target.value)}
               className="form-textarea"
               rows={6}
             />
           </div>
 
           <div className="input-group">
+            <label className="field-label">How many days per week do you usually exercise?</label>
+            <input
+              type="number"
+              min="1"
+              max="7"
+              value={exerciseDays}
+              onChange={(e) => setExerciseDays(e.target.value)}
+              className="form-input"
+            />
+          </div>
+
+          <div className="input-group">
             <textarea
-              placeholder="Fitness Goals..."
-              value={fitnessGoals}
-              onChange={(e) => setFitnessGoals(e.target.value)}
+              placeholder="Exercise types (e.g. cardio, lifting, yoga, walking)"
+              value={exerciseTypes}
+              onChange={(e) => setExerciseTypes(e.target.value)}
               className="form-textarea"
-              rows={6}
+              rows={4}
+            />
+          </div>
+
+          <div className="input-group">
+            <textarea
+              placeholder="Provider notes or special considerations"
+              value={providerNotes}
+              onChange={(e) => setProviderNotes(e.target.value)}
+              className="form-textarea"
+              rows={4}
             />
           </div>
         </div>
 
         <div className="button-group">
           <button onClick={handleContinue} className="primary-button">
-            Finish <ChevronRight size={20} />
+            Continue <ChevronRight size={20} />
           </button>
           <button onClick={handleBack} className="secondary-button">
             <ChevronLeft size={20} /> Go Back

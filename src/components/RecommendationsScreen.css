@@ -1,0 +1,280 @@
+.recommendations-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f6f6f6;
+  color: #303030;
+}
+
+.recommendations-header {
+  background: #67997D;
+  color: white;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.recommendations-header .left-icons {
+  flex: 1;
+}
+
+.back-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
+.recommendations-header .right-icons {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.recommendations-logo {
+  flex: 1;
+  text-align: center;
+}
+
+.recommendations-main {
+  flex: 1;
+  padding-bottom: 96px;
+}
+
+.recommendations-title-section {
+  background: linear-gradient(135deg, #67997D 0%, #5a8673 100%);
+  color: white;
+  padding: 32px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.recommendations-title-section h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.recommendations-subtitle {
+  margin: 0;
+  font-size: 1rem;
+  opacity: 0.95;
+  line-height: 1.4;
+}
+
+.recommendations-loading {
+  padding: 40px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+
+.loading-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  background: white;
+  border-radius: 14px;
+}
+
+.loading-card p {
+  color: #666;
+}
+
+.recommendations-content {
+  padding: 20px;
+}
+
+.recommendation-section {
+  background: white;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 18px;
+  border: 1px solid #e0e0e0;
+}
+
+.section-header {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.section-icon {
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: #e9f2ed;
+  border-radius: 12px;
+}
+
+.section-header h2 {
+  margin: 0 0 4px 0;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.section-goal {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.recommendations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recommendation-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px;
+  background: #fafafa;
+  border-radius: 10px;
+  border-left: 3px solid #6b9b8a;
+}
+
+.recommendation-item.placeholder {
+  border-left-color: #ddd;
+  opacity: 0.8;
+}
+
+.rec-bullet {
+  font-weight: 700;
+  color: #6b9b8a;
+  font-size: 1.1rem;
+  min-width: 24px;
+  text-align: center;
+}
+
+.recommendation-item p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #555;
+  line-height: 1.5;
+}
+
+.health-profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.health-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  background: #e9f2ed;
+  border-radius: 10px;
+}
+
+.health-label {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 600;
+}
+
+.health-value {
+  font-size: 1rem;
+  color: #333;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.recommendations-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.action-button {
+  padding: 14px 20px;
+  border: none;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-button.primary {
+  background: #6b9b8a;
+  color: white;
+}
+
+.action-button.primary:active {
+  background: #5a8673;
+}
+
+.action-button.secondary {
+  background: #fff;
+  color: #6b9b8a;
+  border: 2px solid #6b9b8a;
+}
+
+.action-button.secondary:active {
+  background: #f5f5f5;
+}
+
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 62px;
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  background: white;
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.06);
+}
+
+.nav-item {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  padding: 8px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 0.75rem;
+}
+
+.nav-item:active {
+  background: #ffffff;
+  color: #111;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.icon-btn {
+  cursor: pointer;
+}

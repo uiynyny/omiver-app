@@ -14,7 +14,7 @@ const TermsScreen = () => {
 
     // Build the payload mapping frontend field names to backend field names
     const reg = state.registration;
-    const payload: Record<string, any> = {
+    const payload: Record<string, unknown> = {
       username: reg.username,
       password: reg.password,
       email: reg.email,
@@ -32,6 +32,15 @@ const TermsScreen = () => {
       payload.weight = reg.weight;
       payload.health_conditions = reg.healthConditions;
       payload.allergies = reg.allergies;
+      payload.dietary_recall = reg.dietary_recall;
+      payload.dietary_typicality = reg.dietary_typicality;
+      payload.dietary_preference_mode = reg.dietary_preference_mode;
+      payload.preferred_cuisines = reg.preferred_cuisines;
+      payload.avoided_cuisines = reg.avoided_cuisines;
+      payload.weekly_exercise_routine = reg.weekly_exercise_routine;
+      payload.exercise_days_per_week = reg.exercise_days_per_week;
+      payload.exercise_types = reg.exercise_types;
+      payload.provider_notes = reg.provider_notes;
       payload.dietary_preferences = reg.dietary_preferences;
       payload.fitness_goal = reg.fitness_goal;
       payload.nutritional_goal = reg.nutritional_goal;
@@ -120,11 +129,7 @@ const TermsScreen = () => {
                 </div>
                 <div className="collected-item">
                   <CheckCircle className="check-icon" size={20} />
-                  <span>Dietary Information</span>
-                </div>
-                <div className="collected-item">
-                  <CheckCircle className="check-icon" size={20} />
-                  <span>Fitness Goals</span>
+                  <span>Diet + Exercise Intake</span>
                 </div>
               </>
             )}

@@ -119,3 +119,47 @@
   cursor: pointer;
   color: #333;
 }
+
+.editable-input,
+.editable-textarea {
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font: inherit;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+  margin-top: 12px;
+}
+
+.save-button {
+  margin-top: 16px;
+  width: 100%;
+}
+
+.editable-input,
+.editable-textarea {
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font: inherit;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+  margin-top: 12px;
+}
+
+.save-button {
+  margin-top: 16px;
+  width: 100%;
+}

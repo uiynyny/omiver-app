@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Album, Bell, ChartPie, CircleUserRound, Cog, HeartPulse, ListChecks, LocateFixed } from 'lucide-react';
+import { Bell, Cog, HeartPulse } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 import './HomeScreen.css';
+import BottomNav from './BottomNav';
 import omiver from '../assets/omiver.svg';
-import { fetchDashboard } from '../api/user';
+import { fetchDashboard, type BiomarkerSection, type Dashboard } from '../api/user';
 
 const HomeScreen = () => {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ const HomeScreen = () => {
   console.log('state', state);
   
   const clientId = state.auth.clientId;
-  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [dashboardData, setDashboardData] = useState<Dashboard | null>(null);
 
   useEffect(() => {
     if (clientId) {
@@ -27,10 +28,10 @@ const HomeScreen = () => {
 
   const biomarkers = useMemo(() => {
     if (!dashboardData?.biomarker_results) return [];
-    return Object.entries(dashboardData.biomarker_results).map(([section, data]: [string, any]) => ({
+    return Object.entries(dashboardData.biomarker_results).map(([section, data]: [string, BiomarkerSection]) => ({
       section,
       count: data.biomarker_count,
-      items: data.results.map((r: any) => ({
+      items: data.results.map((r) => ({
         value: r.value,
         unit: r.unit,
         name: r.biomarker_name,
@@ -150,13 +151,7 @@ const HomeScreen = () => {
         </div>
       </main>
 
-      <nav className="bottom-nav">
-        <button className="nav-item active" onClick={() => navigate('/home')}><ChartPie size={28} />Dashboard</button>
-        <button className="nav-item" onClick={() => navigate('/kits')}><Album size={28} />Kits</button>
-        <button className="nav-item" onClick={() => navigate('/collection')}><LocateFixed size={28} />Collection</button>
-        <button className="nav-item" onClick={() => navigate('/orders')}><ListChecks size={28} />Orders</button>
-        <button className="nav-item" onClick={() => navigate('/profile')}><CircleUserRound size={28} />Profile</button>
-      </nav>
+      <BottomNav active="home" />
     </div>
   );
 };

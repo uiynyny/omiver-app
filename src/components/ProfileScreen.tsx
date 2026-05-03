@@ -1,8 +1,9 @@
 import React from 'react'
 import './ProfileScreen.css'
+import BottomNav from './BottomNav';
 import { useAppContext } from '../context/AppContext'
 import { useNavigate } from 'react-router-dom'
-import { User, Heart, Apple, Target, CircleUserRound, Album, ChartPie, LocateFixed, ListChecks } from 'lucide-react'
+import { User, Heart, Target, Apple } from 'lucide-react'
 
 const ProfileScreen: React.FC = () => {
   const { state, dispatch } = useAppContext()
@@ -80,13 +81,7 @@ const ProfileScreen: React.FC = () => {
         </div>
       </main>
 
-      <nav className="bottom-nav">
-        <button className="nav-item" onClick={() => navigate('/home')}><ChartPie size={28} />Dashboard</button>
-        <button className="nav-item" onClick={() => navigate('/kits')}><Album size={28} />Kits</button>
-        <button className="nav-item" onClick={() => navigate('/collection')}><LocateFixed size={28} />Collection</button>
-        <button className="nav-item" onClick={() => navigate('/orders')}><ListChecks size={28} />Orders</button>
-        <button className="nav-item active" onClick={() => navigate('/profile')}><CircleUserRound size={28} />Profile</button>
-      </nav>
+      <BottomNav active="profile" />
     </div>
   )
 }

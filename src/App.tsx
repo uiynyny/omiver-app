@@ -15,6 +15,7 @@ import TermsScreen from './components/TermsScreen';
 import HomeScreen from './components/HomeScreen';
 import KitsScreen from './components/KitsScreen';
 import OrderScreen from './components/OrderScreen';
+import RecommendationsScreen from './components/RecommendationsScreen';
 import ProfileScreen from './components/ProfileScreen';
 import CollectionScreen from './components/CollectionScreen';
 import ScanKitScreen from './components/ScanKitScreen';
@@ -49,6 +50,7 @@ function App() {
           <Route path="/collection/steps" element={<CollectionStepsScreen />} />
           <Route path="/payment" element={<PaymentScreen />} />
           <Route path="/orders" element={<OrderScreen />} />
+          <Route path="/recommendations" element={<RecommendationsScreen />} />
           <Route path="/profile" element={<ProfileScreen />} />
           <Route path="/provider/dashboard" element={<ProviderDashboardScreen />} />
           <Route path="/provider/patient/:id" element={<PatientDetailScreen />} />

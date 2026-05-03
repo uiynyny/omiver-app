@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, Play, Settings } from 'lucide-react';
 import './CollectionStepsScreen.css';
 
 const CollectionStepsScreen: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   // State to simulate progress
   const [isSampleCollected, setIsSampleCollected] = useState(false);
+  const kitCode = (location.state as { kitCode?: string } | null)?.kitCode || 'Enter your kit code';
 
   return (
     <div className="steps-root">
@@ -39,7 +41,7 @@ const CollectionStepsScreen: React.FC = () => {
                 <Check size={18} fill="#0f5132" />
                 <div>
                   <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>Kit Linked</div>
-                  <div>Code: JSAI5B9K5K5J5K5J5H</div>
+                  <div>Code: {kitCode}</div>
                 </div>
               </div>
             </div>

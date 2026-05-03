@@ -131,6 +131,49 @@
   border: 1px solid #f1d7cc
 }
 
+.actions-card {
+  background: white;
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 18px
+}
+
+.actions-card h3 {
+  margin: 0 0 12px 0;
+  font-weight: 700;
+  font-size: 1rem
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 12px;
+  background: #f6f6f6;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.85rem;
+  transition: all 0.2s ease
+}
+
+.action-btn:active {
+  background: #e9f2ed;
+  border-color: #6b9b8a
+}
+
+  background: #5a8673
+}
+
 .next-cta {
   margin-top: 12px;
   background: #D27644;

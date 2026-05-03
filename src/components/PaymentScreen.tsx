@@ -1,15 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { fetchPayments, checkout } from '../api/user';
+import { fetchPayments, createPaymentIntent, confirmPaymentApi } from '../api/user';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { X, Lock, CreditCard, ChevronRight } from 'lucide-react';
+import { X, Lock, ChevronRight } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import './PaymentScreen.css';
 
+const stripePromise = loadStripe('pk_test_placeholder');
+
 const PaymentScreen: React.FC = () => {
+  return (
+    <Elements stripe={stripePromise}>
+      <PaymentForm />
+    </Elements>
+  );
+};
+
+const PaymentForm: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { state } = useAppContext();
   const clientId = state.auth.clientId;
+  const numericClientId = Number(clientId ?? 0);
+  const stripe = useStripe();
+  const elements = useElements();
 
   const kit = location.state?.kit || {
     title: 'Premium Test',
@@ -18,11 +33,9 @@ const PaymentScreen: React.FC = () => {
   };
 
   const [loading, setLoading] = useState(false);
+  const [quantity, setQuantity] = useState(location.state?.quantity || 1);
   const [formData, setFormData] = useState({
     cardholderName: '',
-    cardNumber: '',
-    expiryDate: '',
-    cvv: '',
     streetAddress: '',
     city: '',
     state: '',
@@ -45,44 +58,77 @@ const PaymentScreen: React.FC = () => {
             city: latestPayment.billing_address?.city || '',
             state: latestPayment.billing_address?.state || '',
             zipCode: latestPayment.billing_address?.zip_code || '',
-            // We don't store full card number or cvv, so leave them empty
           }));
         }
       }).catch((error) => console.error(error));
     }
   }, [clientId]);
 
-  const handlePay = (e: React.FormEvent) => {
+  const handlePay = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const payload = {
-      client_id: clientId,
-      test_kit_id: kit.id || 1, // Fallback to 1 if missing for testing
-      cardholder_name: formData.cardholderName,
-      card_number: formData.cardNumber,
-      expiry_date: formData.expiryDate,
-      cvv: formData.cvv,
-      street_address: formData.streetAddress,
-      city: formData.city,
-      state: formData.state,
-      zip_code: formData.zipCode,
-    };
-
-    checkout(payload).then((data) => {
-      console.log(data);
+    if (!stripe || !elements) {
       setLoading(false);
-      navigate('/orders');
-    }).catch((error) => {
+      return;
+    }
+
+    const cardElement = elements.getElement(CardElement);
+    if (!cardElement) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      if (!numericClientId) {
+        throw new Error('Missing client account. Please log in again.');
+      }
+
+      const { clientSecret } = await createPaymentIntent(kit.id || 1, numericClientId, quantity);
+
+      const result = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement,
+          billing_details: {
+            name: formData.cardholderName,
+            address: {
+              line1: formData.streetAddress,
+              city: formData.city,
+              state: formData.state,
+              postal_code: formData.zipCode,
+            }
+          }
+        }
+      });
+
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+
+      if (result.paymentIntent.status === 'succeeded') {
+        await confirmPaymentApi({
+            payment_intent_id: result.paymentIntent.id,
+            street_address: formData.streetAddress,
+            city: formData.city,
+            state: formData.state,
+            zip_code: formData.zipCode,
+            cardholder_name: formData.cardholderName,
+        });
+
+        setLoading(false);
+        navigate('/orders');
+      } else {
+        throw new Error('Payment status: ' + result.paymentIntent.status);
+      }
+    } catch (error: unknown) {
       setLoading(false);
       console.error(error);
-      alert(error.message || 'Payment failed');
-    });
+      alert(error instanceof Error ? error.message : 'Payment failed');
+    }
   };
 
   return (
     <div className="payment-root">
-      {/* Background overlay click to close? Optional */}
       <div className="payment-modal">
         <header className="payment-header">
           <div className="payment-drag-handle"></div>
@@ -104,23 +150,43 @@ const PaymentScreen: React.FC = () => {
 
           <div className="form-section">
             <label className="form-label">
+              <h3>Quantity</h3>
+              <div className="input-group">
+                <input 
+                  type="number" 
+                  min="1" 
+                  max="999" 
+                  value={quantity} 
+                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="text-input"
+                />
+              </div>
+              <div className="quantity-note">Volume discounts may apply for larger orders</div>
+            </label>
+          </div>
+
+          <div className="form-section">
+            <label className="form-label">
               <h3>Card Information</h3>
               <div className="input-group">
                 <input type="text" name="cardholderName" className="text-input" placeholder="Cardholder Name" autoComplete='cc-name' value={formData.cardholderName} onChange={handleInputChange} required />
               </div>
 
-              <div className="input-group card-input-container">
-                <input type="text" name="cardNumber" className="text-input" placeholder="Card Number" autoComplete='cc-number' inputMode="numeric" pattern="[0-9]*" value={formData.cardNumber} onChange={handleInputChange} required />
-                <CreditCard className="card-icon" size={20} />
-              </div>
-
-              <div className="form-row">
-                <div className="input-group">
-                  <input type="text" name="expiryDate" className="text-input" placeholder="Expiry Date (MM/YY)" autoComplete='cc-exp' value={formData.expiryDate} onChange={handleInputChange} required />
-                </div>
-                <div className="input-group">
-                  <input type="text" name="cvv" className="text-input" placeholder="CVV" autoComplete='cc-csc' inputMode="numeric" pattern="[0-9]*" value={formData.cvv} onChange={handleInputChange} required />
-                </div>
+              <div className="input-group card-input-container" style={{ padding: '12px', border: '1px solid #ccc', borderRadius: '4px' }}>
+                <CardElement options={{
+                  style: {
+                    base: {
+                      fontSize: '16px',
+                      color: '#424770',
+                      '::placeholder': {
+                        color: '#aab7c4',
+                      },
+                    },
+                    invalid: {
+                      color: '#9e2146',
+                    },
+                  },
+                }} />
               </div>
             </label>
           </div>

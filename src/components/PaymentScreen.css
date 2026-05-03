@@ -198,3 +198,10 @@
 .pay-btn:active {
   transform: scale(0.98);
 }
+
+.quantity-note {
+  font-size: 0.8rem;
+  color: #999;
+  margin-top: 8px;
+  font-style: italic;
+}

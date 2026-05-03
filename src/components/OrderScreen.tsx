@@ -1,36 +1,42 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Truck, CheckCircle, CircleUserRound, ListChecks, LocateFixed, ChartPie, Album, Bell, Cog, Package } from 'lucide-react';
+import { Box, Truck, CheckCircle, Bell, Cog, Package, Inbox, HelpCircle, Printer } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { fetchOrders, fetchOrderDetail } from '../api/user';
 
 import './OrderScreen.css';
+import BottomNav from './BottomNav';
 import omiver from '../assets/omiver.svg';
+
+type Order = {
+  id?: string | number;
+  testName?: string;
+  date?: string;
+  tracking?: string;
+  kitName?: string;
+};
+
+type DeliveryEvent = {
+  id: string | number;
+  event_type: string;
+  title: string;
+  description?: string;
+  is_completed?: boolean;
+};
 
 const OrderScreen: React.FC = () => {
   const navigate = useNavigate();
   const { state } = useAppContext();
   const clientId = state.auth.clientId;
-  const [order, setOrder] = useState<any>(null);
-  const [events, setEvents] = useState<any[]>([]);
+  const [order, setOrder] = useState<Order | null>(null);
+  const [events, setEvents] = useState<DeliveryEvent[]>([]);
 
-  const mockOrder = {
-    id: '182u0572572283',
-    testName: 'Premium Test',
-    date: '10/02/2025',
-    tracking: 'TK19283JEJT',
-    biomarkers: 650,
-  };
-
-  const mockEvents = [
-    { id: 1, event_type: 'ORDER_PLACED', title: 'Order Placed', description: 'Your order has been received', is_completed: true },
-    { id: 2, event_type: 'IN_TRANSIT', title: 'Metabolic Health', description: 'Your kit is on its way', is_completed: true },
-    { id: 3, event_type: 'DELIVERED', title: 'Kit Delivered', description: 'Ready for sample collection', is_completed: false },
-  ];
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (clientId) {
       fetchOrders(clientId).then((orders) => {
+        setLoading(false);
         if (orders.length > 0) {
           const latestOrder = orders[0];
           setOrder({
@@ -38,7 +44,7 @@ const OrderScreen: React.FC = () => {
             testName: latestOrder.test_kit_name,
             date: latestOrder.order_date || latestOrder.created_at,
             tracking: latestOrder.tracking_number,
-            biomarkers: latestOrder.biomarker_count,
+            kitName: latestOrder.test_kit_name,
           });
 
           fetchOrderDetail(latestOrder.id).then((detail) => {
@@ -46,11 +52,10 @@ const OrderScreen: React.FC = () => {
           }).catch((error) => console.error(error));
         }
       }).catch((error) => console.error(error));
+    } else {
+      setLoading(false);
     }
   }, [clientId]);
-
-  const displayOrder = order || mockOrder;
-  const displayEvents = events.length > 0 ? events : mockEvents;
 
   return (
     <div className="order-root">
@@ -67,68 +72,103 @@ const OrderScreen: React.FC = () => {
       <main className="order-main">
         <div className='order-top'>
           <h2 className='order-title'>Order Confirmed</h2>
-          <div className="order-card">
-            <div className='collection-card-group'>
-              <div className='collection-card-text-group'>
-                <div style={{ opacity: 0.85, marginBottom: 6 }}>{displayOrder.biomarkers} biomarkers</div>
-                <h2>{displayOrder.testName}</h2>
+          {loading ? (
+            <div className="order-card empty-order-card">
+              <div className='collection-card-group'>
+                <div className='collection-card-text-group'>
+                  <div style={{ opacity: 0.85, marginBottom: 6 }}>Loading your latest order</div>
+                  <h2>Checking your order status</h2>
+                </div>
+                <div className='order-card-icon'><Package size={48} color='#fff' /></div>
               </div>
-              <div className='order-card-icon'><Package size={48} color='#fff' /></div>
             </div>
-            <div className="order-meta">
-              <div>ID: {displayOrder.id}</div>
-              <div>Order Date: {displayOrder.date}</div>
+          ) : order ? (
+            <div className="order-card">
+              <div className='collection-card-group'>
+                <div className='collection-card-text-group'>
+                  <div style={{ opacity: 0.85, marginBottom: 6 }}>Home collection kit</div>
+                  <h2>{order.testName}</h2>
+                </div>
+                <div className='order-card-icon'><Package size={48} color='#fff' /></div>
+              </div>
+              <div className="order-meta">
+                <div>ID: {order.id}</div>
+                <div>Order Date: {order.date}</div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="order-card empty-order-card">
+              <div className='collection-card-group'>
+                <div className='collection-card-text-group'>
+                  <div style={{ opacity: 0.85, marginBottom: 6 }}>No recent orders</div>
+                  <h2>Order a kit to get started</h2>
+                </div>
+                <div className='order-card-icon'><Inbox size={48} color='#fff' /></div>
+              </div>
+              <button className="next-cta" onClick={() => navigate('/kits')}>Browse Kits</button>
+            </div>
+          )}
         </div>
 
-        <div className='bottom-card'>
-          <section className="tracking-panel">
-            <div className="tracking-label">Tracking Number</div>
-            <div style={{ color: '#777', marginBottom: 10 }}>Track your order</div>
-            <div className="tracking-number">
-              <div style={{ fontWeight: 700 }}>{displayOrder.tracking}</div>
-              <button className="copy-btn" onClick={() => navigator.clipboard?.writeText(displayOrder.tracking)}>Copy</button>
-            </div>
-          </section>
+        {order && (
+          <div className='bottom-card'>
+            <section className="tracking-panel">
+              <div className="tracking-label">Tracking Number</div>
+              <div style={{ color: '#777', marginBottom: 10 }}>Track your order</div>
+              <div className="tracking-number">
+                <div style={{ fontWeight: 700 }}>{order.tracking || 'Pending'}</div>
+                {order.tracking && <button className="copy-btn" onClick={() => navigator.clipboard?.writeText(order.tracking!)}>Copy</button>}
+              </div>
+            </section>
 
-          <section className="progress-card">
-            <h3 style={{ marginTop: 0 }}>Delivery Progress</h3>
+            <section className="progress-card">
+              <h3 style={{ marginTop: 0 }}>Delivery Progress</h3>
 
-            {displayEvents.map((event: any) => (
-              <div className="progress-row" key={event.id}>
-                <div className="progress-icon">
-                  {event.event_type === 'ORDER_PLACED' && <CheckCircle color="#6b9b8a" />}
-                  {event.event_type === 'IN_TRANSIT' && <Truck color="#6b9b8a" />}
-                  {event.event_type === 'DELIVERED' && <Box color="#6b9b8a" />}
-                  {![ 'ORDER_PLACED', 'IN_TRANSIT', 'DELIVERED' ].includes(event.event_type) && <CheckCircle color="#6b9b8a" />}
-                </div>
-                <div>
-                  <div className="progress-title">
-                    {event.title}
-                    {!event.is_completed && <span style={{ background: '#eaf5ec', color: '#6b9b8a', marginLeft: 8, padding: '4px 8px', borderRadius: 12, fontSize: 12 }}>In Progress</span>}
+              {events.length > 0 ? events.map((event: DeliveryEvent) => (
+                <div className="progress-row" key={event.id}>
+                  <div className="progress-icon">
+                    {event.event_type === 'ORDER_PLACED' && <CheckCircle color="#6b9b8a" />}
+                    {event.event_type === 'IN_TRANSIT' && <Truck color="#6b9b8a" />}
+                    {event.event_type === 'DELIVERED' && <Box color="#6b9b8a" />}
+                    {![ 'ORDER_PLACED', 'IN_TRANSIT', 'DELIVERED' ].includes(event.event_type) && <CheckCircle color="#6b9b8a" />}
                   </div>
-                  <div style={{ color: '#777' }}>{event.description}</div>
+                  <div>
+                    <div className="progress-title">
+                      {event.title}
+                      {!event.is_completed && <span style={{ background: '#eaf5ec', color: '#6b9b8a', marginLeft: 8, padding: '4px 8px', borderRadius: 12, fontSize: 12 }}>In Progress</span>}
+                    </div>
+                    <div style={{ color: '#777' }}>{event.description}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </section>
+              )) : (
+                <div style={{ color: '#777' }}>Tracking updates will appear here once your order is processed.</div>
+              )}
+            </section>
 
-          <section className="next-card">
-            <h3>Next Steps</h3>
-            <div style={{ color: '#777' }}>Your test kit has been delivered! Please proceed to the Sample Collection section to link your kit and begin the testing process.</div>
-            <button className="next-cta" onClick={() => navigate('/collection/steps')}>Start Sample Collection</button>
-          </section>
-        </div>
+            <section className="actions-card">
+              <h3>Order Actions</h3>
+              <div className="actions-grid">
+                <button className="action-btn" onClick={() => window.print()}>
+                  <Printer size={20} />
+                  <span>Print Receipt</span>
+                </button>
+                <button className="action-btn" onClick={() => alert('Support team contact:\nsupport@omiver.me')}>
+                  <HelpCircle size={20} />
+                  <span>Contact Support</span>
+                </button>
+              </div>
+            </section>
+
+            <section className="next-card">
+              <h3>Next Steps</h3>
+              <div style={{ color: '#777' }}>Proceed to the sample collection section to link your kit and begin the testing process.</div>
+              <button className="next-cta" onClick={() => navigate('/collection/steps')}>Start Sample Collection</button>
+            </section>
+          </div>
+        )}
       </main>
 
-      <nav className="bottom-nav">
-        <button className="nav-item" onClick={() => navigate('/home')}><ChartPie size={28} />Dashboard</button>
-        <button className="nav-item" onClick={() => navigate('/kits')}><Album size={28} />Kits</button>
-        <button className="nav-item" onClick={() => navigate('/collection')}><LocateFixed size={28} />Collection</button>
-        <button className="nav-item active" onClick={() => navigate('/orders')}><ListChecks size={28} />Orders</button>
-        <button className="nav-item" onClick={() => navigate('/profile')}><CircleUserRound size={28} />Profile</button>
-      </nav>
+      <BottomNav active="orders" />
     </div>
   )
 }
