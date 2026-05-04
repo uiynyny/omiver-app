@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChartPie, Album, LocateFixed, ListChecks, CircleUserRound, Lightbulb } from 'lucide-react';
+import { ChartPie, Album, LocateFixed, CircleUserRound, Lightbulb } from 'lucide-react';
 import './BottomNav.css';
 
 type Props = { active?: 'home' | 'kits' | 'collection' | 'orders' | 'recommendations' | 'profile' };

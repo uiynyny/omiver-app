@@ -53,11 +53,11 @@ const PaymentForm: React.FC = () => {
           const latestPayment = data[0]; // Most recent payment
           setFormData((prev) => ({
             ...prev,
-            cardholderName: latestPayment.cardholder_name || '',
-            streetAddress: latestPayment.billing_address?.street_address || '',
-            city: latestPayment.billing_address?.city || '',
-            state: latestPayment.billing_address?.state || '',
-            zipCode: latestPayment.billing_address?.zip_code || '',
+            cardholderName: latestPayment?.cardholder_name || '',
+            streetAddress: latestPayment?.billing_address?.street_address || '',
+            city: latestPayment?.billing_address?.city || '',
+            state: latestPayment?.billing_address?.state || '',
+            zipCode: latestPayment?.billing_address?.zip_code || '',
           }));
         }
       }).catch((error) => console.error(error));

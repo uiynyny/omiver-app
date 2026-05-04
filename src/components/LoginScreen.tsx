@@ -17,20 +17,20 @@ const LoginScreen = () => {
   const handleLogin = () => {
     login(email, password).then((data) => {
       console.log('Login successful', data);
-      const userType: 'PROVIDER' | 'INDIVIDUAL' = data.type;
+      const userType: 'PROVIDER' | 'INDIVIDUAL' = data.type || 'INDIVIDUAL';
 
       // Persist profile data so provider dashboard can show the name
       dispatch({
         type: 'UPDATE_REGISTRATION',
         payload: {
-          firstName: data.first_name,
-          lastName: data.last_name,
+          firstName: data.first_name ?? '',
+          lastName: data.last_name ?? '',
           referralCode: data.referral_code ?? undefined,
         },
       });
       dispatch({
         type: 'SET_AUTH',
-        payload: { isAuthenticated: true, userId: email, clientId: data.id, userType },
+        payload: { isAuthenticated: true, userId: email, clientId: data.id || data.user_id, userType },
       });
 
       if (userType === 'PROVIDER') {

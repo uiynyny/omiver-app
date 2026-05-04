@@ -58,11 +58,11 @@ const TermsScreen = () => {
     }
 
     // Persist referral code in context for provider dashboard
-    if (response.referral_code) {
+    if (response?.referral_code) {
       dispatch({ type: 'UPDATE_REGISTRATION', payload: { referralCode: response.referral_code } });
     }
 
-    dispatch({ type: 'SET_AUTH', payload: { isAuthenticated: true, userId: response.id, clientId: response.id } });
+    dispatch({ type: 'SET_AUTH', payload: { isAuthenticated: true, userId: String(response.id), clientId: response.id } });
 
     if (isProvider) {
       navigate('/provider/dashboard');

@@ -6,6 +6,11 @@ export interface LoginResponse {
     user_id: number;
     email: string;
     account_type: string;
+    type?: 'PROVIDER' | 'INDIVIDUAL';
+    first_name?: string;
+    last_name?: string;
+    referral_code?: string;
+    id?: number;
 }
 
 export interface RegisterResponse {
@@ -60,6 +65,9 @@ export interface Order {
     order_date?: string;
     created_at?: string;
     tracking_number?: string;
+    testName?: string;
+    date?: string;
+    tracking?: string;
 }
 
 export interface DeliveryEvent {
@@ -80,6 +88,13 @@ export interface PaymentHistory {
     amount: number;
     status: string;
     created_at: string;
+    cardholder_name?: string;
+    billing_address?: {
+        street_address?: string;
+        city?: string;
+        state?: string;
+        zip_code?: string;
+    };
 }
 
 export interface PaymentIntentResponse {
