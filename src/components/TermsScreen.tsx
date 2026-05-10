@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, CheckCircle } from 'lucide-react';
 import './AccountTypeScreen.css';
 import { useAppContext } from '../context/AppContext';
-import { register } from '../api/user';
+import { login, register } from '../api/user';
 
 const TermsScreen = () => {
   const navigate = useNavigate();
@@ -56,18 +56,33 @@ const TermsScreen = () => {
       alert('Registration failed: ' + response);
       return;
     }
-
-    // Persist referral code in context for provider dashboard
-    if (response?.referral_code) {
-      dispatch({ type: 'UPDATE_REGISTRATION', payload: { referralCode: response.referral_code } });
-    }
-
-    dispatch({ type: 'SET_AUTH', payload: { isAuthenticated: true, userId: String(response.id), clientId: response.id } });
-
-    if (isProvider) {
-      navigate('/provider/dashboard');
+    if (!reg.email || !reg.password) {
+      console.error('Missing email or password for login');
     } else {
-      navigate('/home');
+      login(reg.email, reg.password).then((data) => {
+        console.log('Login successful', data);
+        const userType: 'PROVIDER' | 'INDIVIDUAL' = data.type || 'INDIVIDUAL';
+        dispatch({
+          type: 'UPDATE_REGISTRATION',
+          payload: {
+            firstName: data.first_name ?? '',
+            lastName: data.last_name ?? '',
+            referralCode: data.referral_code ?? undefined,
+          }
+        })
+        dispatch({
+          type: 'SET_AUTH',
+          payload: { isAuthenticated: true, userId: reg.email || '', clientId: data.id || data.user_id, userType },
+        });
+        if (userType === 'PROVIDER') {
+          navigate('/provider/dashboard');
+        } else {
+          navigate('/home');
+        }
+      }).catch((error) => {
+        console.error('Login error', error);
+        alert('Login failed. Please check your credentials and try again.');
+      });
     }
   };
 
