@@ -1,7 +1,32 @@
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'; // origin
+const AUTH_TOKEN_KEY = 'omiver_auth_token';
+
+export const setAuthToken = (token?: string | null): void => {
+    console.log('token:', token)
+    if (!token) {
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+        return;
+    }
+    localStorage.setItem(AUTH_TOKEN_KEY, token);
+};
+
+export const clearAuthToken = (): void => {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+};
+
+export const getAuthToken = (): string | null => {
+    return localStorage.getItem(AUTH_TOKEN_KEY);
+};
+
+const withAuthHeaders = (headers: Record<string, string> = {}): Record<string, string> => {
+    const token = getAuthToken();
+    console.log('token in withAuthHeaders:', token);
+    return token ? { ...headers, Authorization: `Token ${token}` } : headers;
+};
 
 export interface LoginResponse {
-    access_token: string;
+    token?: string;
+    access_token?: string;
     token_type: string;
     user_id: number;
     email: string;
@@ -17,8 +42,9 @@ export interface RegisterResponse {
     id: number;
     email: string;
     account_type: string;
-    access_token: string;
-    token_type: string;
+    access_token?: string;
+    token_type?: string;
+    token?: string;
     referral_code?: string;
 }
 
@@ -149,7 +175,9 @@ export const login = async (username: string, password: string): Promise<LoginRe
     if (!response.ok) {
         throw new Error('Login failed');
     }
-    return response.json();
+    const data = await response.json();
+    setAuthToken(data.token ?? data.access_token ?? null);
+    return data;
 }
 
 export const register = async (user: Record<string, unknown>): Promise<RegisterResponse> => {
@@ -165,7 +193,10 @@ export const register = async (user: Record<string, unknown>): Promise<RegisterR
         throw new Error('Registration failed');
     }
 
-    return response.json();
+    const data = await response.json();
+    // Keep compatibility if backend later returns token on registration.
+    setAuthToken(data.token ?? data.access_token ?? null);
+    return data;
 }
 
 export const emailExist = async (email: string): Promise<boolean> => {
@@ -180,7 +211,9 @@ export const emailExist = async (email: string): Promise<boolean> => {
 }
 
 export const fetchDashboard = async (clientId: string | number): Promise<Dashboard> => {
-    const response = await fetch(`${API_URL}/dashboard?client_id=${clientId}`);
+    const response = await fetch(`${API_URL}/dashboard?client_id=${clientId}`, {
+        headers: withAuthHeaders(),
+    });
     if (!response.ok) {
         throw new Error('Failed to fetch dashboard data');
     }
@@ -188,7 +221,9 @@ export const fetchDashboard = async (clientId: string | number): Promise<Dashboa
 }
 
 export const fetchKits = async (): Promise<Kit[]> => {
-    const response = await fetch(`${API_URL}/kits`);
+    const response = await fetch(`${API_URL}/kits`, {
+        headers: withAuthHeaders(),
+    });
     if (!response.ok) {
         throw new Error('Failed to fetch kits');
     }
@@ -196,7 +231,9 @@ export const fetchKits = async (): Promise<Kit[]> => {
 }
 
 export const fetchOrders = async (clientId: string | number): Promise<Order[]> => {
-    const response = await fetch(`${API_URL}/orders?client_id=${clientId}`);
+    const response = await fetch(`${API_URL}/orders?client_id=${clientId}`, {
+        headers: withAuthHeaders(),
+    });
     if (!response.ok) {
         throw new Error('Failed to fetch orders');
     }
@@ -204,7 +241,9 @@ export const fetchOrders = async (clientId: string | number): Promise<Order[]> =
 }
 
 export const fetchOrderDetail = async (orderId: string | number): Promise<OrderDetail> => {
-    const response = await fetch(`${API_URL}/orders/${orderId}`);
+    const response = await fetch(`${API_URL}/orders/${orderId}`, {
+        headers: withAuthHeaders(),
+    });
     if (!response.ok) {
         throw new Error('Failed to fetch order detail');
     }
@@ -214,7 +253,9 @@ export const getReferralLink = async (clientId: string | number): Promise<{
     referral_code: string;
     patient_count: number;
 }> => {
-    const response = await fetch(`${API_URL}/provider/referral-link?client_id=${clientId}`);
+    const response = await fetch(`${API_URL}/provider/referral-link?client_id=${clientId}`, {
+        headers: withAuthHeaders(),
+    });
     if (!response.ok) {
         throw new Error('Failed to fetch referral link');
     }
@@ -222,7 +263,9 @@ export const getReferralLink = async (clientId: string | number): Promise<{
 }
 
 export const getProviderPatients = async (clientId: string | number): Promise<Patient[]> => {
-    const response = await fetch(`${API_URL}/provider/patients?client_id=${clientId}`);
+    const response = await fetch(`${API_URL}/provider/patients?client_id=${clientId}`, {
+        headers: withAuthHeaders(),
+    });
     if (!response.ok) {
         throw new Error('Failed to fetch provider patients');
     }
@@ -230,7 +273,9 @@ export const getProviderPatients = async (clientId: string | number): Promise<Pa
 }
 
 export const fetchPayments = async (clientId: string | number): Promise<PaymentHistory[]> => {
-    const response = await fetch(`${API_URL}/payments?client_id=${clientId}`);
+    const response = await fetch(`${API_URL}/payments?client_id=${clientId}`, {
+        headers: withAuthHeaders(),
+    });
     if (!response.ok) {
         throw new Error('Failed to fetch payment history');
     }
@@ -240,9 +285,9 @@ export const fetchPayments = async (clientId: string | number): Promise<PaymentH
 export const checkout = async (data: Record<string, unknown>): Promise<Record<string, unknown>> => {
     const response = await fetch(`${API_URL}/checkout`, {
         method: 'POST',
-        headers: {
+        headers: withAuthHeaders({
             'Content-Type': 'application/json',
-        },
+        }),
         body: JSON.stringify(data),
     });
     if (!response.ok) {
@@ -255,9 +300,9 @@ export const checkout = async (data: Record<string, unknown>): Promise<Record<st
 export const createPaymentIntent = async (testKitId: number, clientId: number, quantity: number = 1): Promise<PaymentIntentResponse> => {
     const response = await fetch(`${API_URL}/create-payment-intent`, {
         method: 'POST',
-        headers: {
+        headers: withAuthHeaders({
             'Content-Type': 'application/json',
-        },
+        }),
         body: JSON.stringify({ test_kit_id: testKitId, client_id: clientId, quantity }),
     });
 
@@ -278,9 +323,9 @@ export const confirmPaymentApi = async (data: {
 }): Promise<PaymentConfirmationResponse> => {
     const response = await fetch(`${API_URL}/confirm-payment`, {
         method: 'POST',
-        headers: {
+        headers: withAuthHeaders({
             'Content-Type': 'application/json',
-        },
+        }),
         body: JSON.stringify(data),
     });
 
@@ -294,9 +339,9 @@ export const confirmPaymentApi = async (data: {
 export const updateClient = async (clientId: string | number, data: Partial<Patient & Record<string, unknown>>): Promise<ClientUpdateResponse> => {
     const response = await fetch(`${API_URL}/client/${clientId}`, {
         method: 'PATCH',
-        headers: {
+        headers: withAuthHeaders({
             'Content-Type': 'application/json',
-        },
+        }),
         body: JSON.stringify(data),
     });
 
@@ -306,4 +351,15 @@ export const updateClient = async (clientId: string | number, data: Partial<Pati
     }
 
     return response.json();
+}
+
+export const checkReferralCode = async (code: string): Promise<boolean> => {
+    const response = await fetch(`${API_URL}/validate_referral_code?code=${encodeURIComponent(code)}`, {
+        headers: withAuthHeaders(),
+    });
+    if (!response.ok) {
+        throw new Error('Failed to validate referral code');
+    }
+    const result = await response.json();
+    return result.isValid;
 }

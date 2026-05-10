@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import './AccountTypeScreen.css';
 import { useAppContext } from '../context/AppContext';
+import { checkReferralCode } from '../api/user';
 
 const PersonalInfoScreen = () => {
   const navigate = useNavigate();
@@ -21,6 +22,16 @@ const PersonalInfoScreen = () => {
       alert('Please fill in all required fields, including your referral code');
       return;
     }
+    checkReferralCode(referredByCode.trim()).then((isValid) => {
+      if (!isValid) {
+        alert('Invalid referral code. Please check and try again.');
+        return;
+      }
+    }).catch((error) => {
+      console.error('Error validating referral code:', error);
+      alert('An error occurred while validating the referral code. Please try again later.');
+      return;
+    });
     dispatch({
       type: 'UPDATE_REGISTRATION',
       payload: {

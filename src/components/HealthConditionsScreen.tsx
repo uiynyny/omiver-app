@@ -11,7 +11,7 @@ const HealthConditionsScreen = () => {
 
   const handleContinue = () => {
     dispatch({ type: 'UPDATE_REGISTRATION', payload: { healthConditions } });
-    navigate('/register/dietary-info');
+    navigate('/register/goals');
   };
 
   const handleBack = () => {

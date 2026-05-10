@@ -6,7 +6,7 @@ import {
   HeartPulse, Utensils, Target, Mail, ClipboardList,
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { getReferralLink, getProviderPatients, type Patient } from '../api/user';
+import { clearAuthToken, getReferralLink, getProviderPatients, type Patient } from '../api/user';
 import './ProviderDashboardScreen.css';
 
 /** Build the referral URL on the frontend — always correct for the current environment */
@@ -212,6 +212,7 @@ const ProviderDashboardScreen = () => {
   };
 
   const handleLogout = () => {
+    clearAuthToken();
     dispatch({ type: 'CLEAR_AUTH' });
     dispatch({ type: 'RESET_REGISTRATION' });
     navigate('/');

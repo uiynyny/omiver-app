@@ -37,7 +37,7 @@ function App() {
           {/* Individual registration flow */}
           <Route path="/register/personal-info" element={<PersonalInfoScreen />} />
           <Route path="/register/health-conditions" element={<HealthConditionsScreen />} />
-          <Route path="/register/dietary-info" element={<DietaryInfoScreen />} />
+          <Route path="/dietary" element={<DietaryInfoScreen />} />
           <Route path="/register/goals" element={<GoalsScreen />} />
           {/* Provider registration flow */}
           <Route path="/register/provider-info" element={<ProviderInfoScreen />} />

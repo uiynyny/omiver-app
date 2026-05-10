@@ -4,12 +4,14 @@ import BottomNav from './BottomNav';
 import { useAppContext } from '../context/AppContext'
 import { useNavigate } from 'react-router-dom'
 import { User, Heart, Target, Apple } from 'lucide-react'
+import { clearAuthToken } from '../api/user'
 
 const ProfileScreen: React.FC = () => {
   const { state, dispatch } = useAppContext()
   const navigate = useNavigate()
 
   const handleLogout = () => {
+    clearAuthToken();
     dispatch({ type: 'CLEAR_AUTH' });
     navigate('/login');
   };
@@ -65,6 +67,12 @@ const ProfileScreen: React.FC = () => {
           <div className="section-content">Food Allergies & Sensitivities: {allergies || 'None'}</div>
           <div style={{ height: 10 }} />
           <div className="section-content">Dietary Preferences: {preferences || 'None'}</div>
+          <div style={{ height: 12 }} />
+          <div style={{ display: 'flex', justifyContent: 'flex-start', gap: 8 }}>
+            <button className="secondary-button" onClick={() => navigate('/dietary')}>
+              Edit 24-hour recall
+            </button>
+          </div>
         </section>
 
         <section style={{ marginTop: 18 }}>

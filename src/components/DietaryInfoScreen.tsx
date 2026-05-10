@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import './AccountTypeScreen.css';
 import { useAppContext } from '../context/AppContext';
@@ -13,6 +13,8 @@ const DietaryInfoScreen = () => {
   const [preferredCuisines, setPreferredCuisines] = useState(state.registration.preferred_cuisines ?? '');
   const [avoidedCuisines, setAvoidedCuisines] = useState(state.registration.avoided_cuisines ?? '');
 
+  const location = useLocation();
+
   const handleContinue = () => {
     dispatch({
       type: 'UPDATE_REGISTRATION',
@@ -24,7 +26,12 @@ const DietaryInfoScreen = () => {
         avoided_cuisines: avoidedCuisines,
       },
     });
-    navigate('/register/goals');
+    // If accessed as part of registration flow, continue there; otherwise go back to profile
+    if (location.pathname && location.pathname.startsWith('/register')) {
+      navigate('/register/goals');
+    } else {
+      navigate('/profile');
+    }
   };
 
   const handleBack = () => {
