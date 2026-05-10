@@ -192,6 +192,7 @@ export const register = async (user: Record<string, unknown>): Promise<RegisterR
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken') || '',
         },
         body: JSON.stringify(user),
     });
