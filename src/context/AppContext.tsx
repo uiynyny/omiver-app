@@ -5,7 +5,7 @@ import React, { createContext, useContext, useReducer, type ReactNode } from 're
 type RegistrationData = {
   token?: string;
   access_token?: string;
-  user_id: number;
+  user_id?: number;
   username?: string;
   email?: string;
   password?: string;

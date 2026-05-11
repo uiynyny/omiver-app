@@ -8,7 +8,7 @@ const DietaryInfoScreen = () => {
   const navigate = useNavigate();
   const { state, dispatch } = useAppContext();
   const [dietaryRecall, setDietaryRecall] = useState(state.registration.dietary_recall ?? '');
-  const [typicality, setTypicality] = useState(state.registration.dietary_typicality ?? '5');
+  const [typicality, setTypicality] = useState<number>(state.registration.dietary_typicality ?? 5);
   const [preferenceMode, setPreferenceMode] = useState(state.registration.dietary_preference_mode ?? 'similar');
   const [preferredCuisines, setPreferredCuisines] = useState(state.registration.preferred_cuisines ?? '');
   const [avoidedCuisines, setAvoidedCuisines] = useState(state.registration.avoided_cuisines ?? '');
@@ -74,7 +74,7 @@ const DietaryInfoScreen = () => {
               min="1"
               max="10"
               value={typicality}
-              onChange={(e) => setTypicality(e.target.value)}
+              onChange={(e) => setTypicality(parseInt(e.target.value) || 5)}
               className="form-range"
             />
             <div className="range-value">{typicality}/10</div>

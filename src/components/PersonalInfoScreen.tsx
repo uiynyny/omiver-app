@@ -13,8 +13,8 @@ const PersonalInfoScreen = () => {
   const [date_of_birth, setDateOfBirth] = useState(state.registration.date_of_birth ?? '');
   const [gender, setGender] = useState(state.registration.gender ?? 'Male');
   const [ethnicity, setEthnicity] = useState(state.registration.ethnicity ?? '');
-  const [height, setHeight] = useState(state.registration.height ?? '');
-  const [weight, setWeight] = useState(state.registration.weight ?? '');
+  const [height, setHeight] = useState<number>(state.registration.height ?? 0);
+  const [weight, setWeight] = useState<number>(state.registration.weight ?? 0);
   const [referredByCode, setReferredByCode] = useState(state.registration.referredByCode ?? '');
 
   const handleContinue = () => {
@@ -140,7 +140,7 @@ const PersonalInfoScreen = () => {
               type="number"
               placeholder="Height (inches):"
               value={height}
-              onChange={(e) => setHeight(e.target.value)}
+              onChange={(e) => setHeight(parseFloat(e.target.value) || 0)}
               className="form-input"
             />
           </div>
@@ -150,7 +150,7 @@ const PersonalInfoScreen = () => {
               type="number"
               placeholder="Weight (lbs):"
               value={weight}
-              onChange={(e) => setWeight(e.target.value)}
+              onChange={(e) => setWeight(parseFloat(e.target.value) || 0)}
               className="form-input"
             />
           </div>
