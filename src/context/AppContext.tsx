@@ -3,21 +3,25 @@ import React, { createContext, useContext, useReducer, type ReactNode } from 're
 
 
 type RegistrationData = {
+  token?: string;
+  access_token?: string;
+  user_id: number;
   username?: string;
   email?: string;
   password?: string;
   accountType?: 'individual' | 'healthcare' | null;
+  type?: 'PROVIDER' | 'INDIVIDUAL' | null;
   firstName?: string;
   lastName?: string;
   date_of_birth?: string;
   gender?: string;
   ethnicity?: string;
-  height?: string;
-  weight?: string;
+  height?: number;
+  weight?: number;
   healthConditions?: string;
   allergies?: string;
   dietary_recall?: string;
-  dietary_typicality?: string;
+  dietary_typicality?: number;
   dietary_preference_mode?: string;
   preferred_cuisines?: string;
   avoided_cuisines?: string;

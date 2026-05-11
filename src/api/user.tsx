@@ -34,7 +34,26 @@ export interface LoginResponse {
     type?: 'PROVIDER' | 'INDIVIDUAL';
     first_name?: string;
     last_name?: string;
+    allergies?: string;
+    avoided_cusisines?: string;
+    date_of_birth?: string;
+    dietary_preference_mode?: string;
+    dietary_preferences?: string;
+    dietary_recall?: string;
+    dietary_typicality?: number;
+    nutritional_goal?: string;
+    ethnicity?: string;
+    execrise_days_per_week?: number;
+    exercise_types?: string;
+    fitness_goal?: string;
+    health_conditions?: string;
+    height?: number;
+    preferred_cuisines?: string;
+    provider_notes?: string;
     referral_code?: string;
+    weekly_exercise_routine?: string;
+    weight?: number;
+    sport: string;
     id?: number;
 }
 

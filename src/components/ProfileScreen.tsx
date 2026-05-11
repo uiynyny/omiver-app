@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import './ProfileScreen.css'
 import BottomNav from './BottomNav';
 import { useAppContext } from '../context/AppContext'
@@ -21,9 +21,16 @@ const ProfileScreen: React.FC = () => {
   const preferences = state?.registration?.dietary_preferences || 'None'
   const nutritional_goal = state?.registration?.nutritional_goal || 'None'
   const fitness_goal = state?.registration?.fitness_goal || 'None'
+  const personal = state.registration;
 
   const name = `${state?.registration?.firstName || ''} ${state?.registration?.lastName || ''}`.trim() || ''
-  const age = state?.registration?.date_of_birth || '25'
+  const age = useMemo(() => {
+      if (!personal.date_of_birth) return undefined;
+      const b = new Date(personal.date_of_birth);
+      const diff = Date.now() - b.getTime();
+      return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+    }, [personal.date_of_birth]);
+
   const height = state?.registration?.height || `63"`
   const weight = state?.registration?.weight || '153'
 

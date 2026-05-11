@@ -22,11 +22,7 @@ const LoginScreen = () => {
       // Persist profile data so provider dashboard can show the name
       dispatch({
         type: 'UPDATE_REGISTRATION',
-        payload: {
-          firstName: data.first_name ?? '',
-          lastName: data.last_name ?? '',
-          referralCode: data.referral_code ?? undefined,
-        },
+        payload: {...data},
       });
       dispatch({
         type: 'SET_AUTH',

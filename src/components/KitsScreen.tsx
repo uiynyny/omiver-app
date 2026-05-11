@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Bell, Cog, X, Package, Inbox } from 'lucide-react';
+import { Bell, Cog, X, Package, Inbox, ChevronRight } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 import './KitsScreen.css';
@@ -151,7 +151,7 @@ const KitsScreen: React.FC = () => {
                         style={{ background: color }}
                         onClick={() => handleKitSelect(k)}
                       >
-                        Continue to Billing ➜
+                        { k.price == 0 ? 'Get Your Free Kit' : 'Continue to Billing' } <ChevronRight size={18} />
                       </button>
                     </div>
                   );

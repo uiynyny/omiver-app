@@ -327,9 +327,9 @@
   color: white;
   border: none;
   padding: 12px 28px;
-  border-radius: 25px;
+  border-radius: 50px;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 2rem;
   box-shadow: 0 4px 12px rgba(103, 153, 125, 0.3);
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;

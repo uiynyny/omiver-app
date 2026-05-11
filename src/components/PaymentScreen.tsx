@@ -32,6 +32,17 @@ const PaymentForm: React.FC = () => {
     badge: '150 biomarkers tested' // Fallback
   };
 
+  // Parse price to determine if free
+  const parsePrice = (): number => {
+    if (typeof kit.price === 'number') return kit.price;
+    if (typeof kit.price === 'string') {
+      const numStr = kit.price.replace(/[^0-9.]/g, '');
+      return parseFloat(numStr) || 0;
+    }
+    return 0;
+  };
+  const isFreeOrder = parsePrice() === 0;
+
   const [loading, setLoading] = useState(false);
   const [quantity, setQuantity] = useState(location.state?.quantity || 1);
   const [formData, setFormData] = useState({
@@ -68,20 +79,36 @@ const PaymentForm: React.FC = () => {
     e.preventDefault();
     setLoading(true);
 
-    if (!stripe || !elements) {
-      setLoading(false);
-      return;
-    }
-
-    const cardElement = elements.getElement(CardElement);
-    if (!cardElement) {
-      setLoading(false);
-      return;
-    }
-
     try {
       if (!numericClientId) {
         throw new Error('Missing client account. Please log in again.');
+      }
+
+      // For free orders, skip Stripe and just confirm with shipping address
+      if (isFreeOrder) {
+        await confirmPaymentApi({
+            payment_intent_id: 'free_order',
+            street_address: formData.streetAddress,
+            city: formData.city,
+            state: formData.state,
+            zip_code: formData.zipCode,
+            cardholder_name: formData.cardholderName || 'N/A',
+        });
+        setLoading(false);
+        navigate('/orders');
+        return;
+      }
+
+      // Paid order flow
+      if (!stripe || !elements) {
+        setLoading(false);
+        return;
+      }
+
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) {
+        setLoading(false);
+        return;
       }
 
       const { clientSecret } = await createPaymentIntent(kit.id || 1, numericClientId, quantity);
@@ -165,35 +192,37 @@ const PaymentForm: React.FC = () => {
             </label>
           </div>
 
-          <div className="form-section">
-            <label className="form-label">
-              <h3>Card Information</h3>
-              <div className="input-group">
-                <input type="text" name="cardholderName" className="text-input" placeholder="Cardholder Name" autoComplete='cc-name' value={formData.cardholderName} onChange={handleInputChange} required />
-              </div>
+          {!isFreeOrder && (
+            <div className="form-section">
+              <label className="form-label">
+                <h3>Card Information</h3>
+                <div className="input-group">
+                  <input type="text" name="cardholderName" className="text-input" placeholder="Cardholder Name" value={formData.cardholderName} onChange={handleInputChange} required />
+                </div>
 
-              <div className="input-group card-input-container" style={{ padding: '12px', border: '1px solid #ccc', borderRadius: '4px' }}>
-                <CardElement options={{
-                  style: {
-                    base: {
-                      fontSize: '16px',
-                      color: '#424770',
-                      '::placeholder': {
-                        color: '#aab7c4',
+                <div className="input-group card-input-container" style={{ padding: '12px', border: '1px solid #ccc', borderRadius: '4px' }}>
+                  <CardElement options={{
+                    style: {
+                      base: {
+                        fontSize: '16px',
+                        color: '#424770',
+                        '::placeholder': {
+                          color: '#aab7c4',
+                        },
+                      },
+                      invalid: {
+                        color: '#9e2146',
                       },
                     },
-                    invalid: {
-                      color: '#9e2146',
-                    },
-                  },
-                }} />
-              </div>
-            </label>
-          </div>
+                  }} />
+                </div>
+              </label>
+            </div>
+          )}
 
           <div className="form-section">
             <label className="form-label">
-              <h3>Billing Address</h3>
+              <h3>Shipping Address</h3>
 
               <div className="input-group">
                 <input type="text" name="streetAddress" className="text-input" placeholder="Street Address" value={formData.streetAddress} onChange={handleInputChange} required />
@@ -213,14 +242,16 @@ const PaymentForm: React.FC = () => {
             </label>
           </div>
 
-          <div className="security-note">
-            <Lock size={12} />
-            <span>Your payment information is encrypted and secure</span>
-          </div>
+          {!isFreeOrder && (
+            <div className="security-note">
+              <Lock size={12} />
+              <span>Your payment information is encrypted and secure</span>
+            </div>
+          )}
 
           <div className="payment-footer">
             <button type="submit" className="pay-btn" disabled={loading}>
-              {loading ? 'Processing...' : `Pay ${kit.price}`}
+              {loading ? 'Processing...' : (isFreeOrder ? 'Complete Free Order' : `Pay ${kit.price}`)}
               {!loading && <ChevronRight size={20} />}
             </button>
           </div>
