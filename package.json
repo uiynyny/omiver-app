@@ -10,11 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@capacitor-community/safe-area": "^7.0.0-beta.5",
+    "@capacitor-community/safe-area": "^8.0.0",
     "@capacitor/app": "^8.0.0",
     "@capacitor/core": "^8.0.0",
     "@capacitor/haptics": "^8.0.0",
-    "@capacitor/ios": "^8.0.0",
+    "@capacitor/ios": "8.0.2",
     "@capacitor/keyboard": "^8.0.0",
     "@capacitor/status-bar": "^8.0.0",
     "@react-navigation/bottom-tabs": "^7.8.8",

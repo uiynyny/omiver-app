@@ -6,7 +6,7 @@ import { useAppContext } from '../context/AppContext';
 import './KitsScreen.css';
 import BottomNav from './BottomNav';
 import omiver from '../assets/omiver.svg';
-import { fetchKits, type Kit } from '../api/user';
+import { fetchKits, type Kit, type Order, type DeliveryEvent } from '../api/user';
 
 const kitDefaults: Record<string, { color: string; features: string[] }> = {
   'Basic Test': {
@@ -40,6 +40,9 @@ const KitsScreen: React.FC = () => {
   const [quantity, setQuantity] = useState(1);
 
   const [activeTab, setActiveTab] = useState<'kits' | 'orders'>('kits');
+  const [order] = useState<Order | null>(null);
+  const [events] = useState<DeliveryEvent[]>([]);
+  const [loadingOrders] = useState(true);
 
   const queryParams = new URLSearchParams(location.search);
   const tabParam = queryParams.get('tab');
@@ -54,7 +57,23 @@ const KitsScreen: React.FC = () => {
 
   useEffect(() => {
     fetchKits().then((data: Kit[]) => {
-      setKits(data);
+      const mappedKits = data.map((k) => ({
+        id: k.id,
+        // preserve original name for compatibility with API consumers
+        name: k.name || k.title || '',
+        title: k.name || k.title,
+        subtitle: k.description,
+        price: `$${k.price}`,
+        frequency: 'one-time',
+        color: kitDefaults[k.name ?? '']?.color || '#6b9b8a',
+        badge: 'At-home kit',
+        features: kitDefaults[k.name ?? '']?.features || [
+          'At-home blood collection',
+          'Free shipping and return kit',
+          'Platform membership access',
+        ],
+      }));
+      setKits(mappedKits);
     }).catch((error) => console.error(error));
   }, []);
 
@@ -90,15 +109,15 @@ const KitsScreen: React.FC = () => {
 
       <main className="kits-main">
         <div className="dashboard-tabs">
-          <button 
-            className={`tab-btn ${activeTab === 'kits' ? 'active' : ''}`} 
+          <button
+            className={`tab-btn ${activeTab === 'kits' ? 'active' : ''}`}
             onClick={() => navigate('/kits')}
           >
             <Package size={18} />
             <span>Browse Kits</span>
           </button>
-          <button 
-            className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`} 
+          <button
+            className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
             onClick={() => navigate('/kits?tab=orders')}
           >
             <Inbox size={18} />
@@ -174,6 +193,63 @@ const KitsScreen: React.FC = () => {
                   <button className="next-cta" onClick={() => setActiveTab('kits')}>Browse Kits</button>
                 </div>
             </div>
+
+            {order && (
+              <div className='bottom-card' style={{ marginTop: 20 }}>
+                <section className="tracking-panel">
+                  <div className="tracking-label">Tracking Number</div>
+                  <div style={{ color: '#777', marginBottom: 10 }}>Track your order</div>
+                  <div className="tracking-number">
+                    <div style={{ fontWeight: 700 }}>{order.tracking || 'Pending'}</div>
+                    {order.tracking && <button className="copy-btn" onClick={() => navigator.clipboard?.writeText(order.tracking!)}>Copy</button>}
+                  </div>
+                </section>
+
+                <section className="progress-card" style={{ marginTop: 20 }}>
+                  <h3 style={{ marginTop: 0 }}>Delivery Progress</h3>
+
+                  {events.length > 0 ? events.map((event) => (
+                    <div className="progress-row" key={event.id} style={{ display: 'flex', gap: 10, marginBottom: 15 }}>
+                      <div className="progress-icon">
+                        {event.event_type === 'ORDER_PLACED' && <CheckCircle color="#6b9b8a" />}
+                        {event.event_type === 'IN_TRANSIT' && <Truck color="#6b9b8a" />}
+                        {event.event_type === 'DELIVERED' && <Box color="#6b9b8a" />}
+                        {!['ORDER_PLACED', 'IN_TRANSIT', 'DELIVERED'].includes(event.event_type) && <CheckCircle color="#6b9b8a" />}
+                      </div>
+                      <div>
+                        <div className="progress-title">
+                          {event.title}
+                          {!event.is_completed && <span style={{ background: '#eaf5ec', color: '#6b9b8a', marginLeft: 8, padding: '4px 8px', borderRadius: 12, fontSize: 12 }}>In Progress</span>}
+                        </div>
+                        <div style={{ color: '#777' }}>{event.description}</div>
+                      </div>
+                    </div>
+                  )) : (
+                    <div style={{ color: '#777' }}>Tracking updates will appear here once your order is processed.</div>
+                  )}
+                </section>
+
+                <section className="actions-card" style={{ marginTop: 20 }}>
+                  <h3>Order Actions</h3>
+                  <div className="actions-grid" style={{ display: 'flex', gap: 10 }}>
+                    <button className="action-btn" onClick={() => window.print()}>
+                      <Printer size={20} />
+                      <span>Print Receipt</span>
+                    </button>
+                    <button className="action-btn" onClick={() => alert('Support team contact:\nsupport@omiver.me')}>
+                      <HelpCircle size={20} />
+                      <span>Contact Support</span>
+                    </button>
+                  </div>
+                </section>
+
+                <section className="next-card" style={{ marginTop: 20 }}>
+                  <h3>Next Steps</h3>
+                  <div style={{ color: '#777' }}>Proceed to the sample collection section to link your kit and begin the testing process.</div>
+                  <button className="next-cta" onClick={() => navigate('/collection/steps')}>Start Sample Collection</button>
+                </section>
+              </div>
+            )}
           </div>
         )}
       </main>
@@ -181,8 +257,8 @@ const KitsScreen: React.FC = () => {
       {selectedKit && isProvider && (
         <div className="modal-overlay">
           <div className="quantity-modal">
-            <button 
-              className="modal-close" 
+            <button
+              className="modal-close"
               onClick={() => {
                 setSelectedKit(null);
                 setQuantity(1);
@@ -191,14 +267,14 @@ const KitsScreen: React.FC = () => {
               <X size={24} />
             </button>
             <h2>Select Quantity</h2>
-            <p className="modal-subtitle">{selectedKit.name}</p>
-            
+            <p className="modal-subtitle">{selectedKit.title}</p>
+
             <div className="quantity-input-group">
               <label htmlFor="qty">How many kits would you like to order?</label>
-              <input 
+              <input
                 id="qty"
-                type="number" 
-                min="1" 
+                type="number"
+                min="1"
                 max="9999"
                 value={quantity}
                 onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
@@ -209,7 +285,7 @@ const KitsScreen: React.FC = () => {
             </div>
 
             <div className="modal-actions">
-              <button 
+              <button
                 className="cancel-btn"
                 onClick={() => {
                   setSelectedKit(null);
@@ -218,7 +294,7 @@ const KitsScreen: React.FC = () => {
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className="confirm-btn"
                 onClick={handleConfirmQuantity}
               >

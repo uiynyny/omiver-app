@@ -40,7 +40,7 @@ type RegistrationData = {
 
 type AuthState = {
   isAuthenticated: boolean;
-  userId?: string | null;
+  userId?: string | number | null;
   clientId?: string | number | null;
   userType?: 'PROVIDER' | 'INDIVIDUAL' | null;
 };

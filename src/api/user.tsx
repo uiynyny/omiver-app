@@ -98,9 +98,18 @@ export interface Dashboard {
 
 export interface Kit {
     id: number;
-    name: string;
+    name?: string;
+    // Backend provides a minimal kit shape; frontend consumes a richer display shape.
+    // Make these optional so components can use / map them freely.
+    title?: string;
     description?: string;
-    price: number;
+    subtitle?: string;
+    // price may be number from API but components often render a formatted string
+    price: number | string;
+    frequency?: string;
+    color?: string;
+    badge?: string;
+    features?: string[];
 }
 
 export interface Order {
@@ -110,6 +119,7 @@ export interface Order {
     order_date?: string;
     created_at?: string;
     tracking_number?: string;
+    // aliases used by UI
     testName?: string;
     date?: string;
     tracking?: string;
@@ -133,6 +143,7 @@ export interface PaymentHistory {
     amount: number;
     status: string;
     created_at: string;
+    // optional billing details returned by API
     cardholder_name?: string;
     billing_address?: {
         street_address?: string;

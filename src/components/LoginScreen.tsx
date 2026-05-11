@@ -17,7 +17,7 @@ const LoginScreen = () => {
   const handleLogin = () => {
     login(email, password).then((data) => {
       console.log('Login successful', data);
-      const userType: 'PROVIDER' | 'INDIVIDUAL' = data.type || 'INDIVIDUAL';
+      const userType: 'PROVIDER' | 'INDIVIDUAL' = ((data.type as 'PROVIDER' | 'INDIVIDUAL') || (String(data.account_type || '').toUpperCase() === 'PROVIDER' ? 'PROVIDER' : 'INDIVIDUAL'));
 
       // Persist profile data so provider dashboard can show the name
       dispatch({
