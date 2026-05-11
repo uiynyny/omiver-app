@@ -88,6 +88,8 @@ const PaymentForm: React.FC = () => {
       if (isFreeOrder) {
         await confirmPaymentApi({
             payment_intent_id: 'free_order',
+            test_kit_id: kit.id || 1,
+            quantity,
             street_address: formData.streetAddress,
             city: formData.city,
             state: formData.state,

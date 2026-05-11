@@ -51,9 +51,11 @@ const TermsScreen = () => {
       payload.referred_by_code = reg.referredByCode;
     }
 
-    const response = await register(payload);
-    if (!response) {
-      alert('Registration failed: ' + response);
+    try{
+      await register(payload);
+    }catch(error) {
+      console.error('Registration error', error);
+      alert('Registration failed: ' + error);
       return;
     }
     if (!reg.email || !reg.password) {

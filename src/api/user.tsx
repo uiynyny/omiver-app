@@ -189,14 +189,17 @@ const getCookie = (name: string) => {
 };
 
 export const login = async (username: string, password: string): Promise<LoginResponse> => {
-    const response = await fetch(`${API_URL}/login`, {
+    const options: RequestInit = {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': getCookie('csrftoken') || '',
         },
         body: JSON.stringify({ username, password }),
-    });
+        credentials: 'include',
+    };
+
+    const response = await fetch(`${API_URL}/login`, options);
 
     if (!response.ok) {
         throw new Error('Login failed');
@@ -207,17 +210,21 @@ export const login = async (username: string, password: string): Promise<LoginRe
 }
 
 export const register = async (user: Record<string, unknown>): Promise<RegisterResponse> => {
-    const response = await fetch(`${API_URL}/register`, {
+    const options: RequestInit = {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': getCookie('csrftoken') || '',
         },
         body: JSON.stringify(user),
-    });
+        credentials: 'include',
+    };
+
+    const response = await fetch(`${API_URL}/register`, options);
 
     if (!response.ok) {
-        throw new Error('Registration failed');
+        const errorData = await response.text().catch(() => ({}));
+        throw new Error('Registration failed, ' + errorData);
     }
 
     const data = await response.json();
@@ -225,6 +232,17 @@ export const register = async (user: Record<string, unknown>): Promise<RegisterR
     setAuthToken(data.token ?? data.access_token ?? null);
     return data;
 }
+
+export const logoutApi = async (): Promise<void> => {
+    const token = getAuthToken();
+    const headers = withAuthHeaders({ 'Content-Type': 'application/json' });
+    const options: RequestInit = {
+        method: 'POST',
+        headers,
+        credentials: token ? undefined : 'include',
+    };
+    await fetch(`${API_URL}/logout`, options);
+};
 
 export const emailExist = async (email: string): Promise<boolean> => {
     const response = await fetch(`${API_URL}/check_email?email=${encodeURIComponent(email)}`)
@@ -240,6 +258,7 @@ export const emailExist = async (email: string): Promise<boolean> => {
 export const fetchDashboard = async (clientId: string | number): Promise<Dashboard> => {
     const response = await fetch(`${API_URL}/dashboard?client_id=${clientId}`, {
         headers: withAuthHeaders(),
+        credentials: 'include',
     });
     if (!response.ok) {
         throw new Error('Failed to fetch dashboard data');
@@ -250,6 +269,7 @@ export const fetchDashboard = async (clientId: string | number): Promise<Dashboa
 export const fetchKits = async (): Promise<Kit[]> => {
     const response = await fetch(`${API_URL}/kits`, {
         headers: withAuthHeaders(),
+        credentials: 'include',
     });
     if (!response.ok) {
         throw new Error('Failed to fetch kits');
@@ -260,6 +280,7 @@ export const fetchKits = async (): Promise<Kit[]> => {
 export const fetchOrders = async (clientId: string | number): Promise<Order[]> => {
     const response = await fetch(`${API_URL}/orders?client_id=${clientId}`, {
         headers: withAuthHeaders(),
+        credentials: 'include',
     });
     if (!response.ok) {
         throw new Error('Failed to fetch orders');
@@ -270,6 +291,7 @@ export const fetchOrders = async (clientId: string | number): Promise<Order[]> =
 export const fetchOrderDetail = async (orderId: string | number): Promise<OrderDetail> => {
     const response = await fetch(`${API_URL}/orders/${orderId}`, {
         headers: withAuthHeaders(),
+        credentials: 'include',
     });
     if (!response.ok) {
         throw new Error('Failed to fetch order detail');
@@ -282,6 +304,7 @@ export const getReferralLink = async (clientId: string | number): Promise<{
 }> => {
     const response = await fetch(`${API_URL}/provider/referral-link?client_id=${clientId}`, {
         headers: withAuthHeaders(),
+        credentials: 'include',
     });
     if (!response.ok) {
         throw new Error('Failed to fetch referral link');
@@ -292,6 +315,7 @@ export const getReferralLink = async (clientId: string | number): Promise<{
 export const getProviderPatients = async (clientId: string | number): Promise<Patient[]> => {
     const response = await fetch(`${API_URL}/provider/patients?client_id=${clientId}`, {
         headers: withAuthHeaders(),
+        credentials: 'include',
     });
     if (!response.ok) {
         throw new Error('Failed to fetch provider patients');
@@ -302,6 +326,7 @@ export const getProviderPatients = async (clientId: string | number): Promise<Pa
 export const fetchPayments = async (clientId: string | number): Promise<PaymentHistory[]> => {
     const response = await fetch(`${API_URL}/payments?client_id=${clientId}`, {
         headers: withAuthHeaders(),
+        credentials: 'include',
     });
     if (!response.ok) {
         throw new Error('Failed to fetch payment history');
@@ -316,6 +341,7 @@ export const checkout = async (data: Record<string, unknown>): Promise<Record<st
             'Content-Type': 'application/json',
         }),
         body: JSON.stringify(data),
+        credentials: 'include',
     });
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -331,6 +357,7 @@ export const createPaymentIntent = async (testKitId: number, clientId: number, q
             'Content-Type': 'application/json',
         }),
         body: JSON.stringify({ test_kit_id: testKitId, client_id: clientId, quantity }),
+        credentials: 'include',
     });
 
     if (!response.ok) {
@@ -347,14 +374,25 @@ export const confirmPaymentApi = async (data: {
     state: string;
     zip_code: string;
     cardholder_name?: string;
+    test_kit_id?: number;
+    quantity?: number;
 }): Promise<PaymentConfirmationResponse> => {
-    const response = await fetch(`${API_URL}/confirm-payment`, {
+    const token = getAuthToken();
+    const headers = withAuthHeaders({ 'Content-Type': 'application/json' });
+    const options: RequestInit = {
         method: 'POST',
-        headers: withAuthHeaders({
-            'Content-Type': 'application/json',
-        }),
+        headers,
         body: JSON.stringify(data),
-    });
+        credentials: 'include',
+    };
+
+    // If no token is present, assume cookie/session auth and add CSRF
+    if (!token) {
+        // add CSRF header for session-based auth
+        (options.headers as Record<string, string>)['X-CSRFToken'] = getCookie('csrftoken') || '';
+    }
+
+    const response = await fetch(`${API_URL}/confirm-payment`, options);
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -370,6 +408,7 @@ export const updateClient = async (clientId: string | number, data: Partial<Pati
             'Content-Type': 'application/json',
         }),
         body: JSON.stringify(data),
+        credentials: 'include',
     });
 
     if (!response.ok) {
@@ -383,6 +422,7 @@ export const updateClient = async (clientId: string | number, data: Partial<Pati
 export const checkReferralCode = async (code: string): Promise<boolean> => {
     const response = await fetch(`${API_URL}/validate_referral_code?code=${encodeURIComponent(code)}`, {
         headers: withAuthHeaders(),
+        credentials: 'include',
     });
     if (!response.ok) {
         throw new Error('Failed to validate referral code');

@@ -4,13 +4,18 @@ import BottomNav from './BottomNav';
 import { useAppContext } from '../context/AppContext'
 import { useNavigate } from 'react-router-dom'
 import { User, Heart, Target, Apple } from 'lucide-react'
-import { clearAuthToken } from '../api/user'
+import { clearAuthToken, logoutApi } from '../api/user'
 
 const ProfileScreen: React.FC = () => {
   const { state, dispatch } = useAppContext()
   const navigate = useNavigate()
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await logoutApi();
+    } catch (e) {
+      // ignore network errors, still clear local state
+    }
     clearAuthToken();
     dispatch({ type: 'CLEAR_AUTH' });
     navigate('/login');
