@@ -20,7 +20,6 @@ export const getAuthToken = (): string | null => {
 
 const withAuthHeaders = (headers: Record<string, string> = {}): Record<string, string> => {
     const token = getAuthToken();
-    console.log('token in withAuthHeaders:', token);
     return token ? { ...headers, Authorization: `Token ${token}` } : headers;
 };
 
@@ -110,6 +109,7 @@ export interface Kit {
     color?: string;
     badge?: string;
     features?: string[];
+    active?: boolean;
 }
 
 export interface Order {
@@ -123,6 +123,8 @@ export interface Order {
     testName?: string;
     date?: string;
     tracking?: string;
+    status?: string;
+    quantity?: number;
 }
 
 export interface DeliveryEvent {

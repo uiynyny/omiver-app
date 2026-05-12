@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { X, Package, Inbox, ChevronRight, CheckCircle, Truck, Box, Printer, HelpCircle } from 'lucide-react';
+import { X, Package, Inbox, ChevronRight, ArrowLeft } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 import './KitsScreen.css';
 import BottomNav from './BottomNav';
 import omiver from '../assets/omiver.svg';
-import { fetchKits, type Kit, type Order, type DeliveryEvent } from '../api/user';
+import { fetchKits, fetchOrders, fetchOrderDetail, type Kit, type Order, type OrderDetail } from '../api/user';
 
 const KitsScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -17,60 +17,67 @@ const KitsScreen: React.FC = () => {
   const [kits, setKits] = useState<Kit[]>([]);
   const [selectedKit, setSelectedKit] = useState<Kit | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetail | null>(null);
+  const [loadingOrderDetail, setLoadingOrderDetail] = useState(false);
 
   const [activeTab, setActiveTab] = useState<'kits' | 'orders'>('kits');
-  const [order] = useState<Order | null>(null);
-  const [events] = useState<DeliveryEvent[]>([]);
 
   const queryParams = new URLSearchParams(location.search);
   const tabParam = queryParams.get('tab');
 
   useEffect(() => {
-    if (tabParam === 'orders') {
-      setActiveTab('orders');
-    } else {
-      setActiveTab('kits');
-    }
+    if (tabParam === 'orders') setActiveTab('orders');
+    else setActiveTab('kits');
   }, [tabParam]);
 
   useEffect(() => {
-    fetchKits().then((data: Kit[]) => {
-      const mappedKits = data.map((k) => ({
-        id: k.id,
-        // preserve original name for compatibility with API consumers
-        name: k.name || k.title || '',
-        title: k.name || k.title,
-        subtitle: k.description,
-        price: `$${k.price}`,
-        frequency: 'one-time',
-        color: '#6b9b8a',
-        badge: 'At-home kit',
-        features: [
-          'At-home blood collection',
-          'Free shipping and return kit',
-          'Platform membership access',
-        ],
-      }));
-      setKits(mappedKits);
-    }).catch((error) => console.error(error));
+    fetchKits()
+      .then((data: Kit[]) => setKits(data.filter(k => k.active !== false)))
+      .catch((error) => console.error(error));
   }, []);
 
-  const handleKitSelect = (kit: Kit) => {
-    if (isProvider) {
-      // Show quantity modal for providers
-      setSelectedKit(kit);
-    } else {
-      // Go directly to payment for individuals
-      navigate('/payment', { state: { kit, quantity: 1 } });
+  useEffect(() => {
+    if (state.auth.clientId) {
+      fetchOrders(state.auth.clientId).then((data: Order[]) => setOrders(data)).catch((err) => console.error(err));
     }
+  }, [activeTab, state.auth.clientId]);
+
+  const handleKitSelect = (kit: Kit) => {
+    if (isProvider) setSelectedKit(kit);
+    else navigate('/payment', { state: { kit, quantity: 1 } });
   };
 
   const handleConfirmQuantity = () => {
-    if (selectedKit) {
-      navigate('/payment', { state: { kit: selectedKit, quantity } });
-      setSelectedKit(null);
-      setQuantity(1);
+    if (!selectedKit) return;
+    navigate('/payment', { state: { kit: selectedKit, quantity } });
+    setSelectedKit(null);
+    setQuantity(1);
+  };
+
+  const formatOrderDate = (dateString?: string) => {
+    if (!dateString) return '';
+    try {
+      const d = new Date(dateString);
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return dateString;
     }
+  };
+
+  const handleOrderClick = (orderId: number) => {
+    setSelectedOrderId(orderId);
+    setLoadingOrderDetail(true);
+    fetchOrderDetail(orderId)
+      .then((detail) => setSelectedOrderDetail(detail))
+      .catch((err) => console.error('Failed to fetch order detail:', err))
+      .finally(() => setLoadingOrderDetail(false));
+  };
+
+  const handleCloseOrderDetail = () => {
+    setSelectedOrderId(null);
+    setSelectedOrderDetail(null);
   };
 
   return (
@@ -99,10 +106,7 @@ const KitsScreen: React.FC = () => {
 
         {activeTab === 'kits' ? (
           <>
-            <div className='kits-top'>
-              <h2 className="kits-title">Choose Your Test Kit</h2>
-            </div>
-
+            <div className='kits-top'><h2 className="kits-title">Choose Your Test Kit</h2></div>
             <div className="bottom-card">
               <div className="kits-list">
                 {kits.map((k) => {
@@ -117,31 +121,17 @@ const KitsScreen: React.FC = () => {
                       <div className="kit-top">
                         <div>
                           <h3 className="kit-title">{k.name}</h3>
-                          <div className="kit-sub">{k.description}</div>
+                          <div className="kit-sub">{k.description || ''}</div>
                         </div>
-                        <div className="kit-price">
-                          <div className="price-amount">${k.price}</div>
-                          <div className="price-sub">one-time</div>
-                        </div>
+                        <div className="kit-price"><div className="price-amount">${k.price}</div><div className="price-sub">one-time</div></div>
                       </div>
 
-                      <div className="kit-badge-row">
-                        <div className="badge-label">Includes</div>
-                        <div className="badge-pill" style={{ background: color }}>At-home kit</div>
-                      </div>
+                      <div className="kit-badge-row"><div className="badge-label">Includes</div><div className="badge-pill" style={{ background: color }}>At-home kit</div></div>
 
-                      <ul className="kit-features">
-                        {features.map((f: string) => (
-                          <li key={f} className="kit-feature"><span className="check">✓</span>{f}</li>
-                        ))}
-                      </ul>
+                      <ul className="kit-features">{features.map((f) => <li key={f} className="kit-feature"><span className="check">✓</span>{f}</li>)}</ul>
 
-                      <button
-                        className="kit-cta"
-                        style={{ background: color }}
-                        onClick={() => handleKitSelect(k)}
-                      >
-                        { k.price == 0 ? 'Get Your Free Kit' : 'Continue to Billing' } <ChevronRight size={18} />
+                      <button className="kit-cta" style={{ background: color }} onClick={() => handleKitSelect(k)}>
+                        {k.price == 0 ? 'Get Your Free Kit' : 'Continue to Billing'} <ChevronRight size={18} />
                       </button>
                     </div>
                   );
@@ -150,9 +140,49 @@ const KitsScreen: React.FC = () => {
             </div>
           </>
         ) : (
-          <div className="orders-tab-content" style={{ padding: '0 16px' }}>
-            <div className='order-top'>
-              <h2 className='order-title'>Order Confirmed</h2>
+          <div className="orders-tab-content" style={{ padding: 16 }}>
+            {orders.length > 0 ? (
+              <>
+                {/* Latest Order */}
+                {(() => {
+                  const latest = orders[0];
+                  return (
+                    <div style={{ background: '#6b9b8a', borderRadius: 16, padding: 20, marginBottom: 24, color: 'white', cursor: 'pointer' }} onClick={() => handleOrderClick(latest.id)}>
+                      <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Latest Order</h2>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <div style={{ opacity: 0.9, fontSize: 13 }}>Order #{latest.order_number}</div>
+                          <div style={{ opacity: 0.75, fontSize: 12 }}>{formatOrderDate(latest.created_at || latest.order_date)}</div>
+                          <h3 style={{ fontSize: 16, fontWeight: 600 }}>{latest.test_kit_name}</h3>
+                          <div style={{ fontSize: 13 }}>Status: <span style={{ fontWeight: 600 }}>{latest.status}</span></div>
+                        </div>
+                        <Package size={40} color='white' />
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* History */}
+                {orders.length > 1 && (
+                  <div>
+                    <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, opacity: 0.8 }}>Order History</h3>
+                    {orders.slice(1).map((order) => (
+                      <div key={order.id} className="order-card" style={{ marginBottom: 12, background: 'white', borderRadius: 12, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', cursor: 'pointer' }} onClick={() => handleOrderClick(order.id)}>
+                        <div className='collection-card-group' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div className='collection-card-text-group'>
+                            <div style={{ opacity: 0.7, marginBottom: 2, fontSize: 12 }}>Order #{order.order_number}</div>
+                            <div style={{ opacity: 0.6, marginBottom: 8, fontSize: 11 }}>{formatOrderDate(order.created_at || order.order_date)}</div>
+                            <h3 style={{ fontSize: 14, fontWeight: 600, color: '#1f2937' }}>{order.test_kit_name}</h3>
+                            <div style={{ opacity: 0.6, fontSize: 12, marginTop: 4 }}>Status: <span style={{ fontWeight: 600, color: order.status === 'DELIVERED' ? '#6b9b8a' : order.status === 'CANCELLED' ? '#6b7280' : '#f59e0b' }}>{order.status}</span></div>
+                          </div>
+                          <div style={{ opacity: 0.3 }}>{order.status === 'DELIVERED' ? <Package size={28} /> : <Inbox size={28} />}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
               <div className="order-card empty-order-card">
                   <div className='collection-card-group'>
                     <div className='collection-card-text-group'>
@@ -163,68 +193,48 @@ const KitsScreen: React.FC = () => {
                   </div>
                   <button className="next-cta" onClick={() => setActiveTab('kits')}>Browse Kits</button>
                 </div>
-            </div>
-
-            {order && (
-              <div className='bottom-card' style={{ marginTop: 20 }}>
-                <section className="tracking-panel">
-                  <div className="tracking-label">Tracking Number</div>
-                  <div style={{ color: '#777', marginBottom: 10 }}>Track your order</div>
-                  <div className="tracking-number">
-                    <div style={{ fontWeight: 700 }}>{order.tracking || 'Pending'}</div>
-                    {order.tracking && <button className="copy-btn" onClick={() => navigator.clipboard?.writeText(order.tracking!)}>Copy</button>}
-                  </div>
-                </section>
-
-                <section className="progress-card" style={{ marginTop: 20 }}>
-                  <h3 style={{ marginTop: 0 }}>Delivery Progress</h3>
-
-                  {events.length > 0 ? events.map((event) => (
-                    <div className="progress-row" key={event.id} style={{ display: 'flex', gap: 10, marginBottom: 15 }}>
-                      <div className="progress-icon">
-                        {event.event_type === 'ORDER_PLACED' && <CheckCircle color="#6b9b8a" />}
-                        {event.event_type === 'IN_TRANSIT' && <Truck color="#6b9b8a" />}
-                        {event.event_type === 'DELIVERED' && <Box color="#6b9b8a" />}
-                        {!['ORDER_PLACED', 'IN_TRANSIT', 'DELIVERED'].includes(event.event_type) && <CheckCircle color="#6b9b8a" />}
-                      </div>
-                      <div>
-                        <div className="progress-title">
-                          {event.title}
-                          {!event.is_completed && <span style={{ background: '#eaf5ec', color: '#6b9b8a', marginLeft: 8, padding: '4px 8px', borderRadius: 12, fontSize: 12 }}>In Progress</span>}
-                        </div>
-                        <div style={{ color: '#777' }}>{event.description}</div>
-                      </div>
-                    </div>
-                  )) : (
-                    <div style={{ color: '#777' }}>Tracking updates will appear here once your order is processed.</div>
-                  )}
-                </section>
-
-                <section className="actions-card" style={{ marginTop: 20 }}>
-                  <h3>Order Actions</h3>
-                  <div className="actions-grid" style={{ display: 'flex', gap: 10 }}>
-                    <button className="action-btn" onClick={() => window.print()}>
-                      <Printer size={20} />
-                      <span>Print Receipt</span>
-                    </button>
-                    <button className="action-btn" onClick={() => alert('Support team contact:\nsupport@omiver.me')}>
-                      <HelpCircle size={20} />
-                      <span>Contact Support</span>
-                    </button>
-                  </div>
-                </section>
-
-                <section className="next-card" style={{ marginTop: 20 }}>
-                  <h3>Next Steps</h3>
-                  <div style={{ color: '#777' }}>Proceed to the sample collection section to link your kit and begin the testing process.</div>
-                  <button className="next-cta" onClick={() => navigate('/collection/steps')}>Start Sample Collection</button>
-                </section>
-              </div>
             )}
           </div>
         )}
       </main>
 
+      {/* Order Detail Modal */}
+      {selectedOrderId && selectedOrderDetail && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000 }} onClick={handleCloseOrderDetail}>
+          <div style={{ background: 'white', height: '100vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ padding: 16, display: 'flex', alignItems: 'center', borderBottom: '1px solid #e5e7eb' }}>
+              <button onClick={handleCloseOrderDetail} style={{ background: 'none', border: 'none', padding: 8, cursor: 'pointer' }}><ArrowLeft size={24} color="#6b9b8a" /></button>
+              <h2 style={{ marginLeft: 12, fontSize: 18, fontWeight: 600 }}>Order Details</h2>
+            </div>
+            <div style={{ padding: 16 }}>
+              {loadingOrderDetail ? <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div> : (
+                <>
+                  <div style={{ marginBottom: 24 }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 600 }}>{selectedOrderDetail.test_kit_name}</h3>
+                    <p style={{ opacity: 0.7 }}>Order #{selectedOrderDetail.order_number}</p>
+                  </div>
+                  {selectedOrderDetail.delivery_events && selectedOrderDetail.delivery_events.length > 0 && (
+                    <div>
+                      <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Delivery Updates</h4>
+                      {selectedOrderDetail.delivery_events.map((ev) => (
+                        <div key={ev.id} style={{ display: 'flex', marginBottom: 16 }}>
+                          <div style={{ width: 12, height: 12, borderRadius: '50%', background: ev.is_completed ? '#6b9b8a' : '#e5e7eb', marginRight: 12, marginTop: 4 }} />
+                          <div>
+                            <p style={{ fontSize: 14, fontWeight: 600 }}>{ev.title}</p>
+                            {ev.description && <p style={{ fontSize: 12, opacity: 0.7 }}>{ev.description}</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quantity Modal for Providers */}
       {selectedKit && isProvider && (
         <div className="modal-overlay">
           <div className="quantity-modal">
@@ -238,7 +248,7 @@ const KitsScreen: React.FC = () => {
               <X size={24} />
             </button>
             <h2>Select Quantity</h2>
-            <p className="modal-subtitle">{selectedKit.title}</p>
+            <p className="modal-subtitle">{selectedKit.name}</p>
 
             <div className="quantity-input-group">
               <label htmlFor="qty">How many kits would you like to order?</label>
@@ -254,7 +264,6 @@ const KitsScreen: React.FC = () => {
                 💡 Volume discounts apply: 5% off for 30+ kits
               </p>
             </div>
-
             <div className="modal-actions">
               <button
                 className="cancel-btn"
@@ -282,4 +291,3 @@ const KitsScreen: React.FC = () => {
 };
 
 export default KitsScreen;
-
