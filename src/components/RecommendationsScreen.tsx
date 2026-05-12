@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Cog, Target, Utensils, ArrowLeft, Lightbulb } from 'lucide-react';
+import { Target, Utensils, Lightbulb } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { fetchDashboard } from '../api/user';
 
@@ -37,15 +37,9 @@ const RecommendationsScreen: React.FC = () => {
 
   return (
     <div className="recommendations-root">
-      <header className="recommendations-header">
-        <div className="left-icons">
-          <button className="back-btn" onClick={() => navigate('/orders')}>
-            <ArrowLeft size={20} />
-          </button>
-        </div>
-        <img src={omiver} alt="Omiver Logo" className="recommendations-logo" width={150} />
-        <div className="right-icons">
-          <Cog className="icon-btn" size={20} />
+      <header className="home-header">
+        <div className="centered-logo">
+          <img src={omiver} alt="Omiver Logo" className="home-logo" width={150} />
         </div>
       </header>
 
@@ -64,7 +58,7 @@ const RecommendationsScreen: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="recommendations-content">
+          <div className="bottom-card">
             {/* Exercise Recommendations */}
             <section className="recommendation-section exercise-section">
               <div className="section-header">

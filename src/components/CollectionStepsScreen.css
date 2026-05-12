@@ -9,21 +9,36 @@
 .steps-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: 16px 20px;
   background-color: #6b9b8a; /* Sage green from designs */
   color: white;
+  position: relative;
 }
 
 .steps-header h1 {
   font-size: 1.1rem;
   font-weight: 600;
   margin: 0;
-  flex: 1;
   text-align: center;
 }
 
-.steps-back-btn, .steps-settings-btn {
+.steps-back-btn {
+  position: absolute;
+  left: 20px;
+  background: none;
+  border: none;
+  color: white;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.steps-settings-btn {
+  position: absolute;
+  right: 20px;
   background: none;
   border: none;
   color: white;

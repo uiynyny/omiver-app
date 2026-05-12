@@ -114,10 +114,16 @@
 }
 
 .icon-btn-back {
+  position: absolute;
+  left: 16px;
   background: none;
   border: none;
   cursor: pointer;
   color: #333;
+}
+
+.patient-detail-header {
+  position: relative;
 }
 
 .editable-input,

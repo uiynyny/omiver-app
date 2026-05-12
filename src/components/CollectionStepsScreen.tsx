@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Play, Settings } from 'lucide-react';
+import { ArrowLeft, Check, Settings } from 'lucide-react';
 import './CollectionStepsScreen.css';
 
 const CollectionStepsScreen: React.FC = () => {
@@ -63,11 +63,15 @@ const CollectionStepsScreen: React.FC = () => {
 
             {!isSampleCollected && (
               <div className="step-card">
-                <div className="video-placeholder">
-                  <div className="play-button">
-                    <Play size={20} fill="white" style={{ marginLeft: 3 }} />
-                  </div>
-                </div>
+                <iframe 
+                  src="https://player.vimeo.com/video/759587605?fl=pl&fe=sh" 
+                  width="100%" 
+                  height="300" 
+                  frameBorder="0" 
+                  allow="autoplay; fullscreen; picture-in-picture" 
+                  allowFullScreen
+                  style={{ borderRadius: '8px', marginBottom: '12px' }}
+                />
                 <button className="confirm-btn" onClick={() => setIsSampleCollected(true)}>
                   Confirm Sample Collected
                 </button>

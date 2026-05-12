@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, Cog, Link, ScanLine } from 'lucide-react'
+import { Link, ScanLine } from 'lucide-react'
 
 import './CollectionScreen.css'
 import BottomNav from './BottomNav';
@@ -20,13 +20,7 @@ const CollectionScreen: React.FC = () => {
   return (
     <div className="collection-root">
       <header className="home-header">
-        <div className="left-icons">
-          <Bell className='icon-btn' size={20} />
-        </div>
         <img src={omiver} alt="Omiver Logo" className="home-logo" width={150} />
-        <div className="right-icons">
-          <Cog className="icon-btn" size={20} />
-        </div>
       </header>
 
       <main className="collection-main">

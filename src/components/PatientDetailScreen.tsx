@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Cog, CircleUserRound, Calendar, Mail, Package, Save } from 'lucide-react';
+import { ArrowLeft, CircleUserRound, Calendar, Mail, Package, Save } from 'lucide-react';
 import omiver from '../assets/omiver.svg';
 import { updateClient, type Patient, fetchDashboard, type BiomarkerSection, type Dashboard } from '../api/user';
 
@@ -82,16 +82,11 @@ const PatientDetailScreen: React.FC = () => {
 
   return (
     <div className="screen-root">
-      <header className="home-header">
-        <div className="left-icons">
-          <button onClick={() => navigate('/provider/dashboard')} className="icon-btn-back">
-            <ArrowLeft size={20} />
-          </button>
-        </div>
+      <header className="home-header patient-detail-header">
+        <button onClick={() => navigate('/provider/dashboard')} className="icon-btn-back">
+          <ArrowLeft size={20} />
+        </button>
         <img src={omiver} alt="Omiver Logo" className="home-logo" width={150} />
-        <div className="right-icons">
-          <Cog className="icon-btn" size={20} />
-        </div>
       </header>
 
       <main className="detail-main">

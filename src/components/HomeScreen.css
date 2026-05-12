@@ -12,10 +12,7 @@
   border: none;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-}
-
-.home-header .logo {
+  justify-content: center;
   font-weight: 700;
   letter-spacing: 8px;
 }

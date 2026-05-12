@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Cog, HeartPulse } from 'lucide-react';
+import { HeartPulse } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 import './HomeScreen.css';
@@ -51,13 +51,7 @@ const HomeScreen = () => {
   return (
     <div className="screen-root">
       <header className="home-header">
-        <div className="left-icons">
-          <Bell className='icon-btn' size={20} />
-        </div>
         <img src={omiver} alt="Omiver Logo" className="home-logo" width={150} />
-        <div className="right-icons">
-          <Cog className="icon-btn" size={20} />
-        </div>
       </header>
 
       <main className="home-main">

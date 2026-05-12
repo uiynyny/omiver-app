@@ -5,9 +5,6 @@
   background: #f6f6f6;
   color: #303030
 }
-.profile-header { background:#6b9b8a; color:white; padding:18px 16px 20px 16px; display:flex; flex-direction:column; align-items:center }
-.profile-logo { font-weight:700; letter-spacing:8px; margin-bottom:8px }
-.profile-subtitle { color:rgba(255,255,255,0.95); margin-bottom:12px }
 .profile-main { padding:18px; padding-bottom:96px }
 .card { background:white; border-radius:16px; padding:16px; margin-bottom:18px }
 .profile-summary-title { display:flex; align-items:center; gap:10px; margin-bottom:12px }

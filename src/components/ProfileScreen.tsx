@@ -5,6 +5,7 @@ import { useAppContext } from '../context/AppContext'
 import { useNavigate } from 'react-router-dom'
 import { User, Heart, Target, Apple } from 'lucide-react'
 import { clearAuthToken, logoutApi } from '../api/user'
+import omiver from '../assets/omiver.svg'
 
 const ProfileScreen: React.FC = () => {
   const { state, dispatch } = useAppContext()
@@ -41,9 +42,8 @@ const ProfileScreen: React.FC = () => {
 
   return (
     <div className="profile-root">
-      <header className="profile-header">
-        <div className="profile-logo">OMIVER</div>
-        <div className="profile-subtitle">Your Profile Summary</div>
+      <header className="home-header">
+        <img src={omiver} alt="Omiver Logo" className="home-logo" width={150} />
       </header>
 
       <main className="profile-main">

@@ -1,33 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Bell, Cog, X, Package, Inbox, ChevronRight } from 'lucide-react';
+import { X, Package, Inbox, ChevronRight, CheckCircle, Truck, Box, Printer, HelpCircle } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 import './KitsScreen.css';
 import BottomNav from './BottomNav';
 import omiver from '../assets/omiver.svg';
 import { fetchKits, type Kit, type Order, type DeliveryEvent } from '../api/user';
-
-const kitDefaults: Record<string, { color: string; features: string[] }> = {
-  'Basic Test': {
-    color: '#d98252',
-    features: [
-      'At-home blood collection',
-      'Free shipping and return kit',
-      'Platform membership access',
-      'Provider-guided support',
-    ],
-  },
-  'Premium Test': {
-    color: '#c99bb9',
-    features: [
-      'At-home blood collection',
-      'Free shipping and return kit',
-      'Platform membership access',
-      'Annual membership benefits',
-    ],
-  },
-};
 
 const KitsScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -42,7 +21,6 @@ const KitsScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'kits' | 'orders'>('kits');
   const [order] = useState<Order | null>(null);
   const [events] = useState<DeliveryEvent[]>([]);
-  const [loadingOrders] = useState(true);
 
   const queryParams = new URLSearchParams(location.search);
   const tabParam = queryParams.get('tab');
@@ -65,9 +43,9 @@ const KitsScreen: React.FC = () => {
         subtitle: k.description,
         price: `$${k.price}`,
         frequency: 'one-time',
-        color: kitDefaults[k.name ?? '']?.color || '#6b9b8a',
+        color: '#6b9b8a',
         badge: 'At-home kit',
-        features: kitDefaults[k.name ?? '']?.features || [
+        features: [
           'At-home blood collection',
           'Free shipping and return kit',
           'Platform membership access',
@@ -98,13 +76,7 @@ const KitsScreen: React.FC = () => {
   return (
     <div className="screen-root">
       <header className="home-header">
-        <div className="left-icons">
-          <Bell className='icon-btn' size={20} />
-        </div>
         <img src={omiver} alt="Omiver Logo" className="home-logo" width={150} />
-        <div className="right-icons">
-          <Cog className="icon-btn" size={20} />
-        </div>
       </header>
 
       <main className="kits-main">
@@ -134,9 +106,8 @@ const KitsScreen: React.FC = () => {
             <div className="bottom-card">
               <div className="kits-list">
                 {kits.map((k) => {
-                  const defaults = kitDefaults[k.name] || {};
-                  const color = defaults.color || '#6b9b8a';
-                  const features = defaults.features || [
+                  const color = '#6b9b8a';
+                  const features = [
                     'At-home blood collection',
                     'Free shipping and return kit',
                     'Platform membership access',

@@ -12,33 +12,12 @@
   padding: 16px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-}
-
-.recommendations-header .left-icons {
-  flex: 1;
-}
-
-.back-btn {
-  background: transparent;
-  border: none;
-  color: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 8px;
 }
 
-.recommendations-header .right-icons {
-  flex: 1;
+.centered-logo {
   display: flex;
-  justify-content: flex-end;
-}
-
-.recommendations-logo {
-  flex: 1;
-  text-align: center;
+  justify-content: center;
 }
 
 .recommendations-main {

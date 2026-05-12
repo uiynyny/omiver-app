@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { clearAuthToken, getReferralLink, getProviderPatients, type Patient } from '../api/user';
+import omiver from '../assets/omiver.svg';
 import './ProviderDashboardScreen.css';
 
 /** Build the referral URL on the frontend — always correct for the current environment */
@@ -251,6 +252,7 @@ const ProviderDashboardScreen = () => {
             <h2 className="provider-name">{providerName || 'Provider'}</h2>
           </div>
         </div>
+        <img src={omiver} alt="Omiver Logo" className="home-logo" width={120} />
         <button className="logout-btn" onClick={handleLogout} title="Logout">
           <LogOut size={20} />
         </button>

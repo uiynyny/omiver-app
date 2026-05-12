@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useReducer, type ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
 
+const STORAGE_KEY = 'omiver_app_state';
 
 type RegistrationData = {
   token?: string;
@@ -55,6 +56,28 @@ const initialState: AppState = {
   registration: {},
 };
 
+// Load state from localStorage
+const loadStateFromStorage = (): AppState => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.error('Failed to load state from localStorage:', error);
+  }
+  return initialState;
+};
+
+// Save state to localStorage
+const saveStateToStorage = (state: AppState) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (error) {
+    console.error('Failed to save state to localStorage:', error);
+  }
+};
+
 type Action =
   | { type: 'SET_AUTH'; payload: Partial<AuthState> }
   | { type: 'UPDATE_REGISTRATION'; payload: Partial<RegistrationData> }
@@ -85,7 +108,13 @@ const AppContext = createContext<{
 }>({ state: initialState, dispatch: () => null });
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(reducer, initialState, loadStateFromStorage);
+  
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    saveStateToStorage(state);
+  }, [state]);
+  
   const value = React.useMemo(() => ({ state, dispatch }), [state]);
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

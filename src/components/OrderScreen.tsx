@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Truck, CheckCircle, Bell, Cog, Package, Inbox, HelpCircle, Printer } from 'lucide-react';
+import { Box, Truck, CheckCircle, Package, Inbox, HelpCircle, Printer } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { fetchOrders, fetchOrderDetail } from '../api/user';
 
@@ -60,13 +60,7 @@ const OrderScreen: React.FC = () => {
   return (
     <div className="order-root">
       <header className="home-header">
-        <div className="left-icons">
-          <Bell className='icon-btn' size={20} />
-        </div>
         <img src={omiver} alt="Omiver Logo" className="home-logo" width={150} />
-        <div className="right-icons">
-          <Cog className="icon-btn" size={20} />
-        </div>
       </header>
 
       <main className="order-main">
