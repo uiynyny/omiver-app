@@ -22,7 +22,8 @@ const PersonalInfoScreen = () => {
       alert('Please fill in all required fields, including your referral code');
       return;
     }
-    checkReferralCode(referredByCode.trim()).then((isValid) => {
+    console.log('Validating referral code:', referredByCode);
+    checkReferralCode(referredByCode).then((isValid) => {
       if (!isValid) {
         alert('Invalid referral code. Please check and try again.');
         return;

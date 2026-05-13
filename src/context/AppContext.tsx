@@ -22,6 +22,7 @@ type RegistrationData = {
   healthConditions?: string;
   allergies?: string;
   dietary_recall?: string;
+  exercise_recall?: string;
   dietary_typicality?: number;
   dietary_preference_mode?: string;
   preferred_cuisines?: string;

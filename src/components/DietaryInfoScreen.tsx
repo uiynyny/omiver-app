@@ -1,36 +1,65 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import './AccountTypeScreen.css';
 import { useAppContext } from '../context/AppContext';
+import { updateClient } from '../api/user';
+
+const typicalityLevels = [
+  { value: 1, label: 'Unusual' },
+  { value: 2, label: 'Rarely' },
+  { value: 3, label: 'Sometimes' },
+  { value: 4, label: 'Often' },
+  { value: 5, label: 'Always' },
+];
 
 const DietaryInfoScreen = () => {
   const navigate = useNavigate();
   const { state, dispatch } = useAppContext();
   const [dietaryRecall, setDietaryRecall] = useState(state.registration.dietary_recall ?? '');
-  const [typicality, setTypicality] = useState<number>(state.registration.dietary_typicality ?? 5);
+  const [exerciseRecall, setExerciseRecall] = useState(state.registration.exercise_recall ?? '');
+  const [typicality, setTypicality] = useState<number>(state.registration.dietary_typicality ?? 3);
   const [preferenceMode, setPreferenceMode] = useState(state.registration.dietary_preference_mode ?? 'similar');
   const [preferredCuisines, setPreferredCuisines] = useState(state.registration.preferred_cuisines ?? '');
   const [avoidedCuisines, setAvoidedCuisines] = useState(state.registration.avoided_cuisines ?? '');
 
-  const location = useLocation();
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     dispatch({
       type: 'UPDATE_REGISTRATION',
       payload: {
         dietary_recall: dietaryRecall,
+        exercise_recall: exerciseRecall,
         dietary_typicality: typicality,
         dietary_preference_mode: preferenceMode,
         preferred_cuisines: preferredCuisines,
         avoided_cuisines: avoidedCuisines,
       },
     });
-    // If accessed as part of registration flow, continue there; otherwise go back to profile
-    if (location.pathname && location.pathname.startsWith('/register')) {
-      navigate('/register/goals');
-    } else {
+
+    const clientId = state.auth.clientId;
+    if (!clientId) {
+      alert('Please sign in before submitting your recall information.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await updateClient(clientId, {
+        dietary_recall: dietaryRecall,
+        exercise_recall: exerciseRecall,
+        dietary_typicality: typicality,
+        dietary_preference_mode: preferenceMode,
+        preferred_cuisines: preferredCuisines,
+        avoided_cuisines: avoidedCuisines,
+      });
       navigate('/profile');
+    } catch (error) {
+      console.error('Failed to save recall information:', error);
+      alert('Unable to save recall information right now. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -68,16 +97,30 @@ const DietaryInfoScreen = () => {
           </div>
 
           <div className="input-group">
-            <label className="field-label">How typical is this for you? (1-10)</label>
-            <input
-              type="range"
-              min="1"
-              max="10"
-              value={typicality}
-              onChange={(e) => setTypicality(parseInt(e.target.value) || 5)}
-              className="form-range"
+            <textarea
+              placeholder="24-hour exercise recall..."
+              value={exerciseRecall}
+              onChange={(e) => setExerciseRecall(e.target.value)}
+              className="form-textarea"
+              rows={5}
             />
-            <div className="range-value">{typicality}/10</div>
+          </div>
+
+          <div className="input-group typicality-group">
+            <label className="field-label">How typical is this for you?</label>
+            <div className="form-select-group">
+              <select
+                className="form-input form-select"
+                value={typicality}
+                onChange={(e) => setTypicality(parseInt(e.target.value) || 3)}
+              >
+                {typicalityLevels.map((level) => (
+                  <option key={level.value} value={level.value}>
+                    {level.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="input-group">
@@ -115,8 +158,8 @@ const DietaryInfoScreen = () => {
         </div>
 
         <div className="button-group">
-          <button onClick={handleContinue} className="primary-button">
-            Continue <ChevronRight size={20} />
+          <button onClick={handleContinue} className="primary-button" disabled={submitting}>
+            Submit <ChevronRight size={20} />
           </button>
           <button onClick={handleBack} className="secondary-button">
             <ChevronLeft size={20} /> Go Back

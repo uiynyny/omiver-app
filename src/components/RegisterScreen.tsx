@@ -9,7 +9,7 @@ import { emailExist } from '../api/user';
 const RegisterScreen = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { state, dispatch } = useAppContext();
+  const { dispatch } = useAppContext();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -36,7 +36,7 @@ const RegisterScreen = () => {
     }
     
     const params = new URLSearchParams(location.search);
-    const refCode = params.get('ref') || state.registration.referredByCode;
+    const refCode = params.get('ref');
 
     if (refCode) {
       // Skip account type selection and default to individual user with referral

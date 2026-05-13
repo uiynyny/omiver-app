@@ -62,6 +62,7 @@ const PatientDetailScreen: React.FC = () => {
     try {
       const updated = await updateClient(editData.id, {
         dietary_recall: editData.dietary_recall,
+        exercise_recall: editData.exercise_recall,
         dietary_typicality: editData.dietary_typicality,
         dietary_preference_mode: editData.dietary_preference_mode,
         preferred_cuisines: editData.preferred_cuisines,
@@ -158,15 +159,27 @@ const PatientDetailScreen: React.FC = () => {
                 />
               </div>
               <div className="info-item">
-                <div className="info-label">Typicality (1-10)</div>
-                <input
-                  className="editable-input"
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={editData?.dietary_typicality || ''}
-                  onChange={(e) => handleFieldChange('dietary_typicality', e.target.value)}
+                <div className="info-label">24-hour Exercise Recall</div>
+                <textarea
+                  className="editable-textarea"
+                  value={editData?.exercise_recall || ''}
+                  onChange={(e) => handleFieldChange('exercise_recall', e.target.value)}
+                  rows={4}
                 />
+              </div>
+              <div className="info-item">
+                  <div className="info-label">Typicality (Unusual to Always)</div>
+                  <select
+                    className="editable-input"
+                    value={editData?.dietary_typicality || ''}
+                    onChange={(e) => handleFieldChange('dietary_typicality', e.target.value)}
+                  >
+                    <option value="1">Unusual</option>
+                    <option value="2">Rarely</option>
+                    <option value="3">Sometimes</option>
+                    <option value="4">Often</option>
+                    <option value="5">Always</option>
+                  </select>
               </div>
               <div className="info-item">
                 <div className="info-label">Diet Preference Mode</div>

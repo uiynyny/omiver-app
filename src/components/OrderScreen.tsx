@@ -68,7 +68,42 @@ const OrderScreen: React.FC = () => {
   const orderName = order?.test_kit_name ?? order?.testName ?? 'Order';
   const orderDate = formatOrderDate(order?.order_date || order?.created_at || order?.date);
   const trackingNumber = order?.tracking_number || order?.tracking;
-  const events = order?.delivery_events || [];
+  const orderStatus = order?.status || 'PENDING';
+  const getStatusMessage = () => {
+    switch (orderStatus) {
+      case 'CONFIRMED':
+        return 'We are processing your order';
+      case 'SHIPPED':
+        return trackingNumber ? `Your order has shipped. Tracking: ${trackingNumber}` : 'Your order has shipped';
+      case 'IN_TRANSIT':
+        return trackingNumber ? `Your order is in transit. Tracking: ${trackingNumber}` : 'Your order is in transit';
+      case 'OUT_FOR_DELIVERY':
+        return trackingNumber ? `Your order is out for delivery. Tracking: ${trackingNumber}` : 'Your order is out for delivery';
+      case 'DELIVERED':
+        return trackingNumber ? `Your order has been delivered. Tracking: ${trackingNumber}` : 'Your order has been delivered';
+      case 'CANCELLED':
+        return 'Your order has been cancelled';
+      default:
+        return 'Your order has been received';
+    }
+  };
+
+  const getStatusLink = () => {
+    if (!trackingNumber || !['SHIPPED', 'IN_TRANSIT', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(orderStatus)) {
+      return null;
+    }
+
+    return (
+      <a
+        href={`https://tracking.com/?tracking=${encodeURIComponent(trackingNumber)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ color: '#6b9b8a', textDecoration: 'none', fontWeight: 500 }}
+      >
+        {trackingNumber}
+      </a>
+    );
+  };
 
   return (
     <div className="order-root">
@@ -78,11 +113,11 @@ const OrderScreen: React.FC = () => {
 
       <main className="order-main">
         <div className='order-top'>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-            <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', padding: 8, cursor: 'pointer', flex:1 }} aria-label="Back to orders">
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12, position: 'relative', justifyContent: 'center' }}>
+            <button onClick={() => navigate('/kits')} style={{ background: 'none', border: 'none', padding: 8, cursor: 'pointer', position: 'absolute', left: 0 }} aria-label="Back to orders">
               <ArrowLeft size={20} color="#fff" />
             </button>
-            <h2 className='order-title' style={{ margin: 0, marginLeft: 8, flex:4}}>Order Confirmed</h2>
+            <h2 className='order-title' style={{ margin: 0 }}>My Order</h2>
           </div>
           {loading ? (
             <div className="order-card empty-order-card">
@@ -134,27 +169,29 @@ const OrderScreen: React.FC = () => {
             </section>
 
             <section className="progress-card">
-              <h3 style={{ marginTop: 0 }}>Delivery Progress</h3>
-
-              {events.length > 0 ? events.map((event) => (
-                <div className="progress-row" key={event.id}>
-                  <div className="progress-icon">
-                    {event.event_type === 'ORDER_PLACED' && <CheckCircle color="#6b9b8a" />}
-                    {event.event_type === 'IN_TRANSIT' && <Truck color="#6b9b8a" />}
-                    {event.event_type === 'DELIVERED' && <Box color="#6b9b8a" />}
-                    {![ 'ORDER_PLACED', 'IN_TRANSIT', 'DELIVERED' ].includes(event.event_type) && <CheckCircle color="#6b9b8a" />}
+              <h3 style={{ marginTop: 0 }}>Progress</h3>
+              <div className="progress-row">
+                <div className="progress-icon">
+                  {orderStatus === 'SHIPPED' || orderStatus === 'IN_TRANSIT' || orderStatus === 'OUT_FOR_DELIVERY' ? (
+                    <Truck color="#6b9b8a" />
+                  ) : orderStatus === 'DELIVERED' ? (
+                    <Box color="#6b9b8a" />
+                  ) : (
+                    <CheckCircle color="#6b9b8a" />
+                  )}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div className="progress-title">
+                    {orderStatus}
+                    <span style={{ background: '#eaf5ec', color: '#6b9b8a', marginLeft: 8, padding: '4px 8px', borderRadius: 12, fontSize: 12 }}>
+                      Current Status
+                    </span>
                   </div>
-                  <div>
-                    <div className="progress-title">
-                      {event.title}
-                      {!event.is_completed && <span style={{ background: '#eaf5ec', color: '#6b9b8a', marginLeft: 8, padding: '4px 8px', borderRadius: 12, fontSize: 12 }}>In Progress</span>}
-                    </div>
-                    <div style={{ color: '#777' }}>{event.description}</div>
+                  <div style={{ color: '#777' }}>
+                    {getStatusMessage()} {getStatusLink() && <span style={{ marginLeft: 4 }}>- {getStatusLink()}</span>}
                   </div>
                 </div>
-              )) : (
-                <div style={{ color: '#777' }}>Tracking updates will appear here once your order is processed.</div>
-              )}
+              </div>
             </section>
 
             <section className="actions-card">

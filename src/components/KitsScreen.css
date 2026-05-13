@@ -57,6 +57,12 @@
   padding: 18px
 }
 
+.empty-order-card .collection-card-text-group,
+.empty-order-card .collection-card-text-group h2,
+.empty-order-card .collection-card-text-group div {
+  color: #fff;
+}
+
 .kit-top {
   display: flex;
   justify-content: space-between;

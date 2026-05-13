@@ -157,6 +157,31 @@
   flex:1;
 }
 
+.typicality-group {
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.form-select-group {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 260px;
+}
+
+.typicality-group .form-select {
+  flex: 1;
+  min-width: 180px;
+}
+
+.typicality-group .field-label {
+  min-width: 220px;
+  margin-bottom: 0;
+}
+
 .form-input {
   width: 100%;
   padding: 1.2rem 1.5rem;

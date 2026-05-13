@@ -75,6 +75,7 @@ export interface LoginResponse {
     dietary_preference_mode?: string;
     dietary_preferences?: string;
     dietary_recall?: string;
+    exercise_recall?: string;
     dietary_typicality?: number;
     nutritional_goal?: string;
     ethnicity?: string;
@@ -215,6 +216,7 @@ export interface Patient {
     health_conditions: string;
     dietary_preferences: string;
     dietary_recall?: string;
+    exercise_recall?: string;
     dietary_typicality?: number | null;
     dietary_preference_mode?: string;
     preferred_cuisines?: string;
