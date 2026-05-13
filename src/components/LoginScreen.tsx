@@ -5,7 +5,7 @@ import './RegisterScreen.css';
 
 import omiverIcon from '../assets/omiver-icon.svg';
 import { useAppContext } from '../context/AppContext';
-import { login } from '../api/user';
+import { login, setPersistentLogin } from '../api/user';
 
 const LoginScreen = () => {
   const navigate = useNavigate();
@@ -28,6 +28,18 @@ const LoginScreen = () => {
         type: 'SET_AUTH',
         payload: { isAuthenticated: true, userId: email, clientId: data.id || data.user_id, userType },
       });
+
+      // Store login info if user checked "stay logged in"
+      if (stayLoggedIn) {
+        setPersistentLogin({
+          userId: email,
+          userType,
+          clientId: data.id || data.user_id,
+          email,
+        });
+      } else {
+        setPersistentLogin(null);
+      }
 
       if (userType === 'PROVIDER') {
         navigate('/provider/dashboard');

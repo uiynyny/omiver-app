@@ -8,8 +8,8 @@ import { checkReferralCode } from '../api/user';
 const PersonalInfoScreen = () => {
   const navigate = useNavigate();
   const { state, dispatch } = useAppContext();
-  const [firstName, setFirstName] = useState(state.registration.firstName ?? '');
-  const [lastName, setLastName] = useState(state.registration.lastName ?? '');
+  const [first_name, setFirstName] = useState(state.registration.first_name ?? '');
+  const [last_name, setLastName] = useState(state.registration.last_name ?? '');
   const [date_of_birth, setDateOfBirth] = useState(state.registration.date_of_birth ?? '');
   const [gender, setGender] = useState(state.registration.gender ?? 'Male');
   const [ethnicity, setEthnicity] = useState(state.registration.ethnicity ?? '');
@@ -18,7 +18,7 @@ const PersonalInfoScreen = () => {
   const [referredByCode, setReferredByCode] = useState(state.registration.referredByCode ?? '');
 
   const handleContinue = () => {
-    if (!firstName || !lastName || !date_of_birth || !ethnicity || !gender || !height || !weight || !referredByCode.trim()) {
+    if (!first_name || !last_name || !date_of_birth || !ethnicity || !gender || !height || !weight || !referredByCode.trim()) {
       alert('Please fill in all required fields, including your referral code');
       return;
     }
@@ -35,7 +35,14 @@ const PersonalInfoScreen = () => {
     dispatch({
       type: 'UPDATE_REGISTRATION',
       payload: {
-        firstName, lastName, date_of_birth, gender, ethnicity, height, weight, referredByCode: referredByCode.trim(),
+        first_name: first_name,
+        last_name: last_name,
+        date_of_birth,
+        gender,
+        ethnicity,
+        height,
+        weight,
+        referredByCode: referredByCode.trim(),
       },
     });
     navigate('/register/health-conditions');
@@ -79,7 +86,7 @@ const PersonalInfoScreen = () => {
             <input
               type="text"
               placeholder="First name:"
-              value={firstName}
+              value={first_name}
               onChange={(e) => setFirstName(e.target.value)}
               className="form-input"
             />
@@ -89,7 +96,7 @@ const PersonalInfoScreen = () => {
             <input
               type="text"
               placeholder="Last name:"
-              value={lastName}
+              value={last_name}
               onChange={(e) => setLastName(e.target.value)}
               className="form-input"
             />

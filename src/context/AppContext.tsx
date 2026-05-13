@@ -12,8 +12,8 @@ type RegistrationData = {
   password?: string;
   accountType?: 'individual' | 'healthcare' | null;
   type?: 'PROVIDER' | 'INDIVIDUAL' | null;
-  firstName?: string;
-  lastName?: string;
+  first_name?: string;
+  last_name?: string;
   date_of_birth?: string;
   gender?: string;
   ethnicity?: string;

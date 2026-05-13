@@ -136,7 +136,7 @@ const ProviderDashboardScreen = () => {
   const [pullDistance, setPullDistance] = useState(0);
   const [startY, setStartY] = useState(0);
 
-  const providerName = [state.registration.firstName, state.registration.lastName]
+  const providerName = [state.registration.first_name, state.registration.last_name]
     .filter(Boolean)
     .join(' ');
 

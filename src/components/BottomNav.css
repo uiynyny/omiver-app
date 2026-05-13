@@ -5,8 +5,8 @@
   bottom: 0;
   height: 62px;
   display: flex;
-  gap: 4px;
-  padding: 8px 12px;
+  gap: 0;
+  padding: 8px 0;
   background: white;
   border-top-left-radius: 18px;
   border-top-right-radius: 18px;
@@ -14,7 +14,8 @@
 }
 
 .nav-item {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   background: transparent;
   border: none;
   border-radius: 12px;
@@ -28,6 +29,7 @@
   justify-content: center;
   gap: 4px;
   font-size: 0.75rem;
+  box-sizing: border-box;
 }
 
 .nav-item.active {

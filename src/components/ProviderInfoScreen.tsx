@@ -8,17 +8,17 @@ import { useAppContext } from '../context/AppContext';
 const ProviderInfoScreen = () => {
   const navigate = useNavigate();
   const { state, dispatch } = useAppContext();
-  const [firstName, setFirstName] = useState(state.registration.firstName ?? '');
-  const [lastName, setLastName] = useState(state.registration.lastName ?? '');
+  const [first_name, setFirstName] = useState(state.registration.first_name ?? '');
+  const [last_name, setLastName] = useState(state.registration.last_name ?? '');
 
   const handleContinue = () => {
-    if (!firstName.trim() || !lastName.trim()) {
+    if (!first_name.trim() || !last_name.trim()) {
       alert('Please enter your first and last name');
       return;
     }
     dispatch({
       type: 'UPDATE_REGISTRATION',
-      payload: { firstName: firstName.trim(), lastName: lastName.trim() },
+      payload: { first_name: first_name.trim(), last_name: last_name.trim() },
     });
     navigate('/terms');
   };
@@ -60,7 +60,7 @@ const ProviderInfoScreen = () => {
               id="provider-first-name"
               type="text"
               placeholder="First name"
-              value={firstName}
+              value={first_name}
               onChange={(e) => setFirstName(e.target.value)}
               className="form-input"
               autoFocus
@@ -72,7 +72,7 @@ const ProviderInfoScreen = () => {
               id="provider-last-name"
               type="text"
               placeholder="Last name"
-              value={lastName}
+              value={last_name}
               onChange={(e) => setLastName(e.target.value)}
               className="form-input"
               onKeyDown={(e) => e.key === 'Enter' && handleContinue()}

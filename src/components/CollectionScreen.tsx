@@ -5,16 +5,33 @@ import { Link, ScanLine } from 'lucide-react'
 import './CollectionScreen.css'
 import BottomNav from './BottomNav';
 import omiver from '../assets/omiver.svg';
+import { verifyKitCode } from '../api/user';
 
 const CollectionScreen: React.FC = () => {
   const navigate = useNavigate()
   const [kitCode, setKitCode] = useState('')
-  const [barcodeValue, setBarcodeValue] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleLink = () => {
-    const code = (kitCode || barcodeValue).trim()
+  const handleLink = async () => {
+    const code = kitCode.trim()
     if (!code) return
-    navigate('/collection/steps', { state: { kitCode: code } })
+    
+    setLoading(true)
+    setError('')
+    try {
+      const result = await verifyKitCode(code)
+      if (result.valid) {
+        navigate('/collection/steps', { state: { kitCode: code } })
+      } else {
+        setError(result.message || 'Kit code is invalid. Please check and try again.')
+      }
+    } catch (err) {
+      setError('Failed to verify kit code. Please try again.')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -50,16 +67,10 @@ const CollectionScreen: React.FC = () => {
               <div className='link-card-icon'><Link size={48} color='#C7A1BC' /></div>
             </div>
             <div className="url-row" style={{ marginTop: 12 }}>
-              <input className="url-input" placeholder="Enter kit code" value={kitCode} onChange={e => setKitCode(e.target.value)} />
-              <button className="link-btn" onClick={handleLink}>Link</button>
+              <input className="url-input" placeholder="Enter kit code" value={kitCode} onChange={e => { setKitCode(e.target.value); setError(''); }} disabled={loading} />
+              <button className="link-btn" onClick={handleLink} disabled={loading}>{loading ? 'Verifying...' : 'Link'}</button>
             </div>
-            <input
-              className="barcode-hidden-input"
-              aria-label="Barcode reader input"
-              value={barcodeValue}
-              onChange={(e) => setBarcodeValue(e.target.value)}
-              placeholder="Barcode input support"
-            />
+            {error && <div style={{ color: '#dc2626', fontSize: 13, marginTop: 8, textAlign: 'center' }}>{error}</div>}
           </section>
         </div>
       </main>

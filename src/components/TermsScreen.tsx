@@ -18,8 +18,8 @@ const TermsScreen = () => {
       username: reg.username,
       password: reg.password,
       email: reg.email,
-      first_name: reg.firstName,
-      last_name: reg.lastName,
+      first_name: reg.first_name,
+      last_name: reg.last_name,
       type: reg.accountType === 'healthcare' ? 'PROVIDER' : 'INDIVIDUAL',
     };
 
@@ -67,8 +67,8 @@ const TermsScreen = () => {
         dispatch({
           type: 'UPDATE_REGISTRATION',
           payload: {
-            firstName: data.first_name ?? '',
-            lastName: data.last_name ?? '',
+            first_name: data.first_name ?? '',
+            last_name: data.last_name ?? '',
             referralCode: data.referral_code ?? undefined,
           }
         })

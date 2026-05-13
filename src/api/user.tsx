@@ -1,8 +1,8 @@
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'; // origin
 const AUTH_TOKEN_KEY = 'omiver_auth_token';
+const PERSISTENT_LOGIN_KEY = 'omiver_persistent_login';
 
 export const setAuthToken = (token?: string | null): void => {
-    console.log('token:', token)
     if (!token) {
         localStorage.removeItem(AUTH_TOKEN_KEY);
         return;
@@ -16,6 +16,42 @@ export const clearAuthToken = (): void => {
 
 export const getAuthToken = (): string | null => {
     return localStorage.getItem(AUTH_TOKEN_KEY);
+};
+
+export const setPersistentLogin = (loginInfo?: { userId: string; userType: 'PROVIDER' | 'INDIVIDUAL'; clientId: number; email: string } | null): void => {
+    if (!loginInfo) {
+        localStorage.removeItem(PERSISTENT_LOGIN_KEY);
+        return;
+    }
+    localStorage.setItem(PERSISTENT_LOGIN_KEY, JSON.stringify(loginInfo));
+};
+
+export const getPersistentLogin = (): { userId: string; userType: 'PROVIDER' | 'INDIVIDUAL'; clientId: number; email: string } | null => {
+    try {
+        const stored = localStorage.getItem(PERSISTENT_LOGIN_KEY);
+        return stored ? JSON.parse(stored) : null;
+    } catch {
+        return null;
+    }
+};
+
+export const clearPersistentLogin = (): void => {
+    localStorage.removeItem(PERSISTENT_LOGIN_KEY);
+};
+
+export const verifyToken = async (): Promise<boolean> => {
+    const token = getAuthToken();
+    if (!token) return false;
+    
+    try {
+        const response = await fetch(`${API_URL}/verify-token`, {
+            headers: withAuthHeaders(),
+            credentials: 'include',
+        });
+        return response.ok;
+    } catch {
+        return false;
+    }
 };
 
 const withAuthHeaders = (headers: Record<string, string> = {}): Record<string, string> => {
@@ -255,6 +291,8 @@ export const logoutApi = async (): Promise<void> => {
         credentials: token ? undefined : 'include',
     };
     await fetch(`${API_URL}/logout`, options);
+    // Clear persistent login on logout
+    clearPersistentLogin();
 };
 
 export const emailExist = async (email: string): Promise<boolean> => {
@@ -442,4 +480,16 @@ export const checkReferralCode = async (code: string): Promise<boolean> => {
     }
     const result = await response.json();
     return result.isValid;
+}
+
+export const verifyKitCode = async (kitCode: string): Promise<{ valid: boolean; message?: string }> => {
+    const response = await fetch(`${API_URL}/verify-kit-code?code=${encodeURIComponent(kitCode)}`, {
+        headers: withAuthHeaders(),
+        credentials: 'include',
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        return { valid: false, message: errorData.message || 'Kit code not found' };
+    }
+    return { valid: true, message: 'Kit code verified' };
 }

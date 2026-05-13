@@ -17,14 +17,13 @@ const BottomNav: React.FC<Props> = ({ active = 'home' }) => {
         <Album size={28} />
         <span>Kits</span>
       </button>
+      <button className={`nav-item ${active === 'recommendations' ? 'active' : ''}`} onClick={() => navigate('/recommendations')}>
+        <Lightbulb size={28} />
+        <span>Recommendation</span>
+      </button>
       <button className={`nav-item ${active === 'collection' ? 'active' : ''}`} onClick={() => navigate('/collection')}>
         <LocateFixed size={28} />
         <span>Collection</span>
-      </button>
-
-      <button className={`nav-item ${active === 'recommendations' ? 'active' : ''}`} onClick={() => navigate('/recommendations')}>
-        <Lightbulb size={28} />
-        <span>Recommendations</span>
       </button>
       <button className={`nav-item ${active === 'profile' ? 'active' : ''}`} onClick={() => navigate('/profile')}>
         <CircleUserRound size={28} />

@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { X, Package, Inbox, ChevronRight, ArrowLeft } from 'lucide-react';
+import { X, Package, Inbox, ChevronRight } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 import './KitsScreen.css';
 import BottomNav from './BottomNav';
 import omiver from '../assets/omiver.svg';
-import { fetchKits, fetchOrders, fetchOrderDetail, type Kit, type Order, type OrderDetail } from '../api/user';
+import { fetchKits, fetchOrders, type Kit, type Order } from '../api/user';
 
 const KitsScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -18,11 +18,11 @@ const KitsScreen: React.FC = () => {
   const [selectedKit, setSelectedKit] = useState<Kit | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
-  const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetail | null>(null);
-  const [loadingOrderDetail, setLoadingOrderDetail] = useState(false);
 
   const [activeTab, setActiveTab] = useState<'kits' | 'orders'>('kits');
+
+  // Color palette for kit cards
+  const kitColors = ['#6b9b8a', '#8b5e83', '#d97706', '#059669', '#7c3aed', '#dc2626', '#0891b2', '#ea580c'];
 
   const queryParams = new URLSearchParams(location.search);
   const tabParam = queryParams.get('tab');
@@ -34,7 +34,7 @@ const KitsScreen: React.FC = () => {
 
   useEffect(() => {
     fetchKits()
-      .then((data: Kit[]) => setKits(data.filter(k => k.active !== false)))
+      .then((data: Kit[]) => setKits(data.filter(k => k.active === true)))
       .catch((error) => console.error(error));
   }, []);
 
@@ -66,18 +66,8 @@ const KitsScreen: React.FC = () => {
     }
   };
 
-  const handleOrderClick = (orderId: number) => {
-    setSelectedOrderId(orderId);
-    setLoadingOrderDetail(true);
-    fetchOrderDetail(orderId)
-      .then((detail) => setSelectedOrderDetail(detail))
-      .catch((err) => console.error('Failed to fetch order detail:', err))
-      .finally(() => setLoadingOrderDetail(false));
-  };
-
-  const handleCloseOrderDetail = () => {
-    setSelectedOrderId(null);
-    setSelectedOrderDetail(null);
+  const handleMyOrdersClick = () => {
+    navigate('/kits?tab=orders');
   };
 
   return (
@@ -97,7 +87,7 @@ const KitsScreen: React.FC = () => {
           </button>
           <button
             className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
-            onClick={() => navigate('/kits?tab=orders')}
+            onClick={handleMyOrdersClick}
           >
             <Inbox size={18} />
             <span>My Orders</span>
@@ -109,8 +99,8 @@ const KitsScreen: React.FC = () => {
             <div className='kits-top'><h2 className="kits-title">Choose Your Test Kit</h2></div>
             <div className="bottom-card">
               <div className="kits-list">
-                {kits.map((k) => {
-                  const color = '#6b9b8a';
+                {kits.map((k, index) => {
+                  const color = kitColors[index % kitColors.length];
                   const features = [
                     'At-home blood collection',
                     'Free shipping and return kit',
@@ -147,7 +137,7 @@ const KitsScreen: React.FC = () => {
                 {(() => {
                   const latest = orders[0];
                   return (
-                    <div style={{ background: '#6b9b8a', borderRadius: 16, padding: 20, marginBottom: 24, color: 'white', cursor: 'pointer' }} onClick={() => handleOrderClick(latest.id)}>
+                      <div style={{ background: '#6b9b8a', borderRadius: 16, padding: 20, marginBottom: 24, color: 'white', cursor: 'pointer' }} onClick={() => navigate('/orders', { state: { orderId: latest.id } })}>
                       <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Latest Order</h2>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
@@ -167,7 +157,7 @@ const KitsScreen: React.FC = () => {
                   <div>
                     <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, opacity: 0.8 }}>Order History</h3>
                     {orders.slice(1).map((order) => (
-                      <div key={order.id} className="order-card" style={{ marginBottom: 12, background: 'white', borderRadius: 12, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', cursor: 'pointer' }} onClick={() => handleOrderClick(order.id)}>
+                      <div key={order.id} className="order-card" style={{ marginBottom: 12, background: 'white', borderRadius: 12, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', cursor: 'pointer' }} onClick={() => navigate('/orders', { state: { orderId: order.id } })}>
                         <div className='collection-card-group' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div className='collection-card-text-group'>
                             <div style={{ opacity: 0.7, marginBottom: 2, fontSize: 12 }}>Order #{order.order_number}</div>
@@ -197,42 +187,6 @@ const KitsScreen: React.FC = () => {
           </div>
         )}
       </main>
-
-      {/* Order Detail Modal */}
-      {selectedOrderId && selectedOrderDetail && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000 }} onClick={handleCloseOrderDetail}>
-          <div style={{ background: 'white', height: '100vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ padding: 16, display: 'flex', alignItems: 'center', borderBottom: '1px solid #e5e7eb' }}>
-              <button onClick={handleCloseOrderDetail} style={{ background: 'none', border: 'none', padding: 8, cursor: 'pointer' }}><ArrowLeft size={24} color="#6b9b8a" /></button>
-              <h2 style={{ marginLeft: 12, fontSize: 18, fontWeight: 600 }}>Order Details</h2>
-            </div>
-            <div style={{ padding: 16 }}>
-              {loadingOrderDetail ? <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div> : (
-                <>
-                  <div style={{ marginBottom: 24 }}>
-                    <h3 style={{ fontSize: 16, fontWeight: 600 }}>{selectedOrderDetail.test_kit_name}</h3>
-                    <p style={{ opacity: 0.7 }}>Order #{selectedOrderDetail.order_number}</p>
-                  </div>
-                  {selectedOrderDetail.delivery_events && selectedOrderDetail.delivery_events.length > 0 && (
-                    <div>
-                      <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Delivery Updates</h4>
-                      {selectedOrderDetail.delivery_events.map((ev) => (
-                        <div key={ev.id} style={{ display: 'flex', marginBottom: 16 }}>
-                          <div style={{ width: 12, height: 12, borderRadius: '50%', background: ev.is_completed ? '#6b9b8a' : '#e5e7eb', marginRight: 12, marginTop: 4 }} />
-                          <div>
-                            <p style={{ fontSize: 14, fontWeight: 600 }}>{ev.title}</p>
-                            {ev.description && <p style={{ fontSize: 12, opacity: 0.7 }}>{ev.description}</p>}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Quantity Modal for Providers */}
       {selectedKit && isProvider && (

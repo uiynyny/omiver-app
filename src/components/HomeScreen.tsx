@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HeartPulse } from 'lucide-react';
+import { HeartPulse, Pencil } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 import './HomeScreen.css';
@@ -12,8 +12,7 @@ const HomeScreen = () => {
   const navigate = useNavigate();
   const { state } = useAppContext();
   const personal = state.registration;
-  const displayName = `${state.registration.firstName ?? ''} ${state.registration.lastName ?? ''}`.trim();
-  console.log('state', state);
+  const displayName = `${state.registration.first_name ?? ''} ${state.registration.last_name ?? ''}`.trim();
   
   const clientId = state.auth.clientId;
   const [dashboardData, setDashboardData] = useState<Dashboard | null>(null);
@@ -75,7 +74,12 @@ const HomeScreen = () => {
         </div>
         <div className='bottom-card'>
           <section className="profile-summary">
-            <h3>Profile Summary</h3>
+            <div className="profile-summary-header">
+              <h3>Profile Summary</h3>
+              <button className="edit-profile-btn" onClick={() => navigate('/profile')}>
+                <Pencil size={14} style={{ marginRight: 8 }} /> Edit Profile
+              </button>
+            </div>
             <div className="profile-grid">
               <div className="profile-card">
                 <div className="card-label">Name</div>

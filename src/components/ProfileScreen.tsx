@@ -28,8 +28,9 @@ const ProfileScreen: React.FC = () => {
   const nutritional_goal = state?.registration?.nutritional_goal || 'None'
   const fitness_goal = state?.registration?.fitness_goal || 'None'
   const personal = state.registration;
+  console.log("state", state)
 
-  const name = `${state?.registration?.firstName || ''} ${state?.registration?.lastName || ''}`.trim() || ''
+  const name = `${state?.registration?.first_name || ''} ${state?.registration?.last_name || ''}`.trim() || ''
   const age = useMemo(() => {
       if (!personal.date_of_birth) return undefined;
       const b = new Date(personal.date_of_birth);

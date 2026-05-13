@@ -1,61 +1,74 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Box, Truck, CheckCircle, Package, Inbox, HelpCircle, Printer } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Box, Truck, CheckCircle, Package, Inbox, HelpCircle, Printer, ArrowLeft } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { fetchOrders, fetchOrderDetail } from '../api/user';
+import { fetchOrders, fetchOrderDetail, type OrderDetail } from '../api/user';
 
 import './OrderScreen.css';
 import BottomNav from './BottomNav';
 import omiver from '../assets/omiver.svg';
 
-type Order = {
-  id?: string | number;
-  testName?: string;
-  date?: string;
-  tracking?: string;
-  kitName?: string;
-};
-
-type DeliveryEvent = {
-  id: string | number;
-  event_type: string;
-  title: string;
-  description?: string;
-  is_completed?: boolean;
-};
-
 const OrderScreen: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { state } = useAppContext();
   const clientId = state.auth.clientId;
-  const [order, setOrder] = useState<Order | null>(null);
-  const [events, setEvents] = useState<DeliveryEvent[]>([]);
+  const orderId = (location.state as { orderId?: number } | null)?.orderId;
+  const [order, setOrder] = useState<OrderDetail | null>(null);
 
   const [loading, setLoading] = useState(true);
 
+  const formatOrderDate = (dateString?: string) => {
+    if (!dateString) return '';
+    try {
+      const d = new Date(dateString);
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return dateString;
+    }
+  };
+
   useEffect(() => {
-    if (clientId) {
-      fetchOrders(clientId).then((orders) => {
+    const loadOrder = async () => {
+      if (orderId) {
+        try {
+          const detail = await fetchOrderDetail(orderId);
+          setOrder(detail);
+        } catch (error) {
+          console.error(error);
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (!clientId) {
         setLoading(false);
+        return;
+      }
+
+      try {
+        const orders = await fetchOrders(clientId);
         if (orders.length > 0) {
           const latestOrder = orders[0];
-          setOrder({
-            id: latestOrder.order_number || latestOrder.id,
-            testName: latestOrder.test_kit_name,
-            date: latestOrder.order_date || latestOrder.created_at,
-            tracking: latestOrder.tracking_number,
-            kitName: latestOrder.test_kit_name,
-          });
-
-          fetchOrderDetail(latestOrder.id).then((detail) => {
-            setEvents(detail.delivery_events || []);
-          }).catch((error) => console.error(error));
+          const detail = await fetchOrderDetail(latestOrder.id);
+          setOrder(detail);
         }
-      }).catch((error) => console.error(error));
-    } else {
-      setLoading(false);
-    }
-  }, [clientId]);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadOrder();
+  }, [clientId, orderId]);
+
+  const orderNumber = order?.order_number ?? order?.id;
+  const orderName = order?.test_kit_name ?? order?.testName ?? 'Order';
+  const orderDate = formatOrderDate(order?.order_date || order?.created_at || order?.date);
+  const trackingNumber = order?.tracking_number || order?.tracking;
+  const events = order?.delivery_events || [];
 
   return (
     <div className="order-root">
@@ -65,7 +78,12 @@ const OrderScreen: React.FC = () => {
 
       <main className="order-main">
         <div className='order-top'>
-          <h2 className='order-title'>Order Confirmed</h2>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+            <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', padding: 8, cursor: 'pointer', flex:1 }} aria-label="Back to orders">
+              <ArrowLeft size={20} color="#fff" />
+            </button>
+            <h2 className='order-title' style={{ margin: 0, marginLeft: 8, flex:4}}>Order Confirmed</h2>
+          </div>
           {loading ? (
             <div className="order-card empty-order-card">
               <div className='collection-card-group'>
@@ -81,13 +99,13 @@ const OrderScreen: React.FC = () => {
               <div className='collection-card-group'>
                 <div className='collection-card-text-group'>
                   <div style={{ opacity: 0.85, marginBottom: 6 }}>Home collection kit</div>
-                  <h2>{order.testName}</h2>
+                  <h2>{orderName}</h2>
                 </div>
                 <div className='order-card-icon'><Package size={48} color='#fff' /></div>
               </div>
               <div className="order-meta">
-                <div>ID: {order.id}</div>
-                <div>Order Date: {order.date}</div>
+                <div>ID: {orderNumber}</div>
+                <div>Order Date: {orderDate}</div>
               </div>
             </div>
           ) : (
@@ -110,15 +128,15 @@ const OrderScreen: React.FC = () => {
               <div className="tracking-label">Tracking Number</div>
               <div style={{ color: '#777', marginBottom: 10 }}>Track your order</div>
               <div className="tracking-number">
-                <div style={{ fontWeight: 700 }}>{order.tracking || 'Pending'}</div>
-                {order.tracking && <button className="copy-btn" onClick={() => navigator.clipboard?.writeText(order.tracking!)}>Copy</button>}
+                <div style={{ fontWeight: 700 }}>{trackingNumber || 'Pending'}</div>
+                {trackingNumber && <button className="copy-btn" onClick={() => navigator.clipboard?.writeText(trackingNumber)}>Copy</button>}
               </div>
             </section>
 
             <section className="progress-card">
               <h3 style={{ marginTop: 0 }}>Delivery Progress</h3>
 
-              {events.length > 0 ? events.map((event: DeliveryEvent) => (
+              {events.length > 0 ? events.map((event) => (
                 <div className="progress-row" key={event.id}>
                   <div className="progress-icon">
                     {event.event_type === 'ORDER_PLACED' && <CheckCircle color="#6b9b8a" />}
@@ -146,7 +164,15 @@ const OrderScreen: React.FC = () => {
                   <Printer size={20} />
                   <span>Print Receipt</span>
                 </button>
-                <button className="action-btn" onClick={() => alert('Support team contact:\nsupport@omiver.me')}>
+                <button
+                  className="action-btn"
+                  onClick={() => {
+                    const to = 'info@omiver.me';
+                    const subject = encodeURIComponent(`Order Support - ${orderNumber ?? ''}`);
+                    const body = encodeURIComponent(`Order ID: ${orderNumber ?? ''}\n\nDescribe your issue here:`);
+                    window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+                  }}
+                >
                   <HelpCircle size={20} />
                   <span>Contact Support</span>
                 </button>
