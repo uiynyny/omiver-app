@@ -8,6 +8,7 @@
 .profile-main { padding:18px; padding-bottom:96px }
 .card { background:white; border-radius:16px; padding:16px; margin-bottom:18px }
 .profile-summary-title { display:flex; align-items:center; gap:10px; margin-bottom:12px }
+.profile-summary-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:12px }
 .summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px }
 .summary-item { border:1px solid #eee; border-radius:12px; padding:12px }
 .summary-label { color:#888; font-size:0.9rem; margin-bottom:6px }

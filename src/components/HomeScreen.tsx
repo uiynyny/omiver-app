@@ -76,9 +76,6 @@ const HomeScreen = () => {
           <section className="profile-summary">
             <div className="profile-summary-header">
               <h3>Profile Summary</h3>
-              <button className="edit-profile-btn" onClick={() => navigate('/profile')}>
-                <Pencil size={14} style={{ marginRight: 8 }} /> Edit Profile
-              </button>
             </div>
             <div className="profile-grid">
               <div className="profile-card">

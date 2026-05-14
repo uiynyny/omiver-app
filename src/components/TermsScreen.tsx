@@ -32,7 +32,6 @@ const TermsScreen = () => {
       payload.weight = reg.weight;
       payload.health_conditions = reg.healthConditions;
       payload.allergies = reg.allergies;
-      payload.dietary_recall = reg.dietary_recall;
       payload.exercise_recall = reg.exercise_recall;
       payload.dietary_typicality = reg.dietary_typicality;
       payload.dietary_preference_mode = reg.dietary_preference_mode;

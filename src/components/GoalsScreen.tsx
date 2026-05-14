@@ -11,6 +11,9 @@ const GoalsScreen = () => {
   const [exerciseDays, setExerciseDays] = useState(state.registration.exercise_days_per_week ?? '3');
   const [exerciseTypes, setExerciseTypes] = useState(state.registration.exercise_types ?? '');
   const [providerNotes, setProviderNotes] = useState(state.registration.provider_notes ?? '');
+  const [preferenceMode, setPreferenceMode] = useState(state.registration.dietary_preference_mode ?? 'similar');
+  const [preferredCuisines, setPreferredCuisines] = useState(state.registration.preferred_cuisines ?? '');
+  const [avoidedCuisines, setAvoidedCuisines] = useState(state.registration.avoided_cuisines ?? '');
 
   const handleContinue = () => {
     dispatch({
@@ -20,6 +23,9 @@ const GoalsScreen = () => {
         exercise_days_per_week: exerciseDays,
         exercise_types: exerciseTypes,
         provider_notes: providerNotes,
+        dietary_preference_mode: preferenceMode,
+        preferred_cuisines: preferredCuisines,
+        avoided_cuisines: avoidedCuisines,
       },
     });
     navigate('/terms');
@@ -87,6 +93,39 @@ const GoalsScreen = () => {
               onChange={(e) => setProviderNotes(e.target.value)}
               className="form-textarea"
               rows={4}
+            />
+          </div>
+
+          <div className="input-group">
+            <label className="field-label">Do you want recommendations that are similar to your current diet or different?</label>
+            <select
+              className="form-input form-select"
+              value={preferenceMode}
+              onChange={(e) => setPreferenceMode(e.target.value)}
+            >
+              <option value="similar">Similar to my current diet</option>
+              <option value="different">Different from my current diet</option>
+              <option value="balanced">A balance of both</option>
+            </select>
+          </div>
+
+          <div className="input-group">
+            <textarea
+              placeholder="Preferred cuisines (e.g. Mediterranean, Korean, Mexican)"
+              value={preferredCuisines}
+              onChange={(e) => setPreferredCuisines(e.target.value)}
+              className="form-textarea"
+              rows={3}
+            />
+          </div>
+
+          <div className="input-group">
+            <textarea
+              placeholder="Cuisines you avoid or dislike"
+              value={avoidedCuisines}
+              onChange={(e) => setAvoidedCuisines(e.target.value)}
+              className="form-textarea"
+              rows={3}
             />
           </div>
         </div>

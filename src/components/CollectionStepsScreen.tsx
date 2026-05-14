@@ -1,14 +1,64 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Settings } from 'lucide-react';
+import { ArrowLeft, Camera, Check, Settings } from 'lucide-react';
 import './CollectionStepsScreen.css';
+import { verifyKitCode, updateClient } from '../api/user';
+import { useAppContext } from '../context/AppContext';
 
 const CollectionStepsScreen: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { state } = useAppContext();
   // State to simulate progress
   const [isSampleCollected, setIsSampleCollected] = useState(false);
-  const kitCode = (location.state as { kitCode?: string } | null)?.kitCode || 'Enter your kit code';
+  const [kitCode, setKitCode] = useState((location.state as { kitCode?: string } | null)?.kitCode || '');
+  const [kitLinked, setKitLinked] = useState(Boolean((location.state as { kitCode?: string } | null)?.kitCode));
+  const [kitLoading, setKitLoading] = useState(false);
+  const [kitError, setKitError] = useState('');
+  const [dietaryRecall, setDietaryRecall] = useState('');
+  const [recallSaving, setRecallSaving] = useState(false);
+
+  const handleLinkKit = async () => {
+    const code = kitCode.trim();
+    if (!code) return;
+
+    setKitLoading(true);
+    setKitError('');
+
+    try {
+      const result = await verifyKitCode(code);
+      if (result.valid) {
+        setKitLinked(true);
+      } else {
+        setKitError(result.message || 'Kit code is invalid. Please check and try again.');
+      }
+    } catch (error) {
+      console.error(error);
+      setKitError('Failed to verify kit code. Please try again.');
+    } finally {
+      setKitLoading(false);
+    }
+  };
+
+  const handleSaveDietaryRecall = async () => {
+    if (!state.auth.clientId) {
+      console.error('Client ID not found');
+      return;
+    }
+
+    setRecallSaving(true);
+    try {
+      await updateClient(state.auth.clientId, {
+        dietary_recall: dietaryRecall,
+      });
+      // Optionally show a success message or navigate
+      console.log('Dietary recall saved successfully');
+    } catch (error) {
+      console.error('Failed to save dietary recall:', error);
+    } finally {
+      setRecallSaving(false);
+    }
+  };
 
   return (
     <div className="steps-root">
@@ -25,10 +75,10 @@ const CollectionStepsScreen: React.FC = () => {
       <div className="steps-content">
         <div className="steps-intro">Follow the steps below</div>
 
-        {/* Step 1: Link Your Kit (Completed) */}
+        {/* Step 1: Link Your Kit */}
         <div className="step-item">
           <div className="step-indicator">
-            <div className="step-circle completed">
+            <div className={`step-circle ${kitLinked ? 'completed' : 'active'}`}>
               <Check size={18} />
             </div>
             <div className="step-line"></div>
@@ -37,13 +87,42 @@ const CollectionStepsScreen: React.FC = () => {
             <div className="step-title">Link Your Kit</div>
             <div className="step-desc">Scan the barcode on your test kit or enter the code manually</div>
             <div className="step-card">
-              <div className="kit-linked-box">
-                <Check size={18} fill="#0f5132" />
-                <div>
-                  <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>Kit Linked</div>
-                  <div>Code: {kitCode}</div>
+              {kitLinked ? (
+                <div className="kit-linked-box">
+                  <Check size={18} fill="#0f5132" />
+                  <div>
+                    <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>Kit Linked</div>
+                    <div>Code: {kitCode}</div>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div className="url-row" style={{ marginTop: 0 }}>
+                    <input
+                      className="url-input"
+                      placeholder="Enter kit code"
+                      value={kitCode}
+                      onChange={(e) => {
+                        setKitCode(e.target.value);
+                        setKitError('');
+                      }}
+                      disabled={kitLoading}
+                    />
+                    <button className="link-btn" onClick={handleLinkKit} disabled={kitLoading}>
+                      {kitLoading ? 'Verifying...' : 'Link'}
+                    </button>
+                  </div>
+                  <button
+                    className="scan-cta"
+                    style={{ marginTop: 12 }}
+                    onClick={() => navigate('/collection/scan')}
+                  >
+                    <Camera size={18} />
+                    <span>Scan with Camera</span>
+                  </button>
+                  {kitError && <div style={{ color: '#dc2626', fontSize: 13, marginTop: 8 }}>{kitError}</div>}
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -83,6 +162,41 @@ const CollectionStepsScreen: React.FC = () => {
                 <div className="kit-linked-box" style={{ background: '#fce8f8', color: '#8a4b7d', borderColor: '#e0c0d8' }}>
                   <Check size={18} />
                   Sample Collected
+                </div>
+              </div>
+            )}
+
+            {isSampleCollected && (
+              <div className="step-card">
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 8, color: '#333' }}>
+                    Tell us what you ate in the last 24 hours
+                  </div>
+                  <textarea
+                    placeholder="24-hour dietary recall (e.g., breakfast: eggs and toast, lunch: chicken salad, dinner: pasta...)"
+                    value={dietaryRecall}
+                    onChange={(e) => setDietaryRecall(e.target.value)}
+                    className="form-textarea"
+                    rows={4}
+                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e0e0e0', fontFamily: 'inherit', marginBottom: '12px' }}
+                  />
+                  <button 
+                    onClick={handleSaveDietaryRecall}
+                    disabled={recallSaving || !dietaryRecall.trim()}
+                    style={{
+                      padding: '10px 16px',
+                      backgroundColor: '#6b9b8a',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '0.9rem',
+                      fontWeight: 600,
+                      cursor: recallSaving || !dietaryRecall.trim() ? 'not-allowed' : 'pointer',
+                      opacity: recallSaving || !dietaryRecall.trim() ? 0.6 : 1,
+                    }}
+                  >
+                    {recallSaving ? 'Saving...' : 'Save Dietary Recall'}
+                  </button>
                 </div>
               </div>
             )}

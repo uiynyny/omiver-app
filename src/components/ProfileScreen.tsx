@@ -3,7 +3,7 @@ import './ProfileScreen.css'
 import BottomNav from './BottomNav';
 import { useAppContext } from '../context/AppContext'
 import { useNavigate } from 'react-router-dom'
-import { User, Heart, Target, Apple } from 'lucide-react'
+import { User, Heart, Target, Apple, Pencil } from 'lucide-react'
 import { clearAuthToken, logoutApi } from '../api/user'
 import omiver from '../assets/omiver.svg'
 
@@ -49,7 +49,12 @@ const ProfileScreen: React.FC = () => {
 
       <main className="profile-main">
         <section className="card">
-          <div className="profile-summary-title"><User color="#6b9b8a" /> <div style={{ fontSize: 18 }}>Profile Summary</div></div>
+          <div className="profile-summary-header">
+            <div className="profile-summary-title"><User color="#6b9b8a" /> <div style={{ fontSize: 18 }}>Profile Summary</div></div>
+            <button className="edit-profile-btn" onClick={() => navigate('/profile/edit')}>
+              <Pencil size={14} style={{ marginRight: 8 }} /> Edit
+            </button>
+          </div>
           <div className="summary-grid">
             <div className="summary-item">
               <div className="summary-label">Name</div>
@@ -80,12 +85,6 @@ const ProfileScreen: React.FC = () => {
           <div className="section-content">Food Allergies & Sensitivities: {allergies || 'None'}</div>
           <div style={{ height: 10 }} />
           <div className="section-content">Dietary Preferences: {preferences || 'None'}</div>
-          <div style={{ height: 12 }} />
-          <div style={{ display: 'flex', justifyContent: 'flex-start', gap: 8 }}>
-            <button className="secondary-button" onClick={() => navigate('/dietary')}>
-              Edit 24-hour recall
-            </button>
-          </div>
         </section>
 
         <section style={{ marginTop: 18 }}>
