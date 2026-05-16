@@ -1,9 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChartPie, Album, LocateFixed, CircleUserRound, Lightbulb } from 'lucide-react';
+import { ChartPie, Album, CircleUserRound, Lightbulb } from 'lucide-react';
 import './BottomNav.css';
 
-type Props = { active?: 'home' | 'kits' | 'collection' | 'orders' | 'recommendations' | 'profile' };
+type Props = { active?: 'home' | 'kits' | 'orders' | 'recommendations' | 'profile' };
 
 const BottomNav: React.FC<Props> = ({ active = 'home' }) => {
   const navigate = useNavigate();
@@ -20,10 +20,6 @@ const BottomNav: React.FC<Props> = ({ active = 'home' }) => {
       <button className={`nav-item ${active === 'recommendations' ? 'active' : ''}`} onClick={() => navigate('/recommendations')}>
         <Lightbulb size={28} />
         <span>Recommendation</span>
-      </button>
-      <button className={`nav-item ${active === 'collection' ? 'active' : ''}`} onClick={() => navigate('/collection')}>
-        <LocateFixed size={28} />
-        <span>Collection</span>
       </button>
       <button className={`nav-item ${active === 'profile' ? 'active' : ''}`} onClick={() => navigate('/profile')}>
         <CircleUserRound size={28} />

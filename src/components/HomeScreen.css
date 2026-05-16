@@ -218,7 +218,8 @@
 }
 
 .rec-lead {
-  color: #666
+  color: #666;
+  text-align: center;
 }
 
 .rec-list {

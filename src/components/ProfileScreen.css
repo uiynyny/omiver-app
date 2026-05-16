@@ -10,8 +10,16 @@
 .profile-summary-title { display:flex; align-items:center; gap:10px; margin-bottom:12px }
 .profile-summary-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:12px }
 .summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px }
-.summary-item { border:1px solid #eee; border-radius:12px; padding:12px }
-.summary-label { color:#888; font-size:0.9rem; margin-bottom:6px }
+.summary-item {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+.summary-label { color:#888; font-size:0.9rem; margin-bottom:0 }
 .summary-value { font-weight:700 }
 .section-title { display:flex; align-items:center; gap:10px; margin-bottom:12px; font-weight:700 }
 .section-content { border:1px solid #eee; border-radius:12px; padding:12px; color:#444 }

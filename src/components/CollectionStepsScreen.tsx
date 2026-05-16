@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera, Check, Settings } from 'lucide-react';
+import { ArrowLeft, Camera, Check, Settings, Edit } from 'lucide-react';
 import './CollectionStepsScreen.css';
 import { verifyKitCode, updateClient } from '../api/user';
 import { useAppContext } from '../context/AppContext';
@@ -16,7 +16,42 @@ const CollectionStepsScreen: React.FC = () => {
   const [kitLoading, setKitLoading] = useState(false);
   const [kitError, setKitError] = useState('');
   const [dietaryRecall, setDietaryRecall] = useState('');
+  const [exerciseRecall, setExerciseRecall] = useState('');
+  const [collectionFinishedAt, setCollectionFinishedAt] = useState(() => {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  });
+
+  // Split date/time for better mobile-friendly inputs
+  const splitDateTime = (iso?: string) => {
+    if (!iso) return { date: '', time: '' };
+    const parts = iso.split('T');
+    return { date: parts[0] || '', time: (parts[1] || '').slice(0,5) };
+  };
+  const initialDT = splitDateTime(collectionFinishedAt);
+  const [collectionDate, setCollectionDate] = useState(initialDT.date);
+  const [collectionTime, setCollectionTime] = useState(initialDT.time);
+
+  const combineDateTime = (date: string, time: string) => {
+    if (!date) return '';
+    return `${date}T${time || '00:00'}`;
+  };
+
+  const setNow = () => {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    setCollectionDate(date);
+    setCollectionTime(time);
+    setCollectionFinishedAt(`${date}T${time}`);
+  };
   const [recallSaving, setRecallSaving] = useState(false);
+  const [recallCollapsed, setRecallCollapsed] = useState(false);
+  const [savedDietary, setSavedDietary] = useState('');
+  const [savedExercise, setSavedExercise] = useState('');
+  const [savedCollectionFinishedAt, setSavedCollectionFinishedAt] = useState('');
 
   const handleLinkKit = async () => {
     const code = kitCode.trim();
@@ -50,9 +85,15 @@ const CollectionStepsScreen: React.FC = () => {
     try {
       await updateClient(state.auth.clientId, {
         dietary_recall: dietaryRecall,
+        exercise_recall: exerciseRecall,
+        collection_finished_at: collectionFinishedAt ? new Date(collectionFinishedAt).toISOString() : null,
       });
-      // Optionally show a success message or navigate
-      console.log('Dietary recall saved successfully');
+      // store saved values and collapse the form
+      setSavedDietary(dietaryRecall);
+      setSavedExercise(exerciseRecall);
+      setSavedCollectionFinishedAt(collectionFinishedAt);
+      setRecallCollapsed(true);
+      console.log('Dietary, exercise recall and collection time saved successfully');
     } catch (error) {
       console.error('Failed to save dietary recall:', error);
     } finally {
@@ -142,15 +183,15 @@ const CollectionStepsScreen: React.FC = () => {
 
             {!isSampleCollected && (
               <div className="step-card">
-                <iframe 
-                  src="https://player.vimeo.com/video/759587605?fl=pl&fe=sh" 
-                  width="100%" 
-                  height="300" 
-                  frameBorder="0" 
-                  allow="autoplay; fullscreen; picture-in-picture" 
-                  allowFullScreen
-                  style={{ borderRadius: '8px', marginBottom: '12px' }}
-                />
+                  <iframe
+                    title="vimeo-player"
+                    src="https://player.vimeo.com/video/1051338117?h=8f460a47f8"
+                    width="100%"
+                    height="100%"
+                    frameBorder="0"
+                    allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                    allowFullScreen
+                  />
                 <button className="confirm-btn" onClick={() => setIsSampleCollected(true)}>
                   Confirm Sample Collected
                 </button>
@@ -170,33 +211,110 @@ const CollectionStepsScreen: React.FC = () => {
               <div className="step-card">
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 8, color: '#333' }}>
-                    Tell us what you ate in the last 24 hours
+                    When did you finish the collection?
                   </div>
-                  <textarea
-                    placeholder="24-hour dietary recall (e.g., breakfast: eggs and toast, lunch: chicken salad, dinner: pasta...)"
-                    value={dietaryRecall}
-                    onChange={(e) => setDietaryRecall(e.target.value)}
-                    className="form-textarea"
-                    rows={4}
-                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e0e0e0', fontFamily: 'inherit', marginBottom: '12px' }}
-                  />
-                  <button 
-                    onClick={handleSaveDietaryRecall}
-                    disabled={recallSaving || !dietaryRecall.trim()}
-                    style={{
-                      padding: '10px 16px',
-                      backgroundColor: '#6b9b8a',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '0.9rem',
-                      fontWeight: 600,
-                      cursor: recallSaving || !dietaryRecall.trim() ? 'not-allowed' : 'pointer',
-                      opacity: recallSaving || !dietaryRecall.trim() ? 0.6 : 1,
-                    }}
-                  >
-                    {recallSaving ? 'Saving...' : 'Save Dietary Recall'}
-                  </button>
+                  {recallCollapsed ? (
+                    <div className="recall-summary">
+                        <div className="recall-row recall-row-top">
+                          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flex: 1 }}>
+                            <div className="recall-label">Collection finished:</div>
+                            <div className="recall-value">{savedCollectionFinishedAt ? savedCollectionFinishedAt.replace('T', ' ') : 'Not set'}</div>
+                          </div>
+                          <button
+                            className="recall-edit-btn"
+                            onClick={() => setRecallCollapsed(false)}
+                            aria-label="Edit recalls"
+                          >
+                            <Edit size={16} />
+                          </button>
+                        </div>
+                      <div className="recall-row">
+                        <div className="recall-label">Dietary recall:</div>
+                        <div className="recall-value">{savedDietary || 'Not provided'}</div>
+                      </div>
+                      <div className="recall-row">
+                        <div className="recall-label">Exercise recall:</div>
+                        <div className="recall-value">{savedExercise || 'Not provided'}</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="collection-time-row" style={{ marginBottom: 12 }}>
+                        <input
+                          type="date"
+                          value={collectionDate}
+                          onChange={(e) => {
+                            const d = e.target.value;
+                            setCollectionDate(d);
+                            const combined = combineDateTime(d, collectionTime);
+                            setCollectionFinishedAt(combined);
+                          }}
+                        />
+                        <input
+                          type="time"
+                          value={collectionTime}
+                          onChange={(e) => {
+                            const t = e.target.value;
+                            setCollectionTime(t);
+                            const combined = combineDateTime(collectionDate, t);
+                            setCollectionFinishedAt(combined);
+                          }}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+                        <button
+                          type="button"
+                          className="small-plain-btn"
+                          onClick={setNow}
+                          style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #e0e0e0', background: 'white', cursor: 'pointer' }}
+                        >
+                          Set to Now
+                        </button>
+                        <div style={{ fontSize: '0.9rem', color: '#555' }}>
+                          Selected: {collectionFinishedAt.replace('T', ' ')}
+                        </div>
+                      </div>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 8, color: '#333' }}>
+                        Tell us what you ate in the last 24 hours
+                      </div>
+                      <textarea
+                        placeholder="24-hour dietary recall (e.g., breakfast: eggs and toast, lunch: chicken salad, dinner: pasta...)"
+                        value={dietaryRecall}
+                        onChange={(e) => setDietaryRecall(e.target.value)}
+                        className="form-textarea"
+                        rows={4}
+                        style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e0e0e0', fontFamily: 'inherit', marginBottom: '12px' }}
+                      />
+                      <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 8, color: '#333' }}>
+                        Tell us about your recent exercise
+                      </div>
+                      <textarea
+                        placeholder="Exercise recall (e.g., walked 30 minutes, strength training, yoga...)"
+                        value={exerciseRecall}
+                        onChange={(e) => setExerciseRecall(e.target.value)}
+                        className="form-textarea"
+                        rows={3}
+                        style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e0e0e0', fontFamily: 'inherit', marginBottom: '12px' }}
+                      />
+                      <button 
+                        onClick={handleSaveDietaryRecall}
+                        disabled={recallSaving}
+                        style={{
+                          padding: '10px 16px',
+                          backgroundColor: '#6b9b8a',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          cursor: recallSaving ? 'not-allowed' : 'pointer',
+                          opacity: recallSaving ? 0.6 : 1,
+                        }}
+                      >
+                        {recallSaving ? 'Saving...' : 'Save Recall'}
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             )}

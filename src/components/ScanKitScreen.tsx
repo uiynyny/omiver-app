@@ -1,11 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera, Zap } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import './ScanKitScreen.css';
 
 const ScanKitScreen: React.FC = () => {
   const navigate = useNavigate();
-  const [flashlightOn, setFlashlightOn] = useState(false);
   const [isScanning, setIsScanning] = useState(true);
   const [error, setError] = useState('');
   const [cameraReady, setCameraReady] = useState(false);
@@ -100,13 +99,7 @@ const ScanKitScreen: React.FC = () => {
     };
   }, [isScanning, navigate]);
 
-  const handleCapture = () => {
-    setError('Point the camera at a barcode and wait for it to be detected.');
-  };
-
-  const toggleFlashlight = () => {
-    setFlashlightOn(!flashlightOn);
-  };
+  // scanning is fully automatic via BarcodeDetector; no manual capture controls required
 
   return (
     <div className="scan-root">
@@ -136,22 +129,7 @@ const ScanKitScreen: React.FC = () => {
           </div>
         </div>
 
-        <div className="scan-controls">
-          <button className="scan-control-btn" onClick={handleCapture} aria-label="Scan with camera">
-            <Camera size={24} />
-          </button>
-          
-          <button className="scan-capture-btn" onClick={handleCapture}>
-            <div className="scan-capture-inner"></div>
-          </button>
-          
-          <button 
-            className={`scan-control-btn ${flashlightOn ? 'active' : ''}`} 
-            onClick={toggleFlashlight}
-          >
-            <Zap size={24} />
-          </button>
-        </div>
+        {/* Controls removed — scanning is automatic and captures detected barcodes */}
       </div>
     </div>
   );

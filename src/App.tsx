@@ -17,9 +17,9 @@ import KitsScreen from './components/KitsScreen';
 import OrderScreen from './components/OrderScreen';
 import RecommendationsScreen from './components/RecommendationsScreen';
 import ProfileScreen from './components/ProfileScreen';
-import CollectionScreen from './components/CollectionScreen';
 import ScanKitScreen from './components/ScanKitScreen';
 import CollectionStepsScreen from './components/CollectionStepsScreen';
+import ForgotPasswordScreen from './components/ForgotPasswordScreen';
 import PaymentScreen from './components/PaymentScreen';
 import PatientDetailScreen from './components/PatientDetailScreen';
 import './App.css';
@@ -45,9 +45,9 @@ function App() {
           <Route path="/terms" element={<TermsScreen />} />
           <Route path="/home" element={<HomeScreen />} />
           <Route path="/kits" element={<KitsScreen />} />
-          <Route path="/collection" element={<CollectionScreen />} />
           <Route path="/collection/scan" element={<ScanKitScreen />} />
           <Route path="/collection/steps" element={<CollectionStepsScreen />} />
+          <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
           <Route path="/payment" element={<PaymentScreen />} />
           <Route path="/orders" element={<OrderScreen />} />
           <Route path="/recommendations" element={<RecommendationsScreen />} />

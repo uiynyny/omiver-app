@@ -261,3 +261,86 @@
 .step-card {
   animation: fadeIn 0.4s ease-out;
 }
+
+/* Constrain recall textareas and other elements to parent width */
+.form-textarea,
+.step-card textarea,
+.step-card input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  overflow: auto;
+  word-break: break-word;
+  white-space: pre-wrap;
+  resize: vertical;
+}
+
+/* Ensure embedded iframe/video does not overflow */
+.step-card iframe {
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Collection time row: responsive layout for date/time inputs */
+.collection-time-row {
+  display: flex;
+  gap: 8px;
+}
+.collection-time-row input[type="date"],
+.collection-time-row input[type="time"] {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+@media (max-width: 480px) {
+  .collection-time-row { flex-direction: column; }
+}
+
+.small-plain-btn {
+  font-size: 0.9rem;
+}
+
+.recall-summary {
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #e9ecef;
+}
+.recall-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+.recall-label {
+  min-width: 120px;
+  color: #666;
+  font-weight: 600;
+}
+.recall-value {
+  flex: 1;
+  color: #333;
+  white-space: pre-wrap;
+}
+
+.recall-edit-btn {
+  background: transparent;
+  border: none;
+  padding: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #6b9b8a;
+}
+.recall-edit-btn:hover { opacity: 0.9; }
+
+.recall-actions {
+  display: none;
+}

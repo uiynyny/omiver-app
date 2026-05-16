@@ -54,6 +54,29 @@ export const verifyToken = async (): Promise<boolean> => {
     }
 };
 
+export const requestPasswordReset = async (email: string): Promise<boolean> => {
+    try {
+        // backend base (strip trailing /api if present)
+        const backendBase = API_URL.replace(/\/api\/?$/, '');
+        const url = `${backendBase}/accounts/password_reset/`;
+        const form = new URLSearchParams();
+        form.append('email', email);
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: form.toString(),
+            credentials: 'include',
+        });
+        return res.ok;
+    } catch (err) {
+        console.error('requestPasswordReset error', err);
+        return false;
+    }
+};
+
 const withAuthHeaders = (headers: Record<string, string> = {}): Record<string, string> => {
     const token = getAuthToken();
     return token ? { ...headers, Authorization: `Token ${token}` } : headers;
