@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HeartPulse, Pencil } from 'lucide-react';
+import { HeartPulse } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 import './HomeScreen.css';

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { X, Package, Inbox, ChevronRight, ScanLine, Link } from 'lucide-react';
+import { X, Package, Inbox, ChevronRight } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 import './KitsScreen.css';
