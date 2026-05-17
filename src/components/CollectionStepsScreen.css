@@ -11,7 +11,8 @@
   align-items: center;
   justify-content: center;
   padding: 16px 20px;
-  background-color: #6b9b8a; /* Sage green from designs */
+  background-color: #6b9b8a;
+  /* Sage green from designs */
   color: white;
   position: relative;
 }
@@ -133,9 +134,56 @@
   background: white;
   border-radius: 12px;
   padding: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   margin-top: 8px;
   border: 1px solid #eee;
+}
+
+/* URL input + link button layout used on the step card */
+.url-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.url-input {
+  flex: 1;
+  background: #fbf7f7;
+  color: #333;
+  border: 1px solid #e0e0e0;
+  padding: 12px 14px;
+  border-radius: 50px;
+  border: 1px solid #f0eaea;
+  ;
+}
+
+.link-btn {
+  background-color: #C7A1BC;
+  /* Lilac/Purple from design */
+  color: white;
+  border: none;
+  border-radius: 25px;
+  padding: 12px 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.scan-cta {
+  background-color: #D27644;
+  /* Brand orange/brown */
+  color: white;
+  border: none;
+  border-radius: 25px;
+  width: 100%;
+  padding: 12px 20px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .kit-linked-box {
@@ -166,7 +214,7 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   border: 2px solid white;
   display: flex;
   align-items: center;
@@ -177,7 +225,8 @@
 .confirm-btn {
   width: 100%;
   padding: 14px;
-  background-color: #C7A1BC; /* Lilac/Purple from design */
+  background-color: #C7A1BC;
+  /* Lilac/Purple from design */
   color: white;
   border: none;
   border-radius: 25px;
@@ -219,7 +268,8 @@
 }
 
 .info-card {
-  background-color: #fffaf5; /* Light creamy background */
+  background-color: #fffaf5;
+  /* Light creamy background */
   border: 1px solid #fcefe6;
   border-radius: 12px;
   padding: 16px;
@@ -242,7 +292,8 @@
 .dashboard-btn {
   width: 100%;
   padding: 16px;
-  background-color: #D27644; /* Brand orange/brown */
+  background-color: #D27644;
+  /* Brand orange/brown */
   color: white;
   border: none;
   border-radius: 25px;
@@ -254,8 +305,15 @@
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .step-card {
@@ -288,6 +346,7 @@
   display: flex;
   gap: 8px;
 }
+
 .collection-time-row input[type="date"],
 .collection-time-row input[type="time"] {
   flex: 1;
@@ -299,7 +358,9 @@
 }
 
 @media (max-width: 480px) {
-  .collection-time-row { flex-direction: column; }
+  .collection-time-row {
+    flex-direction: column;
+  }
 }
 
 .small-plain-btn {
@@ -312,17 +373,20 @@
   padding: 12px;
   border: 1px solid #e9ecef;
 }
+
 .recall-row {
   display: flex;
   gap: 12px;
   margin-bottom: 8px;
   align-items: center;
 }
+
 .recall-label {
   min-width: 120px;
   color: #666;
   font-weight: 600;
 }
+
 .recall-value {
   flex: 1;
   color: #333;
@@ -339,7 +403,10 @@
   cursor: pointer;
   color: #6b9b8a;
 }
-.recall-edit-btn:hover { opacity: 0.9; }
+
+.recall-edit-btn:hover {
+  opacity: 0.9;
+}
 
 .recall-actions {
   display: none;

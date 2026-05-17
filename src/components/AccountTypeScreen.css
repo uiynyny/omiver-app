@@ -218,6 +218,56 @@
   pointer-events: none;
 }
 
+.input-row {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+}
+
+.input-with-suffix {
+  flex: 1;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.input-wrapper .form-input {
+  flex: 1;
+  padding-right: 5rem;
+  padding-left: 5rem;
+}
+.input-prefix {
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  left: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+.input-suffix {
+  position: absolute;
+  right: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.input-hint {
+  font-size: 0.75rem;
+  color: #999;
+  padding-left: 1.5rem;
+}
+
 .form-textarea {
   width: 100%;
   padding: 1.2rem 1.5rem;

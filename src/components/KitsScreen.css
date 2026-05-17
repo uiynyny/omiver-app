@@ -56,11 +56,28 @@
   border-radius: 18px;
   padding: 18px
 }
+.collection-card-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin: 12px 0;
+}
 
 .empty-order-card .collection-card-text-group,
 .empty-order-card .collection-card-text-group h2,
 .empty-order-card .collection-card-text-group div {
   color: #fff;
+}
+
+.order-card-icon {
+  background: #67997D;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .kit-top {
@@ -326,35 +343,26 @@
 /* ── Order Empty State Buttons ─────────────────────────────── */
 .next-cta,
 .alt-cta {
-  flex: 1;
-  padding: 12px 16px;
+  flex: 1;  
   border: none;
-  border-radius: 8px;
+  margin: 12px 0 0;
+  padding: 16px 32px;
+  border-radius: 50px;
   font-weight: 600;
   font-size: 0.9rem;
-  cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: white;
+  color: #406952;
 }
 
-.next-cta {
-  background: #67997D;
-  color: white;
+.alt-cta:hover {
+  background: white;
+  box-shadow: 0 4px 12px rgba(103, 153, 125, 0.2);
 }
 
 .next-cta:hover {
   background: #5a8470;
   box-shadow: 0 4px 12px rgba(103, 153, 125, 0.2);
-}
-
-.alt-cta {
-  background: white;
-  color: #67997D;
-  border: 2px solid #67997D;
-}
-
-.alt-cta:hover {
-  background: #f0f8f5;
-  box-shadow: 0 4px 12px rgba(103, 153, 125, 0.15);
 }
 
 .kits-helper {

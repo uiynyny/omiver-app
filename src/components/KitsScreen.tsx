@@ -7,7 +7,6 @@ import './KitsScreen.css';
 import BottomNav from './BottomNav';
 import omiver from '../assets/omiver.svg';
 import { fetchKits, fetchOrders, type Kit, type Order } from '../api/user';
-import CollectionStepsScreen from './CollectionStepsScreen';
 
 const KitsScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -21,7 +20,7 @@ const KitsScreen: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
  
 
-  const [activeTab, setActiveTab] = useState<'kits' | 'orders' | 'collection'>('kits');
+  const [activeTab, setActiveTab] = useState<'browse' | 'orders'>('browse');
 
   // Color palette for kit cards
   const kitColors = ['#6b9b8a', '#8b5e83', '#d97706', '#059669', '#7c3aed', '#dc2626', '#0891b2', '#ea580c'];
@@ -31,8 +30,8 @@ const KitsScreen: React.FC = () => {
 
   useEffect(() => {
     if (tabParam === 'orders') setActiveTab('orders');
-    else if (tabParam === 'collection') setActiveTab('collection');
-    else setActiveTab('kits');
+    else if (tabParam === 'browse') setActiveTab('browse');
+    else setActiveTab('browse');
   }, [tabParam]);
 
   useEffect(() => {
@@ -84,13 +83,12 @@ const KitsScreen: React.FC = () => {
       <main className="kits-main">
         <div className="dashboard-tabs">
           <button
-            className={`tab-btn ${activeTab === 'kits' ? 'active' : ''}`}
-            onClick={() => navigate('/kits')}
+            className={`tab-btn ${activeTab === 'browse' ? 'active' : ''}`}
+            onClick={() => navigate('/kits?tab=browse')}
           >
             <Package size={18} />
             <span>Browse Kits</span>
           </button>
-          {/* Collection tab removed */}
           <button
             className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
             onClick={handleMyOrdersClick}
@@ -100,7 +98,7 @@ const KitsScreen: React.FC = () => {
           </button>
         </div>
 
-        {activeTab === 'kits' ? (
+        {activeTab === 'browse' ? (
           <>
             <div className='kits-top'><h2 className="kits-title">Choose Your Test Kit</h2></div>
             <div className="bottom-card">
@@ -138,10 +136,6 @@ const KitsScreen: React.FC = () => {
               </div>
             </div>
           </>
-        ) : activeTab === 'collection' ? (
-          <div className="collection-tab-content" style={{ padding: 16 }}>
-            <CollectionStepsScreen />
-          </div>
         ) : (
           <div className="orders-tab-content" style={{ padding: 16 }}>
             {orders.length > 0 ? (
@@ -191,13 +185,12 @@ const KitsScreen: React.FC = () => {
                       <div className='collection-card-text-group'>
                         <div style={{ opacity: 0.85, marginBottom: 6 }}>No recent orders</div>
                         <h2>Order a kit to get started</h2>
-                        <div style={{ marginTop: 10, fontSize: 13, color: '#6b7280' }}>Already have a kit? Start your collection now</div>
                       </div>
                       <div className='order-card-icon'><Inbox size={48} color='#fff' /></div>
                     </div>
                     <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-                      <button className="next-cta" onClick={() => setActiveTab('kits')}>Browse Kits</button>
-                      <button className="alt-cta" onClick={() => navigate('/collection/scan')}>Start Collection</button>
+                      <button className="next-cta" onClick={() => navigate('/kits?tab=browse')}>Browse Kits</button>
+                      <button className="alt-cta" onClick={() => navigate('/collection/steps')}>Start Collection</button>
                     </div>
                   </div>
             )}

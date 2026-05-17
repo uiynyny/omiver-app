@@ -143,24 +143,36 @@ const PersonalInfoScreen = () => {
             </select>
           </div>
 
-          <div className="input-group">
-            <input
-              type="number"
-              placeholder="Height (inches):"
-              value={height}
-              onChange={(e) => setHeight(parseFloat(e.target.value) || 0)}
-              className="form-input"
-            />
-          </div>
+          <div className="input-row">
+            <div className="input-group input-with-suffix">
+              <div className="input-wrapper">
+                <span className="input-prefix">Height:</span>
+                <input
+                  type="number"
+                  placeholder="Height:"
+                  value={height}
+                  onChange={(e) => setHeight(parseFloat(e.target.value) || 0)}
+                  className="form-input"
+                />
+                <span className="input-suffix">inches</span>
+              </div>
+              <span className="input-hint">e.g., 70</span>
+            </div>
 
-          <div className="input-group">
-            <input
-              type="number"
-              placeholder="Weight (lbs):"
-              value={weight}
-              onChange={(e) => setWeight(parseFloat(e.target.value) || 0)}
-              className="form-input"
-            />
+            <div className="input-group input-with-suffix">
+              <div className="input-wrapper">
+                <span className="input-prefix">Weight:</span>
+                <input
+                  type="number"
+                  placeholder="Weight:"
+                  value={weight}
+                  onChange={(e) => setWeight(parseFloat(e.target.value) || 0)}
+                  className="form-input"
+                />
+                <span className="input-suffix">lbs</span>
+              </div>
+              <span className="input-hint">e.g., 180</span>
+            </div>
           </div>
         </div>
 
