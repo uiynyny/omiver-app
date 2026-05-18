@@ -12,7 +12,7 @@ const CollectionStepsScreen: React.FC = () => {
   // State to simulate progress
   const [isSampleCollected, setIsSampleCollected] = useState(false);
   const [kitCode, setKitCode] = useState((location.state as { kitCode?: string } | null)?.kitCode || '');
-  const [kitLinked, setKitLinked] = useState(Boolean((location.state as { kitCode?: string } | null)?.kitCode));
+  const [kitLinked, setKitLinked] = useState(false);
   const [kitLoading, setKitLoading] = useState(false);
   const [kitError, setKitError] = useState('');
   const [dietaryRecall, setDietaryRecall] = useState('');
@@ -100,6 +100,7 @@ const CollectionStepsScreen: React.FC = () => {
       setRecallSaving(false);
     }
   };
+  
 
   return (
     <div className="steps-root">
