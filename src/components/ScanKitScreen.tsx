@@ -2,8 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
-// @ts-ignore - polyfill package may not provide TypeScript declarations
-import "@sec-ant/barcode-detector"; // Polyfill for broader browser support
+import "barcode-detector/polyfill"; // Polyfill for broader browser support
 import './ScanKitScreen.css';
 
 const ScanKitScreen: React.FC = () => {
