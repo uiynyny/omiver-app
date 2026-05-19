@@ -9,7 +9,6 @@ import PersonalInfoScreen from './components/PersonalInfoScreen';
 import ProviderInfoScreen from './components/ProviderInfoScreen';
 import ProviderDashboardScreen from './components/ProviderDashboardScreen';
 import HealthConditionsScreen from './components/HealthConditionsScreen';
-import DietaryInfoScreen from './components/DietaryInfoScreen';
 import DietaryQuestionnaireScreen from './components/DietaryQuestionnaireScreen';
 import GoalsScreen from './components/GoalsScreen';
 import TermsScreen from './components/TermsScreen';
