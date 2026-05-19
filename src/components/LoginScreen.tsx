@@ -120,7 +120,7 @@ const LoginScreen = () => {
 
       <p className="terms-text">
         By creating an account, you agree to our{' '}
-        <a href="/terms">Terms of Service and Privacy Policy</a>
+        <a href="/terms?mode=readonly">Terms of Service and Privacy Policy</a>
       </p>
     </div>
   );

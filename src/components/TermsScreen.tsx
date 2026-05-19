@@ -1,15 +1,33 @@
-import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ChevronLeft, CheckCircle } from 'lucide-react';
-import './AccountTypeScreen.css';
+import { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ChevronRight, ChevronLeft, ChevronDown, Check } from 'lucide-react';
+import './TermsScreen.css';
 import { useAppContext } from '../context/AppContext';
 import { login, register } from '../api/user';
 
+interface AccordionSection {
+  title: string;
+  content: React.ReactNode;
+}
+
 const TermsScreen = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { state, dispatch } = useAppContext();
   const isProvider = state.registration.accountType === 'healthcare';
+  const isReadOnly = searchParams.get('mode') === 'readonly';
+
+  // Stateful Accordion & Checkbox Consent
+  const [expandedSection, setExpandedSection] = useState<number | null>(null);
+  const [isAgreed, setIsAgreed] = useState<boolean>(false);
+
+  const toggleSection = (index: number) => {
+    setExpandedSection(expandedSection === index ? null : index);
+  };
 
   const handleContinue = async () => {
+    if (!isAgreed) return;
+
     dispatch({ type: 'UPDATE_REGISTRATION', payload: { acceptedTerms: true } });
 
     // Build the payload mapping frontend field names to backend field names
@@ -51,13 +69,14 @@ const TermsScreen = () => {
       payload.referred_by_code = reg.referredByCode;
     }
 
-    try{
+    try {
       await register(payload);
-    }catch(error) {
+    } catch (error) {
       console.error('Registration error', error);
       alert('Registration failed: ' + error);
       return;
     }
+
     if (!reg.email || !reg.password) {
       console.error('Missing email or password for login');
     } else {
@@ -71,7 +90,7 @@ const TermsScreen = () => {
             last_name: data.last_name ?? '',
             referralCode: data.referral_code ?? undefined,
           }
-        })
+        });
         dispatch({
           type: 'SET_AUTH',
           payload: { isAuthenticated: true, userId: reg.email || '', clientId: data.id || data.user_id, userType },
@@ -92,76 +111,153 @@ const TermsScreen = () => {
     navigate(-1);
   };
 
+  // Rich Accordion Section Content
+  const accordionSections: AccordionSection[] = [
+    {
+      title: "1. Introduction & Acceptance",
+      content: (
+        <>
+          <p>Welcome to Omiver! By accessing our hybrid mobile application and services, you agree to be bound by these Terms of Service and our Privacy Policy.</p>
+          <p>These Terms constitute a legally binding agreement between you and Omiver Nutrition, Inc. If you do not agree, you must discontinue registration.</p>
+        </>
+      )
+    },
+    {
+      title: "2. Scope of Services",
+      content: (
+        <>
+          <p>Omiver offers biological biomarker screening coupled with AI-assisted dietary, nutritional, and performance guidance.</p>
+          {isProvider ? (
+            <ul>
+              <li>Access a dedicated provider analytics dashboard.</li>
+              <li>Generate unique patient referral links.</li>
+              <li>Monitor patient biomarker trends and wellness plans.</li>
+            </ul>
+          ) : (
+            <ul>
+              <li>Order at-home biometric collection kits.</li>
+              <li>View deep molecular analysis of 100+ biomarkers.</li>
+              <li>Get adaptive recipes and custom fitness plans matching your habits.</li>
+            </ul>
+          )}
+        </>
+      )
+    },
+    {
+      title: "3. Medical Advice Disclaimer",
+      content: (
+        <>
+          <div className="terms-warning-callout">
+            <h4>⚠️ IMPORTANT: NOT MEDICAL ADVICE</h4>
+            <p>Omiver is a wellness technology platform, not a medical provider. We do not offer clinical diagnostic services or medical treatment. All biological test analysis is performed by independent laboratory partners. Any metric, analysis, or recommendation provided is solely for general wellness purposes.</p>
+          </div>
+          <p>Always consult with your doctor or qualified clinical practitioner before beginning any new supplementation, diet, or intense physical training regimen.</p>
+        </>
+      )
+    },
+    {
+      title: "4. Privacy & Biomarker Security",
+      content: (
+        <>
+          <p>We value the sensitivity of your biological profile. Your biomarker data is pseudonymized using randomized ID keys and separated from your personal billing credentials.</p>
+          <p>We secure database storage using standard AES-256 encryption. We will never sell, license, or share your health records with health insurance brokers or marketing firms.</p>
+        </>
+      )
+    },
+    {
+      title: "5. Data Ownership & Deletion",
+      content: (
+        <>
+          <p>Your biological data belongs exclusively to you. You retain the full right to download your raw biomarker dataset at any time.</p>
+          <p>If you decide to delete your account, Omiver will permanently purge all biomarker histories and personal identification data from our systems within 30 days.</p>
+        </>
+      )
+    }
+  ];
+
   return (
-    <div className="registration-screen">
-      <header className="registration-header">
-        <button onClick={handleBack} className="back-button">
-          <ChevronLeft size={24} color='black' />
+    <div className="terms-container">
+      <header className="terms-header">
+        <button onClick={handleBack} className="back-button" aria-label="Go Back">
+          <ChevronLeft size={24} color="black" />
         </button>
-        <h2>Terms of Service</h2>
+        <h2>Review Terms</h2>
       </header>
 
-      <div className="registration-content terms-content">
-        <div className="terms-notice">
-          <h2>Important Notice</h2>
+      <div className="terms-content-scroll">
+        
+        {/* Welcome Banner */}
+        <div className="terms-welcome-card">
+          <h3>Nearly there!</h3>
           <p>
             {isProvider
-              ? 'By registering as a healthcare provider, you agree to our terms and privacy policy. You will be able to generate referral links for your patients.'
-              : 'We will be collecting personal health information to provide you with accurate and personalized biomarker analysis.'}
+              ? "As an Omiver Healthcare Provider, you can generate patient referral codes and track biological health indicators."
+              : "Before analyzing your biomarkers and custom-crafting your adaptive nutrition plans, please read and accept our Terms of Service."}
           </p>
         </div>
 
-        <div className="terms-section">
-          <h3>{isProvider ? 'As a provider you can:' : 'The information you provide will be used to:'}</h3>
-          <ul className="terms-list">
-            {isProvider ? (
-              <>
-                <li><span className="bullet-icon">⦿</span> Generate a unique referral link for your patients</li>
-                <li><span className="bullet-icon">⦿</span> Track and monitor your referred patients</li>
-                <li><span className="bullet-icon">⦿</span> Access your provider dashboard</li>
-              </>
-            ) : (
-              <>
-                <li><span className="bullet-icon">⦿</span> Customize your biomarker testing recommendations</li>
-                <li><span className="bullet-icon">⦿</span> Generate personalized health insights</li>
-                <li><span className="bullet-icon">⦿</span> Create targeted nutrition and fitness plans</li>
-                <li><span className="bullet-icon">⦿</span> Track your health progress over time</li>
-              </>
-            )}
-          </ul>
+        {/* Expandable Accordion Lists */}
+        <div className="terms-accordion-list">
+          {accordionSections.map((section, index) => {
+            const isOpen = expandedSection === index;
+            return (
+              <div 
+                key={index} 
+                className={`terms-accordion-item ${isOpen ? 'active' : ''}`}
+              >
+                <button
+                  className={`terms-accordion-header ${isOpen ? 'active' : ''}`}
+                  onClick={() => toggleSection(index)}
+                  aria-expanded={isOpen}
+                >
+                  <span className="terms-accordion-title">{section.title}</span>
+                  <ChevronDown 
+                    size={18} 
+                    className="terms-accordion-icon" 
+                  />
+                </button>
+                <div className={`terms-accordion-body ${isOpen ? 'open' : ''}`}>
+                  <div className="terms-accordion-inner">
+                    {section.content}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        <div className="terms-collected">
-          <h3>Information We Will Collect:</h3>
-          <div className="collected-items">
-            <div className="collected-item">
-              <CheckCircle className="check-icon" size={20} />
-              <span>Personal Information</span>
+      </div>
+
+      {/* Interactive Custom Sticky Consent Box */}
+      {isReadOnly ? (
+        <></>
+      ) : (
+        <div className="terms-consent-panel">
+          <div 
+            className="terms-consent-row" 
+            onClick={() => setIsAgreed(!isAgreed)}
+            aria-checked={isAgreed}
+            role="checkbox"
+          >
+            <div className={`terms-custom-checkbox ${isAgreed ? 'checked' : ''}`}>
+              {isAgreed && <Check size={14} className="terms-checkmark" />}
             </div>
-            {!isProvider && (
-              <>
-                <div className="collected-item">
-                  <CheckCircle className="check-icon" size={20} />
-                  <span>Health Conditions</span>
-                </div>
-                <div className="collected-item">
-                  <CheckCircle className="check-icon" size={20} />
-                  <span>Diet + Exercise Intake</span>
-                </div>
-              </>
-            )}
+            <span className="terms-consent-label">
+              I have read, understood, and agree to Omiver's <span className="bold-link">Terms of Service</span> and <span className="bold-link">Privacy Policy</span>.
+            </span>
+          </div>
+
+          <div className="terms-button-group">
+            <button 
+              onClick={handleContinue} 
+              className="terms-primary-btn"
+              disabled={!isAgreed}
+            >
+              Agree & Register <ChevronRight size={20} />
+            </button>
           </div>
         </div>
-
-        <div className="button-group">
-          <button onClick={handleContinue} className="primary-button">
-            I Understand, Continue <ChevronRight size={20} />
-          </button>
-          <button onClick={handleBack} className="secondary-button">
-            <ChevronLeft size={20} /> Go Back
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

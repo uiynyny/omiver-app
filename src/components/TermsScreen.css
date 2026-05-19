@@ -1,0 +1,322 @@
+/* Dedicated TermsScreen Styles */
+
+.terms-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: #FAF8F9;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.terms-header {
+  display: flex;
+  align-items: center;
+  padding: 1.25rem 1rem;
+  background: #FFFFFF;
+  border-bottom: 1px solid #EAEAEA;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.terms-header h2 {
+  flex: 1;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin-right: 40px; /* Balance the back-button width to center title */
+}
+
+.back-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: #F1F1F1;
+}
+
+.terms-content-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: 4rem; /* Ensure spacing above consent box */
+}
+
+/* Premium Welcome Card */
+.terms-welcome-card {
+  background: linear-gradient(135deg, #ffffff 0%, #faf4f7 100%);
+  border-radius: 20px;
+  padding: 1.5rem;
+  border: 1px solid #EAEAEA;
+  box-shadow: 0 8px 20px rgba(168, 135, 157, 0.05);
+}
+
+.terms-welcome-card h3 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #2C3E35;
+  margin-bottom: 0.5rem;
+}
+
+.terms-welcome-card p {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #555555;
+}
+
+.terms-welcome-card .highlight-green {
+  color: #67997D;
+  font-weight: 700;
+}
+
+/* Expandable Accordions */
+.terms-accordion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.terms-accordion-item {
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid #E8E6E7;
+  box-shadow: 0 4px 15px rgba(168, 135, 157, 0.03);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.terms-accordion-item.active {
+  border-color: #6B9B8A;
+  box-shadow: 0 6px 20px rgba(107, 155, 138, 0.06);
+}
+
+.terms-accordion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.terms-accordion-header:hover {
+  background-color: #FAF9FA;
+}
+
+.terms-accordion-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #222222;
+}
+
+.terms-accordion-header.active .terms-accordion-title {
+  color: #67997D;
+}
+
+.terms-accordion-icon {
+  color: #999999;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.terms-accordion-header.active .terms-accordion-icon {
+  transform: rotate(180deg);
+  color: #6B9B8A;
+}
+
+.terms-accordion-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.terms-accordion-body.open {
+  max-height: 800px; /* Arbitrary high value to allow smooth expansion transition */
+  border-top: 1px solid #FAF8F9;
+}
+
+.terms-accordion-inner {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.terms-accordion-inner p {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #444444;
+}
+
+.terms-accordion-inner ul {
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.terms-accordion-inner li {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #555555;
+}
+
+/* Custom Premium Disclaimers */
+.terms-warning-callout {
+  background-color: rgba(210, 118, 68, 0.06);
+  border-left: 4px solid #D27644;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.terms-warning-callout h4 {
+  color: #D27644;
+  font-size: 0.95rem;
+  font-weight: 800;
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.terms-warning-callout p {
+  font-size: 0.85rem !important;
+  line-height: 1.5;
+  color: #60524B !important;
+  margin-bottom: 0;
+}
+
+/* Interactive Checkbox & Sticky Consent Control Footer */
+.terms-consent-panel {
+  background: #FFFFFF;
+  border-top: 1px solid #EAEAEA;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.03);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
+.terms-consent-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.terms-custom-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid #CCCCCC;
+  border-radius: 6px;
+  background: #FFFFFF;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: all 0.2s;
+}
+
+.terms-custom-checkbox.checked {
+  border-color: #6B9B8A;
+  background-color: #6B9B8A;
+}
+
+.terms-checkmark {
+  color: #FFFFFF;
+}
+
+.terms-consent-label {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #555555;
+  user-select: none;
+}
+
+.terms-consent-label .bold-link {
+  font-weight: 700;
+  color: #67997D;
+}
+
+/* Dynamic Interactive Buttons */
+.terms-button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.terms-primary-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 1.1rem;
+  background-color: #6B9B8A;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(107, 155, 138, 0.2);
+}
+
+.terms-primary-btn:active {
+  transform: scale(0.98);
+}
+
+.terms-primary-btn:disabled {
+  background-color: #D4D6D5;
+  color: #A1A3A2;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.terms-secondary-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 1.1rem;
+  background-color: #FAF8F9;
+  color: #777777;
+  border: 1px solid #E2E0E1;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.terms-secondary-btn:hover {
+  background-color: #F1EFF0;
+}
