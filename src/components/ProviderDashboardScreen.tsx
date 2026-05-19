@@ -6,7 +6,7 @@ import {
   HeartPulse, Utensils, Target, Mail, ClipboardList,
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { clearAuthToken, getReferralLink, getProviderPatients, type Patient } from '../api/user';
+import { clearAuthToken, clearPersistentLogin, getReferralLink, getProviderPatients, type Patient } from '../api/user';
 import omiver from '../assets/omiver.svg';
 import './ProviderDashboardScreen.css';
 
@@ -214,6 +214,7 @@ const ProviderDashboardScreen = () => {
 
   const handleLogout = () => {
     clearAuthToken();
+    clearPersistentLogin();
     dispatch({ type: 'CLEAR_AUTH' });
     dispatch({ type: 'RESET_REGISTRATION' });
     navigate('/');

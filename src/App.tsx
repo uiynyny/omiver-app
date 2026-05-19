@@ -10,6 +10,7 @@ import ProviderInfoScreen from './components/ProviderInfoScreen';
 import ProviderDashboardScreen from './components/ProviderDashboardScreen';
 import HealthConditionsScreen from './components/HealthConditionsScreen';
 import DietaryInfoScreen from './components/DietaryInfoScreen';
+import DietaryQuestionnaireScreen from './components/DietaryQuestionnaireScreen';
 import GoalsScreen from './components/GoalsScreen';
 import TermsScreen from './components/TermsScreen';
 import HomeScreen from './components/HomeScreen';
@@ -37,8 +38,8 @@ function App() {
           {/* Individual registration flow */}
           <Route path="/register/personal-info" element={<PersonalInfoScreen />} />
           <Route path="/register/health-conditions" element={<HealthConditionsScreen />} />
-          <Route path="/dietary" element={<DietaryInfoScreen />} />
           <Route path="/register/goals" element={<GoalsScreen />} />
+          <Route path="/register/dietary" element={<DietaryQuestionnaireScreen />} />
           {/* Provider registration flow */}
           <Route path="/register/provider-info" element={<ProviderInfoScreen />} />
           {/* Shared */}

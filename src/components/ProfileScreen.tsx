@@ -4,7 +4,7 @@ import BottomNav from './BottomNav';
 import { useAppContext } from '../context/AppContext'
 import { useNavigate } from 'react-router-dom'
 import { User, Heart, Target, Apple, Pencil } from 'lucide-react'
-import { clearAuthToken, logoutApi } from '../api/user'
+import { clearAuthToken, logoutApi, clearPersistentLogin } from '../api/user'
 import omiver from '../assets/omiver.svg'
 
 const ProfileScreen: React.FC = () => {
@@ -18,6 +18,7 @@ const ProfileScreen: React.FC = () => {
       // ignore network errors, still clear local state
     }
     clearAuthToken();
+    clearPersistentLogin();
     dispatch({ type: 'CLEAR_AUTH' });
     navigate('/login');
   };

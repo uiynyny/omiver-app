@@ -11,9 +11,7 @@ const GoalsScreen = () => {
   const [exerciseDays, setExerciseDays] = useState(state.registration.exercise_days_per_week ?? '3');
   const [exerciseTypes, setExerciseTypes] = useState(state.registration.exercise_types ?? '');
   const [providerNotes, setProviderNotes] = useState(state.registration.provider_notes ?? '');
-  const [preferenceMode, setPreferenceMode] = useState(state.registration.dietary_preference_mode ?? 'similar');
-  const [preferredCuisines, setPreferredCuisines] = useState(state.registration.preferred_cuisines ?? '');
-  const [avoidedCuisines, setAvoidedCuisines] = useState(state.registration.avoided_cuisines ?? '');
+  
 
   const handleContinue = () => {
     dispatch({
@@ -23,17 +21,23 @@ const GoalsScreen = () => {
         exercise_days_per_week: exerciseDays,
         exercise_types: exerciseTypes,
         provider_notes: providerNotes,
-        dietary_preference_mode: preferenceMode,
-        preferred_cuisines: preferredCuisines,
-        avoided_cuisines: avoidedCuisines,
       },
     });
-    navigate('/terms');
+    // After saving exercise-related goals, continue to the dietary questionnaire
+    navigate('/register/dietary');
   };
 
   const handleBack = () => {
     navigate(-1);
   };
+
+  const typicalityLevels = [
+    { value: 1, label: 'Unusual' },
+    { value: 2, label: 'Rarely' },
+    { value: 3, label: 'Sometimes' },
+    { value: 4, label: 'Often' },
+    { value: 5, label: 'Always' },
+  ];
 
   return (
     <div className="registration-screen">
@@ -66,14 +70,17 @@ const GoalsScreen = () => {
 
           <div className="input-group">
             <label className="field-label">How many days per week do you usually exercise?</label>
-            <input
-              type="number"
-              min="1"
-              max="7"
+            <select
+              className="form-input form-select"
               value={exerciseDays}
               onChange={(e) => setExerciseDays(e.target.value)}
-              className="form-input"
-            />
+            >
+              {typicalityLevels.map((level) => (
+                <option key={level.value} value={String(level.value)}>
+                  {level.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="input-group">
@@ -95,39 +102,7 @@ const GoalsScreen = () => {
               rows={4}
             />
           </div>
-
-          <div className="input-group">
-            <label className="field-label">Do you want recommendations that are similar to your current diet or different?</label>
-            <select
-              className="form-input form-select"
-              value={preferenceMode}
-              onChange={(e) => setPreferenceMode(e.target.value)}
-            >
-              <option value="similar">Similar to my current diet</option>
-              <option value="different">Different from my current diet</option>
-              <option value="balanced">A balance of both</option>
-            </select>
-          </div>
-
-          <div className="input-group">
-            <textarea
-              placeholder="Preferred cuisines (e.g. Mediterranean, Korean, Mexican)"
-              value={preferredCuisines}
-              onChange={(e) => setPreferredCuisines(e.target.value)}
-              className="form-textarea"
-              rows={3}
-            />
-          </div>
-
-          <div className="input-group">
-            <textarea
-              placeholder="Cuisines you avoid or dislike"
-              value={avoidedCuisines}
-              onChange={(e) => setAvoidedCuisines(e.target.value)}
-              className="form-textarea"
-              rows={3}
-            />
-          </div>
+          {/* Dietary questions moved to a separate screen */}
         </div>
 
         <div className="button-group">
