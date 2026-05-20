@@ -39,8 +39,14 @@ const ProfileScreen: React.FC = () => {
       return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
     }, [personal.date_of_birth]);
 
-  const height = state?.registration?.height || `63"`
-  const weight = state?.registration?.weight || '153'
+  const height = useMemo(() => {
+    const h = state?.registration?.height;
+    if (!h) return `5 ft 3 in`;
+    const feet = Math.floor(h / 12);
+    const inches = h % 12;
+    return `${feet} ft ${inches} in`;
+  }, [state?.registration?.height]);
+  const weight = state?.registration?.weight ? `${state.registration.weight} lbs` : '153 lbs'
 
   return (
     <div className="profile-root">

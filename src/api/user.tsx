@@ -518,3 +518,19 @@ export const verifyKitCode = async (kitCode: string): Promise<{ valid: boolean; 
     }
     return { valid: true, message: 'Kit code verified' };
 }
+
+export const createOrder = async (data: { client_id: number | string; kit_codes?: string[]; test_kit_name?: string; tracking_number?: string; order_date?: string; }): Promise<Order> => {
+    const response = await fetch(`${API_URL}/orders`, {
+        method: 'POST',
+        headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(data),
+        credentials: 'include',
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to create order');
+    }
+
+    return response.json();
+}

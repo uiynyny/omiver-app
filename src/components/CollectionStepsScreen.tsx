@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Camera, Check, Settings, Edit } from 'lucide-react';
 import './CollectionStepsScreen.css';
-import { verifyKitCode, updateClient } from '../api/user';
+import { verifyKitCode, updateClient, createOrder } from '../api/user';
 import { useAppContext } from '../context/AppContext';
 
 const CollectionStepsScreen: React.FC = () => {
@@ -12,7 +12,7 @@ const CollectionStepsScreen: React.FC = () => {
   // State to simulate progress
   const [isSampleCollected, setIsSampleCollected] = useState(false);
   const [kitCode, setKitCode] = useState((location.state as { kitCode?: string } | null)?.kitCode || '');
-  const [kitLinked, setKitLinked] = useState(false);
+  const [kitLinked, setKitLinked] = useState(Boolean((location.state as { kitCode?: string } | null)?.kitCode));
   const [kitLoading, setKitLoading] = useState(false);
   const [kitError, setKitError] = useState('');
   const [dietaryRecall, setDietaryRecall] = useState('');
@@ -27,7 +27,7 @@ const CollectionStepsScreen: React.FC = () => {
   const splitDateTime = (iso?: string) => {
     if (!iso) return { date: '', time: '' };
     const parts = iso.split('T');
-    return { date: parts[0] || '', time: (parts[1] || '').slice(0,5) };
+    return { date: parts[0] || '', time: (parts[1] || '').slice(0, 5) };
   };
   const initialDT = splitDateTime(collectionFinishedAt);
   const [collectionDate, setCollectionDate] = useState(initialDT.date);
@@ -52,6 +52,11 @@ const CollectionStepsScreen: React.FC = () => {
   const [savedDietary, setSavedDietary] = useState('');
   const [savedExercise, setSavedExercise] = useState('');
   const [savedCollectionFinishedAt, setSavedCollectionFinishedAt] = useState('');
+  const [collectionConfirmed, setCollectionConfirmed] = useState(false);
+  const [finalizeError, setFinalizeError] = useState('');
+  const [shippedLoading, setShippedLoading] = useState(false);
+  const [shippedError, setShippedError] = useState('');
+  const [preparedForShipment, setPreparedForShipment] = useState(false);
 
   const handleLinkKit = async () => {
     const code = kitCode.trim();
@@ -100,7 +105,21 @@ const CollectionStepsScreen: React.FC = () => {
       setRecallSaving(false);
     }
   };
-  
+
+  const handleBarcodeInBox = () => {
+    console.log("Finalizing collection confirmation with checks for date, time, and dietary recall");
+    setFinalizeError('');
+    const hasDate = !!collectionDate;
+    const hasTime = !!collectionTime;
+    const hasDiet = dietaryRecall.trim().length > 0;
+    if (!hasDate || !hasTime || !hasDiet) {
+      console.log("error missing info")
+      setFinalizeError('Please enter collection date, time, and a short dietary recall before confirming.');
+      return;
+    }
+    setCollectionConfirmed(true);
+  }
+
 
   return (
     <div className="steps-root">
@@ -127,7 +146,7 @@ const CollectionStepsScreen: React.FC = () => {
           </div>
           <div className="step-details">
             <div className="step-title">Link Your Kit</div>
-            <div className="step-desc">Scan the barcode on your test kit or enter the code manually</div>
+            <div className="barcode-hint">Tip: The barcode is on the bottom-right corner of the box.</div>
             <div className="step-card">
               {kitLinked ? (
                 <div className="kit-linked-box">
@@ -172,8 +191,8 @@ const CollectionStepsScreen: React.FC = () => {
         {/* Step 2: Collect Your Sample (Active) */}
         <div className="step-item">
           <div className="step-indicator">
-            <div className={`step-circle ${!isSampleCollected ? 'active' : 'completed'}`}>
-              {isSampleCollected ? <Check size={18} /> : <Check size={18} style={{ opacity: 0.3 }} />}
+            <div className={`step-circle ${!collectionConfirmed ? 'active' : 'completed'}`}>
+              {collectionConfirmed ? <Check size={18} /> : <Check size={18} style={{ opacity: 0.3 }} />}
               {/* Note: Icon usage here is a bit tricky, usually active step has a number or dot, using check for consistency with design mock which shows checkmark circle */}
             </div>
             <div className="step-line"></div>
@@ -184,16 +203,19 @@ const CollectionStepsScreen: React.FC = () => {
 
             {!isSampleCollected && (
               <div className="step-card">
-                  <iframe
-                    title="vimeo-player"
-                    src="https://player.vimeo.com/video/1051338117?h=8f460a47f8"
-                    width="100%"
-                    height="100%"
-                    frameBorder="0"
-                    allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-                    allowFullScreen
-                  />
-                <button className="confirm-btn" onClick={() => setIsSampleCollected(true)}>
+                <iframe
+                  title="vimeo-player"
+                  src="https://player.vimeo.com/video/1051338117?h=8f460a47f8"
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  allow="autoplay; fullscreen; encrypted-media"
+                  allowFullScreen
+                />
+                {!kitLinked && (
+                  <div style={{ color: '#b45309', marginBottom: 10 }}>Please link your kit first to continue.</div>
+                )}
+                <button className="confirm-btn" onClick={() => { setIsSampleCollected(true); }} disabled={!kitLinked} title={!kitLinked ? 'Link your kit first' : ''}>
                   Confirm Sample Collected
                 </button>
               </div>
@@ -216,19 +238,19 @@ const CollectionStepsScreen: React.FC = () => {
                   </div>
                   {recallCollapsed ? (
                     <div className="recall-summary">
-                        <div className="recall-row recall-row-top">
-                          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flex: 1 }}>
-                            <div className="recall-label">Collection finished:</div>
-                            <div className="recall-value">{savedCollectionFinishedAt ? savedCollectionFinishedAt.replace('T', ' ') : 'Not set'}</div>
-                          </div>
-                          <button
-                            className="recall-edit-btn"
-                            onClick={() => setRecallCollapsed(false)}
-                            aria-label="Edit recalls"
-                          >
-                            <Edit size={16} />
-                          </button>
+                      <div className="recall-row recall-row-top">
+                        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flex: 1 }}>
+                          <div className="recall-label">Collection finished:</div>
+                          <div className="recall-value">{savedCollectionFinishedAt ? savedCollectionFinishedAt.replace('T', ' ') : 'Not set'}</div>
                         </div>
+                        <button
+                          className="recall-edit-btn"
+                          onClick={() => setRecallCollapsed(false)}
+                          aria-label="Edit recalls"
+                        >
+                          <Edit size={16} />
+                        </button>
+                      </div>
                       <div className="recall-row">
                         <div className="recall-label">Dietary recall:</div>
                         <div className="recall-value">{savedDietary || 'Not provided'}</div>
@@ -297,7 +319,7 @@ const CollectionStepsScreen: React.FC = () => {
                         rows={3}
                         style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e0e0e0', fontFamily: 'inherit', marginBottom: '12px' }}
                       />
-                      <button 
+                      <button
                         onClick={handleSaveDietaryRecall}
                         disabled={recallSaving}
                         style={{
@@ -319,31 +341,114 @@ const CollectionStepsScreen: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Final confirmation: ensure user wrote barcode on foil envelope and placed in box */}
+            {isSampleCollected && !collectionConfirmed && (
+              <div className="step-card">
+                <div style={{ marginBottom: 8, fontWeight: 600 }}>Final step: confirm barcode placement</div>
+                <div style={{ marginBottom: 12 }} className="barcode-instruction">Please write the barcode number on the silver foil envelope and place it inside the Omiver box.</div>
+                {finalizeError && <div style={{ color: '#dc2626', marginBottom: 8 }}>{finalizeError}</div>}
+                <button
+                  className="confirm-btn"
+                  onClick={handleBarcodeInBox}
+                  style={{ marginTop: 0 }}
+                  disabled={(collectionDate==null || collectionTime==null || recallSaving)}
+                >
+                  I placed the barcode inside the box
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Step 3: Ship Your Sample */}
+        {/* Step 3: Prepare Your Sample for Shipment */}
         <div className="step-item">
           <div className="step-indicator">
-            {/* Simulating this is next */}
-            <div className={`step-circle ${isSampleCollected ? 'active' : ''}`} style={{ backgroundColor: isSampleCollected ? '#6b9b8a' : '#e0e0e0' }}>
-              <Check size={18} style={{ opacity: isSampleCollected ? 1 : 0.3 }} />
+            <div className={`step-circle ${preparedForShipment ? 'completed' : 'active'}`}>
+              {preparedForShipment ? <Check size={18} /> : <Check size={18} style={{ opacity: 0.3 }} />}
             </div>
             <div className="step-line"></div>
           </div>
           <div className="step-details">
-            <div className="step-title" style={{ opacity: isSampleCollected ? 1 : 0.6 }}>Ship Your Sample</div>
-            <div className="step-desc" style={{ opacity: isSampleCollected ? 1 : 0.6 }}>Place your sample in the prepaid return envelope and ship it to our laboratory</div>
+            <div className="step-title">Prepare Your Sample for Shipment</div>
+            <div className="step-desc">Follow these steps to pack your sample for shipping</div>
+            <div className="step-card">
+              <ol className="prep-list">
+                <li>Place your silver collection bag inside your Omiver box.</li>
+                <li>Put the box inside the black plastic poly mailer included and seal the top.</li>
+                <li>Attach the included shipping label on the outside of the poly mailer bag.</li>
+                <li>Drop it off at your local FedEx within a week of sample collection.</li>
+              </ol>
+              {!preparedForShipment ? (
+                <button
+                  className="confirm-btn"
+                  onClick={() => setPreparedForShipment(true)}
+                  disabled={!collectionConfirmed || !kitLinked}
+                  title={!collectionConfirmed ? 'Confirm barcode placement first' : !kitLinked ? 'Link your kit first' : ''}
+                >
+                  I have dropped off my shipment
+                </button>
+              ) : (
+                <div className="kit-linked-box" style={{ marginTop: 8 }}>
+                  <Check size={18} /> Thank you! you can check update on your shipment.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Step 4: Ship Your Sample */}
+        <div className="step-item">
+          <div className="step-indicator">
+            {/* Simulating this is next */}
+            <div className={`step-circle ${collectionConfirmed ? 'active' : ''}`} style={{ backgroundColor: collectionConfirmed ? '#6b9b8a' : '#e0e0e0' }}>
+              <Check size={18} style={{ opacity: collectionConfirmed ? 1 : 0.3 }} />
+            </div>
+            <div className="step-line"></div>
+          </div>
+          <div className="step-details">
+            <div className="step-title" style={{ opacity: preparedForShipment ? 1 : 0.6 }}>Ship Your Sample</div>
+            <div className="step-desc" style={{ opacity: preparedForShipment ? 1 : 0.6 }}>Place your prepared box inside the prepaid return envelope and ship it to our laboratory</div>
 
             {/* Show hypothetical shipped state if collected? Or keep it simple as per mockup which shows logic flow */}
             {/* The mockup shows this step as 'Active/Completed' with "Sample Shipped". Let's assume for this demo we stop at collection confirmation */}
 
-            <div className="step-card" style={{ opacity: 0.6 }}>
-              <div className="status-badge" style={{ background: isSampleCollected ? '#eaf5ec' : '#eee', color: isSampleCollected ? '#6b9b8a' : '#999' }}>
+              <div className="step-card" style={{ opacity: 0.6 }}>
+              <div className="status-badge" style={{ background: preparedForShipment ? '#eaf5ec' : '#eee', color: preparedForShipment ? '#6b9b8a' : '#999' }}>
                 <Check size={12} /> Pending...
               </div>
               <div className="tracking-info">Tracking: PENDING</div>
             </div>
+            {preparedForShipment && (
+              <div style={{ marginTop: 10 }}>
+                {shippedError && <div style={{ color: '#dc2626', marginBottom: 8 }}>{shippedError}</div>}
+                <button
+                  className="confirm-btn"
+                  disabled={shippedLoading || !preparedForShipment || !kitLinked}
+                  onClick={async () => {
+                    setShippedError('');
+                    setShippedLoading(true);
+                    try {
+                      const payload = {
+                        client_id: state.auth.clientId,
+                        kit_codes: kitCode ? [kitCode] : [],
+                        test_kit_name: 'Omiver Collection Kit',
+                        order_date: new Date().toISOString(),
+                      } as any;
+                      await createOrder(payload);
+                      navigate('/kits?tab=orders');
+                    } catch (err: any) {
+                      console.error('Failed to create order', err);
+                      setShippedError(err?.message || 'Failed to create order');
+                    } finally {
+                      setShippedLoading(false);
+                    }
+                  }}
+                >
+                  {shippedLoading ? 'Creating order...' : 'Mark as Shipped (create order)'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

@@ -47,6 +47,16 @@ const HomeScreen = () => {
     return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
   }, [personal.date_of_birth]);
 
+  const heightFormatted = useMemo(() => {  
+    const h = personal.height;
+    if (!h) return '—';
+    if (typeof h === 'number') {
+      const feet = Math.floor(h / 12);
+      const inches = h % 12;
+      return `${feet} ft ${inches} in`;
+    }
+  }, [dashboardData?.profile?.height, personal.height]);
+
   return (
     <div className="screen-root">
       <header className="home-header">
@@ -88,11 +98,15 @@ const HomeScreen = () => {
               </div>
               <div className="profile-card">
                 <div className="card-label">Height</div>
-                <div className="card-value">{dashboardData?.profile?.height || personal.height || '—'}</div>
+                <div className="card-value">{heightFormatted}</div>
               </div>
               <div className="profile-card">
                 <div className="card-label">Weight</div>
-                <div className="card-value">{dashboardData?.profile?.weight || personal.weight || '—'}</div>
+                <div className="card-value">
+                  {dashboardData?.profile?.weight || personal.weight
+                    ? `${dashboardData?.profile?.weight || personal.weight} lbs`
+                    : '—'}
+                </div>
               </div>
             </div>
           </section>

@@ -10,8 +10,22 @@ const DietaryQuestionnaireScreen = () => {
   const [preferenceMode, setPreferenceMode] = useState(state.registration.dietary_preference_mode ?? 'similar');
   const [preferredCuisines, setPreferredCuisines] = useState(state.registration.preferred_cuisines ?? '');
   const [avoidedCuisines, setAvoidedCuisines] = useState(state.registration.avoided_cuisines ?? '');
+  const [errors, setErrors] = useState<{ preferredCuisines?: string; avoidedCuisines?: string }>({});
 
   const handleContinue = () => {
+    const newErrors: { preferredCuisines?: string; avoidedCuisines?: string } = {};
+    if (!preferredCuisines.trim()) {
+      newErrors.preferredCuisines = 'Preferred cuisines description is required';
+    }
+    if (!avoidedCuisines.trim()) {
+      newErrors.avoidedCuisines = 'Please specify the cuisines you avoid or state "None"';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     dispatch({
       type: 'UPDATE_REGISTRATION',
       payload: {
@@ -48,24 +62,32 @@ const DietaryQuestionnaireScreen = () => {
         </h1>
 
         <div className="form-fields">
-            <div className="input-group">
+            <div className="input-group" style={{ flexDirection: 'column' }}>
               <textarea
-                placeholder="Preferred cuisines (e.g. Mediterranean, Korean, Mexican)"
+                placeholder="Preferred cuisines (e.g. Mediterranean, Korean, Mexican) *"
                 value={preferredCuisines}
-                onChange={(e) => setPreferredCuisines(e.target.value)}
-                className="form-textarea"
+                onChange={(e) => {
+                  setPreferredCuisines(e.target.value);
+                  if (errors.preferredCuisines) setErrors(prev => ({ ...prev, preferredCuisines: undefined }));
+                }}
+                className={`form-textarea ${errors.preferredCuisines ? 'error' : ''}`}
                 rows={3}
               />
+              {errors.preferredCuisines && <span className="error-text">{errors.preferredCuisines}</span>}
             </div>
 
-            <div className="input-group">
+            <div className="input-group" style={{ flexDirection: 'column' }}>
               <textarea
-                placeholder="Cuisines you avoid or dislike"
+                placeholder="Cuisines you avoid or dislike *"
                 value={avoidedCuisines}
-                onChange={(e) => setAvoidedCuisines(e.target.value)}
-                className="form-textarea"
+                onChange={(e) => {
+                  setAvoidedCuisines(e.target.value);
+                  if (errors.avoidedCuisines) setErrors(prev => ({ ...prev, avoidedCuisines: undefined }));
+                }}
+                className={`form-textarea ${errors.avoidedCuisines ? 'error' : ''}`}
                 rows={3}
               />
+              {errors.avoidedCuisines && <span className="error-text">{errors.avoidedCuisines}</span>}
             </div>
 
             <div className="input-group">

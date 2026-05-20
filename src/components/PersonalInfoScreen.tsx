@@ -13,26 +13,29 @@ const PersonalInfoScreen = () => {
   const [date_of_birth, setDateOfBirth] = useState(state.registration.date_of_birth ?? '');
   const [gender, setGender] = useState(state.registration.gender ?? 'Male');
   const [ethnicity, setEthnicity] = useState(state.registration.ethnicity ?? '');
-  const [height, setHeight] = useState<number>(state.registration.height ?? 0);
+  const [height, setHeight] = useState<number>(state.registration.height || 68); // Default to 5'8" (68 inches)
   const [weight, setWeight] = useState<number>(state.registration.weight ?? 0);
   const [referredByCode, setReferredByCode] = useState(state.registration.referredByCode ?? '');
 
-  const handleContinue = () => {
+  // Derived local variables computed from height state
+
+  const handleContinue = async () => {
     if (!first_name || !last_name || !date_of_birth || !ethnicity || !gender || !height || !weight || !referredByCode.trim()) {
       alert('Please fill in all required fields, including your referral code');
       return;
     }
     console.log('Validating referral code:', referredByCode);
-    checkReferralCode(referredByCode).then((isValid) => {
+    try {
+      const isValid = await checkReferralCode(referredByCode);
       if (!isValid) {
         alert('Invalid referral code. Please check and try again.');
         return;
       }
-    }).catch((error) => {
+    } catch (error) {
       console.error('Error validating referral code:', error);
       alert('An error occurred while validating the referral code. Please try again later.');
       return;
-    });
+    }
     dispatch({
       type: 'UPDATE_REGISTRATION',
       payload: {
@@ -145,18 +148,41 @@ const PersonalInfoScreen = () => {
 
           <div className="input-row">
             <div className="input-group input-with-suffix">
-              <div className="input-wrapper">
-                <span className="input-prefix">Height:</span>
-                <input
-                  type="number"
-                  placeholder="Height:"
-                  value={height}
-                  onChange={(e) => setHeight(parseFloat(e.target.value) || 0)}
-                  className="form-input"
-                />
-                <span className="input-suffix">inches</span>
+              <div className="input-wrapper" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <span className="input-prefix" style={{ position: 'static', transform: 'none', marginRight: '4px' }}>Height:</span>
+                <select
+                  value={Math.floor(height / 12) || 6}
+                  onChange={(e) => {
+                    const ft = parseInt(e.target.value) || 5;
+                    const inch = height % 12;
+                    setHeight(ft * 12 + inch);
+                  }}
+                  className="form-input form-select"
+                  style={{ paddingLeft: '0.75rem', paddingRight: '2rem', flex: 1 }}
+                >
+                  <option value={4}>4'</option>
+                  <option value={5}>5'</option>
+                  <option value={6}>6'</option>
+                  <option value={7}>7'</option>
+                </select>
+                <select
+                  value={height % 12}
+                  onChange={(e) => {
+                    const ft = Math.floor(height / 12) || 5;
+                    const inch = parseInt(e.target.value) || 0;
+                    setHeight(ft * 12 + inch);
+                  }}
+                  className="form-input form-select"
+                  style={{ paddingLeft: '0.75rem', paddingRight: '2rem', flex: 1 }}
+                >
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <option key={i} value={i}>
+                      {i}''
+                    </option>
+                  ))}
+                </select>
               </div>
-              <span className="input-hint">e.g., 70</span>
+              <span className="input-hint">e.g., 6' 3 ''</span>
             </div>
 
             <div className="input-group input-with-suffix">

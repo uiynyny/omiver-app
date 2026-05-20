@@ -90,7 +90,7 @@ function reducer(state: AppState, action: Action): AppState {
     case 'SET_AUTH':
       return { ...state, auth: { ...state.auth, ...action.payload } };
     case 'CLEAR_AUTH':
-      return { ...state, auth: { isAuthenticated: false, userId: null, clientId: null, userType: null } };
+      return initialState;
     case 'UPDATE_REGISTRATION':
       return {
         ...state,

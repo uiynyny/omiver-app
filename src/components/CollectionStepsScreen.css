@@ -130,6 +130,29 @@
   margin-bottom: 12px;
 }
 
+/* Small hint about barcode placement on the kit box */
+.barcode-hint {
+  font-size: 0.85rem;
+  color: #495057;
+  margin-bottom: 10px;
+  font-style: italic;
+}
+
+.barcode-instruction {
+  font-size: 0.9rem;
+  color: #333;
+  margin-bottom: 14px;
+}
+
+.prep-list {
+  margin: 0 0 12px 18px;
+  padding: 0;
+  color: #333;
+}
+.prep-list li {
+  margin-bottom: 8px;
+}
+
 .step-card {
   background: white;
   border-radius: 12px;
@@ -238,6 +261,15 @@
 
 .confirm-btn:hover {
   opacity: 0.9;
+}
+
+/* Disabled state for confirm buttons */
+.confirm-btn:disabled,
+.confirm-btn[disabled] {
+  background-color: #d8c5d0; /* muted lilac */
+  color: #ffffff;
+  opacity: 0.9;
+  cursor: not-allowed;
 }
 
 .sample-shipped-box {
