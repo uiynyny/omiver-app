@@ -178,6 +178,8 @@ export interface Order {
     test_kit_name?: string;
     order_date?: string;
     created_at?: string;
+    forward_tracking_number?: string;
+    return_tracking_number?: string;
     tracking_number?: string;
     // aliases used by UI
     testName?: string;
@@ -447,6 +449,116 @@ export const createOrder = async (data: Record<string, unknown>): Promise<OrderD
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to create order');
+    }
+
+    return response.json();
+}
+
+export const createBarcodeAssignment = async (data: {
+    kit_code: string;
+    barcode_number: string;
+}): Promise<{
+    created: boolean;
+    assignment_id: number;
+    barcode_number: string;
+    client_id: number;
+    order_id: number;
+    test_kit_id: number;
+    test_kit_name: string;
+}> => {
+    const token = getAuthToken();
+    const headers = withAuthHeaders({
+        'Content-Type': 'application/json',
+    });
+    const options: RequestInit = {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data),
+        credentials: 'include',
+    };
+
+    if (!token) {
+        (options.headers as Record<string, string>)['X-CSRFToken'] = getCookie('csrftoken') || '';
+    }
+
+    const response = await fetch(`${API_URL}/barcode/assign`, options);
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || errorData.error || 'Failed to create barcode assignment');
+    }
+
+    return response.json();
+}
+
+export const linkBarcodeAssignment = async (data: {
+    barcode_number: string;
+    client_id: number | string;
+}): Promise<{
+    linked: boolean;
+    already_linked: boolean;
+    barcode_number: string;
+    client_id: number;
+    order_id: number;
+    test_kit_id: number;
+    test_kit_name: string;
+}> => {
+    const token = getAuthToken();
+    const headers = withAuthHeaders({
+        'Content-Type': 'application/json',
+    });
+    const options: RequestInit = {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data),
+        credentials: 'include',
+    };
+
+    if (!token) {
+        (options.headers as Record<string, string>)['X-CSRFToken'] = getCookie('csrftoken') || '';
+    }
+
+    const response = await fetch(`${API_URL}/barcode/link`, options);
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || errorData.error || 'Failed to link barcode');
+    }
+
+    return response.json();
+}
+
+export const updateOrderStatus = async (
+    orderId: number | string,
+    data: {
+        status: string;
+        title?: string;
+        description?: string;
+        forward_tracking_number?: string;
+        return_tracking_number?: string;
+        tracking_number?: string;
+    },
+): Promise<OrderDetail> => {
+    const token = getAuthToken();
+    const headers = withAuthHeaders({
+        'Content-Type': 'application/json',
+    });
+    const options: RequestInit = {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify(data),
+        credentials: 'include',
+    };
+
+    if (!token) {
+        (options.headers as Record<string, string>)['X-CSRFToken'] = getCookie('csrftoken') || '';
+    }
+
+    const response = await fetch(`${API_URL}/orders/${orderId}/status`, options);
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to update order status');
     }
 
     return response.json();

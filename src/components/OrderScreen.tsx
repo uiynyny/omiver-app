@@ -67,20 +67,21 @@ const OrderScreen: React.FC = () => {
   const orderNumber = order?.order_number ?? order?.id;
   const orderName = order?.test_kit_name ?? order?.testName ?? 'Order';
   const orderDate = formatOrderDate(order?.order_date || order?.created_at || order?.date);
-  const trackingNumber = order?.tracking_number || order?.tracking;
+  const forwardTrackingNumber = order?.forward_tracking_number || order?.tracking_number || order?.tracking;
+  const returnTrackingNumber = order?.return_tracking_number || '';
   const orderStatus = order?.status || 'PENDING';
   const getStatusMessage = () => {
     switch (orderStatus) {
       case 'CONFIRMED':
         return 'We are processing your order';
       case 'SHIPPED':
-        return trackingNumber ? `Your order has shipped. Tracking: ${trackingNumber}` : 'Your order has shipped';
+        return forwardTrackingNumber ? `Your order has shipped. Tracking: ${forwardTrackingNumber}` : 'Your order has shipped';
       case 'IN_TRANSIT':
-        return trackingNumber ? `Your order is in transit. Tracking: ${trackingNumber}` : 'Your order is in transit';
+        return forwardTrackingNumber ? `Your order is in transit. Tracking: ${forwardTrackingNumber}` : 'Your order is in transit';
       case 'OUT_FOR_DELIVERY':
-        return trackingNumber ? `Your order is out for delivery. Tracking: ${trackingNumber}` : 'Your order is out for delivery';
+        return forwardTrackingNumber ? `Your order is out for delivery. Tracking: ${forwardTrackingNumber}` : 'Your order is out for delivery';
       case 'DELIVERED':
-        return trackingNumber ? `Your order has been delivered. Tracking: ${trackingNumber}` : 'Your order has been delivered';
+        return forwardTrackingNumber ? `Your order has been delivered. Tracking: ${forwardTrackingNumber}` : 'Your order has been delivered';
       case 'CANCELLED':
         return 'Your order has been cancelled';
       default:
@@ -89,18 +90,18 @@ const OrderScreen: React.FC = () => {
   };
 
   const getStatusLink = () => {
-    if (!trackingNumber || !['SHIPPED', 'IN_TRANSIT', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(orderStatus)) {
+    if (!forwardTrackingNumber || !['SHIPPED', 'IN_TRANSIT', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(orderStatus)) {
       return null;
     }
 
     return (
       <a
-        href={`https://tracking.com/?tracking=${encodeURIComponent(trackingNumber)}`}
+        href={`https://tracking.com/?tracking=${encodeURIComponent(forwardTrackingNumber)}`}
         target="_blank"
         rel="noopener noreferrer"
         style={{ color: '#6b9b8a', textDecoration: 'none', fontWeight: 500 }}
       >
-        {trackingNumber}
+        {forwardTrackingNumber}
       </a>
     );
   };
@@ -160,16 +161,46 @@ const OrderScreen: React.FC = () => {
         {order && (
           <div className='bottom-card'>
             <section className="tracking-panel">
-              <div className="tracking-label">Tracking Number</div>
+              <div className="tracking-label">Tracking Numbers</div>
               <div style={{ color: '#777', marginBottom: 10 }}>Track your order</div>
               <div className="tracking-number">
-                <div style={{ fontWeight: 700 }}>{trackingNumber || 'Pending'}</div>
-                {trackingNumber && <button className="copy-btn" onClick={() => navigator.clipboard?.writeText(trackingNumber)}>Copy</button>}
+                <div className="tracking-list">
+                  <div>
+                    <div style={{ fontSize: 12, color: '#777', marginBottom: 4 }}>Forward</div>
+                    <div style={{ fontWeight: 700 }}>{forwardTrackingNumber || 'Pending'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, color: '#777', marginBottom: 4 }}>Return</div>
+                    <div style={{ fontWeight: 700 }}>{returnTrackingNumber || 'Pending'}</div>
+                  </div>
+                </div>
+                {forwardTrackingNumber && <button className="copy-btn" onClick={() => navigator.clipboard?.writeText(forwardTrackingNumber)}>Copy forward</button>}
               </div>
             </section>
 
             <section className="progress-card">
               <h3 style={{ marginTop: 0 }}>Progress</h3>
+              {order && (() => {
+                const deliveryEvents = order.delivery_events || [];
+                const isDelivered = orderStatus === 'DELIVERED' || deliveryEvents.some(e => e.event_type === 'DELIVERED');
+                const stages = [
+                  { id: 'ordered', label: 'Ordered', done: !!(order.order_date || order.created_at) },
+                  { id: 'shipped', label: 'Shipped (forward)', done: !!forwardTrackingNumber },
+                  { id: 'return_label', label: 'Return label included', done: !!returnTrackingNumber },
+                  { id: 'returned', label: 'Sample returned', done: isDelivered },
+                ];
+
+                return (
+                  <div className="progress-steps">
+                    {stages.map(s => (
+                      <div key={s.id} className={`step ${s.done ? 'done' : ''}`}>
+                        <div className="step-dot">{s.done ? <CheckCircle size={16} color="#6b9b8a" /> : <div className="step-empty" />}</div>
+                        <div className="step-label">{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
               <div className="progress-row">
                 <div className="progress-icon">
                   {orderStatus === 'SHIPPED' || orderStatus === 'IN_TRANSIT' || orderStatus === 'OUT_FOR_DELIVERY' ? (
@@ -218,8 +249,14 @@ const OrderScreen: React.FC = () => {
 
             <section className="next-card">
               <h3>Next Steps</h3>
-              <div style={{ color: '#777' }}>Proceed to the sample collection section to link your kit and begin the testing process.</div>
-              <button className="next-cta" onClick={() => navigate('/collection/steps')}>Start Sample Collection</button>
+              {returnTrackingNumber ? (
+                <div style={{ color: '#777' }}>Please wait patiently for an update from us.</div>
+              ) : (
+                <>
+                  <div style={{ color: '#777' }}>Proceed to the sample collection section to link your kit and begin the testing process.</div>
+                  <button className="next-cta" onClick={() => navigate('/collection/steps')}>Start Sample Collection</button>
+                </>
+              )}
             </section>
           </div>
         )}

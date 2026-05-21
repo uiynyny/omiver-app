@@ -82,10 +82,17 @@
 .tracking-number {
   background: #f6f6f6;
   padding: 12px 16px;
-  border-radius: 999px;
+  border-radius: 14px;
   display: flex;
   justify-content: space-between;
-  align-items: center
+  align-items: center;
+  gap: 10px;
+}
+
+.tracking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .copy-btn {
@@ -108,6 +115,45 @@
   gap: 12px;
   align-items: flex-start;
   margin-bottom: 14px
+}
+
+.progress-steps {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin: 8px 0 12px 0;
+  flex-wrap: wrap;
+}
+
+.progress-steps .step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.progress-steps .step .step-dot {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.progress-steps .step .step-empty {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #e0e0e0;
+}
+
+.progress-steps .step.done {
+  color: #234f3a;
+}
+
+.progress-steps .step.done .step-empty {
+  background: #6b9b8a;
 }
 
 .progress-icon {

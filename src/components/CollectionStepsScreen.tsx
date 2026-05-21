@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Camera, Check, Settings, Edit } from 'lucide-react';
 import './CollectionStepsScreen.css';
-import { verifyKitCode, updateClient, createOrder } from '../api/user';
+import { updateClient, linkBarcodeAssignment, updateOrderStatus } from '../api/user';
 import { useAppContext } from '../context/AppContext';
 
 const CollectionStepsScreen: React.FC = () => {
@@ -15,6 +15,8 @@ const CollectionStepsScreen: React.FC = () => {
   const [kitLinked, setKitLinked] = useState(Boolean((location.state as { kitCode?: string } | null)?.kitCode));
   const [kitLoading, setKitLoading] = useState(false);
   const [kitError, setKitError] = useState('');
+  const [assignmentMessage, setAssignmentMessage] = useState('');
+  const [linkedOrderId, setLinkedOrderId] = useState<number | null>(null);
   const [dietaryRecall, setDietaryRecall] = useState('');
   const [exerciseRecall, setExerciseRecall] = useState('');
   const [collectionFinishedAt, setCollectionFinishedAt] = useState(() => {
@@ -62,19 +64,30 @@ const CollectionStepsScreen: React.FC = () => {
     const code = kitCode.trim();
     if (!code) return;
 
+    if (!state.auth.clientId) {
+      setKitError('Client account not found. Please log in again.');
+      return;
+    }
+
     setKitLoading(true);
     setKitError('');
+    setAssignmentMessage('');
 
     try {
-      const result = await verifyKitCode(code);
-      if (result.valid) {
+      const result = await linkBarcodeAssignment({
+        barcode_number: code,
+        client_id: state.auth.clientId,
+      });
+      if (result.linked) {
         setKitLinked(true);
+        setLinkedOrderId(result.order_id);
+        setAssignmentMessage(result.already_linked ? 'Barcode is already linked to your account.' : `Barcode linked to ${result.test_kit_name}.`);
       } else {
-        setKitError(result.message || 'Kit code is invalid. Please check and try again.');
+        setKitError('Barcode could not be linked. Please try again.');
       }
     } catch (error) {
       console.error(error);
-      setKitError('Failed to verify kit code. Please try again.');
+      setKitError('Failed to link barcode. Please try again.');
     } finally {
       setKitLoading(false);
     }
@@ -119,6 +132,30 @@ const CollectionStepsScreen: React.FC = () => {
     }
     setCollectionConfirmed(true);
   }
+
+  const handleMarkShipped = async () => {
+    if (!linkedOrderId) {
+      setShippedError('Please link your barcode first so we know which order to ship.');
+      return;
+    }
+
+    setShippedError('');
+    setShippedLoading(true);
+    try {
+      await updateOrderStatus(linkedOrderId, {
+        status: 'SHIPPED',
+        title: 'Shipped',
+        description: 'Your sample has been shipped',
+      });
+      navigate('/kits?tab=orders');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to update order status';
+      console.error('Failed to update order status', err);
+      setShippedError(message);
+    } finally {
+      setShippedLoading(false);
+    }
+  };
 
 
   return (
@@ -181,6 +218,7 @@ const CollectionStepsScreen: React.FC = () => {
                     <Camera size={18} />
                     <span>Scan with Camera</span>
                   </button>
+                  {assignmentMessage && <div style={{ color: '#0f5132', fontSize: 13, marginTop: 8 }}>{assignmentMessage}</div>}
                   {kitError && <div style={{ color: '#dc2626', fontSize: 13, marginTop: 8 }}>{kitError}</div>}
                 </>
               )}
@@ -425,27 +463,9 @@ const CollectionStepsScreen: React.FC = () => {
                 <button
                   className="confirm-btn"
                   disabled={shippedLoading || !preparedForShipment || !kitLinked}
-                  onClick={async () => {
-                    setShippedError('');
-                    setShippedLoading(true);
-                    try {
-                      const payload = {
-                        client_id: state.auth.clientId,
-                        kit_codes: kitCode ? [kitCode] : [],
-                        test_kit_name: 'Omiver Collection Kit',
-                        order_date: new Date().toISOString(),
-                      } as any;
-                      await createOrder(payload);
-                      navigate('/kits?tab=orders');
-                    } catch (err: any) {
-                      console.error('Failed to create order', err);
-                      setShippedError(err?.message || 'Failed to create order');
-                    } finally {
-                      setShippedLoading(false);
-                    }
-                  }}
+                  onClick={handleMarkShipped}
                 >
-                  {shippedLoading ? 'Creating order...' : 'Mark as Shipped (create order)'}
+                  {shippedLoading ? 'Updating shipment...' : 'Mark as Shipped'}
                 </button>
               </div>
             )}

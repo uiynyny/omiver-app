@@ -16,6 +16,8 @@ const TermsScreen = () => {
   const { state, dispatch } = useAppContext();
   const isProvider = state.registration.accountType === 'healthcare';
   const isReadOnly = searchParams.get('mode') === 'readonly';
+  const termsReadOnlyUrl = `${import.meta.env.BASE_URL}terms?mode=readonly&section=terms`;
+  const privacyReadOnlyUrl = `${import.meta.env.BASE_URL}terms?mode=readonly&section=privacy`;
 
   // Stateful Accordion & Checkbox Consent
   const [expandedSection, setExpandedSection] = useState<number | null>(null);
@@ -117,7 +119,7 @@ const TermsScreen = () => {
       title: "1. Introduction & Acceptance",
       content: (
         <>
-          <p>Welcome to Omiver! By accessing our hybrid mobile application and services, you agree to be bound by these Terms of Service and our Privacy Policy.</p>
+          <p>Welcome to Omiver! By accessing our hybrid mobile application and services, you agree to be bound by our Terms of Service and our Privacy Policy (see below).</p>
           <p>These Terms constitute a legally binding agreement between you and Omiver Nutrition, Inc. If you do not agree, you must discontinue registration.</p>
         </>
       )
@@ -243,7 +245,27 @@ const TermsScreen = () => {
               {isAgreed && <Check size={14} className="terms-checkmark" />}
             </div>
             <span className="terms-consent-label">
-              I have read, understood, and agree to Omiver's <span className="bold-link">Terms of Service</span> and <span className="bold-link">Privacy Policy</span>.
+              I have read, understood, and agree to Omiver's{' '}
+              <a
+                className="bold-link"
+                href={termsReadOnlyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(event) => event.stopPropagation()}
+              >
+                Terms of Service
+              </a>{' '}
+              and{' '}
+              <a
+                className="bold-link"
+                href={privacyReadOnlyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(event) => event.stopPropagation()}
+              >
+                Privacy Policy
+              </a>
+              .
             </span>
           </div>
 
