@@ -426,6 +426,32 @@ export const checkout = async (data: Record<string, unknown>): Promise<Record<st
     return response.json();
 }
 
+export const createOrder = async (data: Record<string, unknown>): Promise<OrderDetail> => {
+    const token = getAuthToken();
+    const headers = withAuthHeaders({
+        'Content-Type': 'application/json',
+    });
+    const options: RequestInit = {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data),
+        credentials: 'include',
+    };
+
+    if (!token) {
+        (options.headers as Record<string, string>)['X-CSRFToken'] = getCookie('csrftoken') || '';
+    }
+
+    const response = await fetch(`${API_URL}/orders/create`, options);
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to create order');
+    }
+
+    return response.json();
+}
+
 export const createPaymentIntent = async (testKitId: number, clientId: number, quantity: number = 1): Promise<PaymentIntentResponse> => {
     const response = await fetch(`${API_URL}/create-payment-intent`, {
         method: 'POST',
@@ -517,20 +543,4 @@ export const verifyKitCode = async (kitCode: string): Promise<{ valid: boolean; 
         return { valid: false, message: errorData.message || 'Kit code not found' };
     }
     return { valid: true, message: 'Kit code verified' };
-}
-
-export const createOrder = async (data: { client_id: number | string; kit_codes?: string[]; test_kit_name?: string; tracking_number?: string; order_date?: string; }): Promise<Order> => {
-    const response = await fetch(`${API_URL}/orders`, {
-        method: 'POST',
-        headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(data),
-        credentials: 'include',
-    });
-
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to create order');
-    }
-
-    return response.json();
 }
