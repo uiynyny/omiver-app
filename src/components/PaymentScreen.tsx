@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchPayments, createPaymentIntent, confirmPaymentApi } from '../api/user';
+import { fetchPayments, createPaymentIntent, confirmPaymentApi, fetchDefaultShippingAddress } from '../api/user';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { X, Lock, ChevronRight } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
@@ -50,7 +50,8 @@ const PaymentForm: React.FC = () => {
     streetAddress: '',
     city: '',
     state: '',
-    zipCode: ''
+    zipCode: '',
+    country: ''
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,19 +60,48 @@ const PaymentForm: React.FC = () => {
 
   useEffect(() => {
     if (clientId) {
-      fetchPayments(clientId).then((data) => {
-        if (data && data.length > 0) {
-          const latestPayment = data[0]; // Most recent payment
+      fetchDefaultShippingAddress(clientId).then((addr) => {
+        if (addr && Object.keys(addr).length) {
           setFormData((prev) => ({
             ...prev,
-            cardholderName: latestPayment?.cardholder_name || '',
-            streetAddress: latestPayment?.billing_address?.street_address || '',
-            city: latestPayment?.billing_address?.city || '',
-            state: latestPayment?.billing_address?.state || '',
-            zipCode: latestPayment?.billing_address?.zip_code || '',
+            streetAddress: addr?.street_address || '',
+            city: addr?.city || '',
+            state: addr?.state || '',
+            zipCode: addr?.zip_code || '',
+            country: addr?.country || '',
           }));
+        } else {
+          fetchPayments(clientId).then((data) => {
+            if (data && data.length > 0) {
+              const latestPayment = data[0];
+              setFormData((prev) => ({
+                ...prev,
+                cardholderName: latestPayment?.cardholder_name || '',
+                streetAddress: latestPayment?.billing_address?.street_address || '',
+                city: latestPayment?.billing_address?.city || '',
+                state: latestPayment?.billing_address?.state || '',
+                zipCode: latestPayment?.billing_address?.zip_code || '',
+                country: '',
+              }));
+            }
+          }).catch((error) => console.error(error));
         }
-      }).catch((error) => console.error(error));
+      }).catch(() => {
+        fetchPayments(clientId).then((data) => {
+          if (data && data.length > 0) {
+            const latestPayment = data[0];
+            setFormData((prev) => ({
+              ...prev,
+              cardholderName: latestPayment?.cardholder_name || '',
+              streetAddress: latestPayment?.billing_address?.street_address || '',
+              city: latestPayment?.billing_address?.city || '',
+              state: latestPayment?.billing_address?.state || '',
+              zipCode: latestPayment?.billing_address?.zip_code || '',
+              country: '',
+            }));
+          }
+        }).catch((error) => console.error(error));
+      });
     }
   }, [clientId]);
 
@@ -94,6 +124,7 @@ const PaymentForm: React.FC = () => {
             city: formData.city,
             state: formData.state,
             zip_code: formData.zipCode,
+            country: formData.country,
             cardholder_name: formData.cardholderName || 'N/A',
         });
         setLoading(false);
@@ -141,6 +172,7 @@ const PaymentForm: React.FC = () => {
             city: formData.city,
             state: formData.state,
             zip_code: formData.zipCode,
+            country: formData.country,
             cardholder_name: formData.cardholderName,
         });
 
@@ -240,6 +272,10 @@ const PaymentForm: React.FC = () => {
                 <div className="input-group">
                   <input type="text" name="zipCode" className="text-input" placeholder="Zip Code" value={formData.zipCode} onChange={handleInputChange} required />
                 </div>
+              </div>
+
+              <div className="input-group">
+                <input type="text" name="country" className="text-input" placeholder="Country" value={formData.country} onChange={handleInputChange} required />
               </div>
             </label>
           </div>

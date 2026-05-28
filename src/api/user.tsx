@@ -587,6 +587,7 @@ export const confirmPaymentApi = async (data: {
     city: string;
     state: string;
     zip_code: string;
+    country?: string;
     cardholder_name?: string;
     test_kit_id?: number;
     quantity?: number;
@@ -655,4 +656,27 @@ export const verifyKitCode = async (kitCode: string): Promise<{ valid: boolean; 
         return { valid: false, message: errorData.message || 'Kit code not found' };
     }
     return { valid: true, message: 'Kit code verified' };
+}
+
+export const fetchShippingAddresses = async (clientId: string | number): Promise<any[]> => {
+    const response = await fetch(`${API_URL}/shipping-addresses?client_id=${clientId}`, {
+        headers: withAuthHeaders(),
+        credentials: 'include',
+    });
+    if (!response.ok) {
+        throw new Error('Failed to fetch shipping addresses');
+    }
+    return response.json();
+}
+
+export const fetchDefaultShippingAddress = async (clientId?: string | number): Promise<any> => {
+    const query = clientId ? `?client_id=${clientId}` : '';
+    const response = await fetch(`${API_URL}/shipping-address${query}`, {
+        headers: withAuthHeaders(),
+        credentials: 'include',
+    });
+    if (!response.ok) {
+        throw new Error('Failed to fetch default shipping address');
+    }
+    return response.json();
 }

@@ -190,9 +190,9 @@ const PersonalInfoScreen = () => {
                 <span className="input-prefix">Weight:</span>
                 <input
                   type="number"
-                  placeholder="Weight:"
+                  placeholder=""
                   value={weight}
-                  onChange={(e) => setWeight(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => setWeight(parseFloat(e.target.value))}
                   className="form-input"
                 />
                 <span className="input-suffix">lbs</span>
