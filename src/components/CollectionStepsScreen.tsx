@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Camera, Check, Settings, Edit } from 'lucide-react';
 import './CollectionStepsScreen.css';
-import { updateClient, linkBarcodeAssignment, updateOrderStatus } from '../api/user';
+import { updateClient, linkBarcodeAssignment, markBarcodeCollected, updateOrderStatus } from '../api/user';
 import { useAppContext } from '../context/AppContext';
 
 const CollectionStepsScreen: React.FC = () => {
@@ -98,9 +98,21 @@ const CollectionStepsScreen: React.FC = () => {
       console.error('Client ID not found');
       return;
     }
+    if (!kitLinked || !kitCode.trim()) {
+      console.error('Kit code not linked');
+      return;
+    }
 
     setRecallSaving(true);
     try {
+      if (isSampleCollected) {
+        await markBarcodeCollected({
+          barcode_number: kitCode.trim(),
+          client_id: state.auth.clientId,
+          collected_at: collectionFinishedAt ? new Date(collectionFinishedAt).toISOString() : undefined,
+        });
+      }
+
       await updateClient(state.auth.clientId, {
         dietary_recall: dietaryRecall,
         exercise_recall: exerciseRecall,
@@ -132,6 +144,10 @@ const CollectionStepsScreen: React.FC = () => {
     }
     setCollectionConfirmed(true);
   }
+
+  const handleConfirmSampleCollected = async () => {
+    setIsSampleCollected(true);
+  };
 
   const handleMarkShipped = async () => {
     if (!linkedOrderId) {
@@ -253,7 +269,7 @@ const CollectionStepsScreen: React.FC = () => {
                 {!kitLinked && (
                   <div style={{ color: '#b45309', marginBottom: 10 }}>Please link your kit first to continue.</div>
                 )}
-                <button className="confirm-btn" onClick={() => { setIsSampleCollected(true); }} disabled={!kitLinked} title={!kitLinked ? 'Link your kit first' : ''}>
+                <button className="confirm-btn" onClick={handleConfirmSampleCollected} disabled={!kitLinked} title={!kitLinked ? 'Link your kit first' : ''}>
                   Confirm Sample Collected
                 </button>
               </div>

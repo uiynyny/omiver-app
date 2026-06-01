@@ -528,6 +528,45 @@ export const linkBarcodeAssignment = async (data: {
     return response.json();
 }
 
+export const markBarcodeCollected = async (data: {
+    barcode_number: string;
+    client_id?: number | string;
+    collected_at?: string;
+}): Promise<{
+    collected: boolean;
+    barcode_number: string;
+    collected_at: string;
+    assignment_id: number;
+    client_id: number | null;
+    order_id: number | null;
+    test_kit_id: number;
+    test_kit_name: string;
+}> => {
+    const token = getAuthToken();
+    const headers = withAuthHeaders({
+        'Content-Type': 'application/json',
+    });
+    const options: RequestInit = {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data),
+        credentials: 'include',
+    };
+
+    if (!token) {
+        (options.headers as Record<string, string>)['X-CSRFToken'] = getCookie('csrftoken') || '';
+    }
+
+    const response = await fetch(`${API_URL}/barcode/collect`, options);
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || errorData.error || 'Failed to mark barcode as collected');
+    }
+
+    return response.json();
+}
+
 export const updateOrderStatus = async (
     orderId: number | string,
     data: {
