@@ -675,7 +675,6 @@ export const updateClient = async (clientId: string | number, data: Partial<Pati
 
 export const checkReferralCode = async (code: string): Promise<boolean> => {
     const response = await fetch(`${API_URL}/validate_referral_code?code=${encodeURIComponent(code)}`, {
-        headers: withAuthHeaders(),
         credentials: 'include',
     });
     if (!response.ok) {
