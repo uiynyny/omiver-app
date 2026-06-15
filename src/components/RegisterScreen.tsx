@@ -97,6 +97,10 @@ const RegisterScreen = () => {
           />
         </div>
 
+        <p className="terms-text">
+          Passwords must be at least 8 characters and should not be common, numeric-only, or similar to your email or username.
+        </p>
+
         <button onClick={handleRegister} className="primary-button">
           Register <ChevronRight size={20} />
         </button>
