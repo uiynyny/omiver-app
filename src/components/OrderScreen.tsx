@@ -254,7 +254,7 @@ const OrderScreen: React.FC = () => {
               ) : (
                 <>
                   <div style={{ color: '#777' }}>Proceed to the sample collection section to link your kit and begin the testing process.</div>
-                  <button className="next-cta" onClick={() => navigate('/collection/steps')}>Start Sample Collection</button>
+                  <button className="next-cta" onClick={() => navigate('/collection/steps', { state: { orderId: order.id } })}>Start Sample Collection</button>
                 </>
               )}
             </section>

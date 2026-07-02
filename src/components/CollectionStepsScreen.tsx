@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Camera, Check, Settings, Edit } from 'lucide-react';
 import './CollectionStepsScreen.css';
-import { updateClient, linkBarcodeAssignment, markBarcodeCollected, updateOrderStatus } from '../api/user';
+import { updateClient, linkBarcodeAssignment, markBarcodeCollected, updateOrderStatus, collectionScan, collectionLog, collectionShip, getKitCollection } from '../api/user';
 import { useAppContext } from '../context/AppContext';
 
 const CollectionStepsScreen: React.FC = () => {
@@ -60,6 +60,32 @@ const CollectionStepsScreen: React.FC = () => {
   const [shippedError, setShippedError] = useState('');
   const [preparedForShipment, setPreparedForShipment] = useState(false);
 
+  useEffect(() => {
+    const initOrderId = (location.state as any)?.orderId;
+    if (initOrderId) {
+      setLinkedOrderId(initOrderId);
+      getKitCollection(initOrderId).then(data => {
+        if (data.kit_barcode) {
+          setKitCode(data.kit_barcode);
+          setKitLinked(true);
+        }
+        if (data.dietary_recall || data.exercise_recall) {
+          setIsSampleCollected(true);
+          setDietaryRecall(data.dietary_recall || '');
+          setExerciseRecall(data.exercise_recall || '');
+          setSavedDietary(data.dietary_recall || '');
+          setSavedExercise(data.exercise_recall || '');
+          setRecallCollapsed(true);
+        }
+        if (data.status === 'SHIPPING' || data.status === 'TESTING' || data.status === 'FINISHED') {
+          setIsSampleCollected(true);
+          setCollectionConfirmed(true);
+          setPreparedForShipment(true);
+        }
+      }).catch(console.error);
+    }
+  }, [location.state]);
+
   const handleLinkKit = async () => {
     const code = kitCode.trim();
     if (!code) return;
@@ -74,6 +100,11 @@ const CollectionStepsScreen: React.FC = () => {
     setAssignmentMessage('');
 
     try {
+      const orderIdToScan = linkedOrderId || (location.state as any)?.orderId;
+      if (orderIdToScan) {
+          await collectionScan(orderIdToScan, code);
+      }
+
       const result = await linkBarcodeAssignment({
         barcode_number: code,
         client_id: state.auth.clientId,
@@ -82,6 +113,9 @@ const CollectionStepsScreen: React.FC = () => {
         setKitLinked(true);
         setLinkedOrderId(result.order_id);
         setAssignmentMessage(result.already_linked ? 'Barcode is already linked to your account.' : `Barcode linked to ${result.test_kit_name}.`);
+        if (result.order_id && !orderIdToScan) {
+          await collectionScan(result.order_id, code);
+        }
       } else {
         setKitError('Barcode could not be linked. Please try again.');
       }
@@ -118,6 +152,12 @@ const CollectionStepsScreen: React.FC = () => {
         exercise_recall: exerciseRecall,
         collection_finished_at: collectionFinishedAt ? new Date(collectionFinishedAt).toISOString() : null,
       });
+
+      const orderIdToLog = linkedOrderId || (location.state as any)?.orderId;
+      if (orderIdToLog) {
+        await collectionLog(orderIdToLog, dietaryRecall, exerciseRecall);
+      }
+
       // store saved values and collapse the form
       setSavedDietary(dietaryRecall);
       setSavedExercise(exerciseRecall);
@@ -150,7 +190,8 @@ const CollectionStepsScreen: React.FC = () => {
   };
 
   const handleMarkShipped = async () => {
-    if (!linkedOrderId) {
+    const orderIdToShip = linkedOrderId || (location.state as any)?.orderId;
+    if (!orderIdToShip) {
       setShippedError('Please link your barcode first so we know which order to ship.');
       return;
     }
@@ -158,7 +199,8 @@ const CollectionStepsScreen: React.FC = () => {
     setShippedError('');
     setShippedLoading(true);
     try {
-      await updateOrderStatus(linkedOrderId, {
+      await collectionShip(orderIdToShip);
+      await updateOrderStatus(orderIdToShip, {
         status: 'SHIPPED',
         title: 'Shipped',
         description: 'Your sample has been shipped',

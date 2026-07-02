@@ -718,3 +718,55 @@ export const fetchDefaultShippingAddress = async (clientId?: string | number): P
     }
     return response.json();
 }
+
+export interface KitCollectionData {
+    id: number;
+    kit_barcode: string;
+    status: string;
+    dietary_recall?: string | null;
+    exercise_recall?: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export const getKitCollection = async (orderId: number | string): Promise<KitCollectionData> => {
+    const response = await fetch(`${API_URL}/collection/${orderId}`, {
+        headers: withAuthHeaders(),
+        credentials: 'include',
+    });
+    if (!response.ok) throw new Error('Failed to fetch kit collection');
+    return response.json();
+}
+
+export const collectionScan = async (orderId: number | string, kitBarcode: string): Promise<KitCollectionData> => {
+    const response = await fetch(`${API_URL}/collection/scan`, {
+        method: 'POST',
+        headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
+        body: JSON.stringify({ order_id: orderId, kit_barcode: kitBarcode }),
+    });
+    if (!response.ok) throw new Error('Failed to scan kit collection');
+    return response.json();
+}
+
+export const collectionLog = async (orderId: number | string, dietaryRecall: string, exerciseRecall: string): Promise<KitCollectionData> => {
+    const response = await fetch(`${API_URL}/collection/log`, {
+        method: 'POST',
+        headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
+        body: JSON.stringify({ order_id: orderId, dietary_recall: dietaryRecall, exercise_recall: exerciseRecall }),
+    });
+    if (!response.ok) throw new Error('Failed to save collection logs');
+    return response.json();
+}
+
+export const collectionShip = async (orderId: number | string, trackingNumber?: string): Promise<KitCollectionData> => {
+    const response = await fetch(`${API_URL}/collection/ship`, {
+        method: 'POST',
+        headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
+        body: JSON.stringify({ order_id: orderId, tracking_number: trackingNumber }),
+    });
+    if (!response.ok) throw new Error('Failed to ship collection');
+    return response.json();
+}
