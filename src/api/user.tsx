@@ -655,6 +655,17 @@ export const confirmPaymentApi = async (data: {
     return response.json();
 }
 
+export const fetchClient = async (clientId: string | number): Promise<any> => {
+    const response = await fetch(`${API_URL}/client/${clientId}`, {
+        headers: withAuthHeaders(),
+        credentials: 'include',
+    });
+    if (!response.ok) {
+        throw new Error('Failed to fetch client data');
+    }
+    return response.json();
+}
+
 export const updateClient = async (clientId: string | number, data: Partial<Patient & Record<string, unknown>>): Promise<ClientUpdateResponse> => {
     const response = await fetch(`${API_URL}/client/${clientId}`, {
         method: 'PATCH',

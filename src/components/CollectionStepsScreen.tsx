@@ -59,6 +59,64 @@ const CollectionStepsScreen: React.FC = () => {
   const [shippedLoading, setShippedLoading] = useState(false);
   const [shippedError, setShippedError] = useState('');
   const [preparedForShipment, setPreparedForShipment] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const recoverProgress = async () => {
+      if (!state.auth.clientId) {
+        setLoading(false);
+        return;
+      }
+      try {
+        // 1. Recover recalls and collection finished time
+        const clientData = await fetchClient(state.auth.clientId);
+        if (clientData.dietary_recall) {
+          setDietaryRecall(clientData.dietary_recall);
+          setSavedDietary(clientData.dietary_recall);
+        }
+        if (clientData.exercise_recall) {
+          setExerciseRecall(clientData.exercise_recall);
+          setSavedExercise(clientData.exercise_recall);
+        }
+        if (clientData.collection_finished_at) {
+          setCollectionFinishedAt(clientData.collection_finished_at);
+          const dt = splitDateTime(clientData.collection_finished_at);
+          setCollectionDate(dt.date);
+          setCollectionTime(dt.time);
+          setSavedCollectionFinishedAt(clientData.collection_finished_at);
+          setIsSampleCollected(true);
+        }
+        
+        // If recalls and collection time are recorded, collapse they are finished
+        if (clientData.dietary_recall && clientData.exercise_recall && clientData.collection_finished_at) {
+          setRecallCollapsed(true);
+          setCollectionConfirmed(true);
+          setPreparedForShipment(true);
+        }
+
+        // 2. Recover barcode linkage from order history
+        const orders = await fetchOrders(state.auth.clientId);
+        const activeOrder = orders.find(o => o.status !== 'FINISHED' && o.status !== 'CANCELLED');
+        if (activeOrder && activeOrder.barcode_assignment) {
+          const barcode = activeOrder.barcode_assignment.barcode_number;
+          setKitCode(barcode);
+          setKitLinked(true);
+          setLinkedOrderId(activeOrder.id);
+        } else if (activeOrder && (activeOrder as any).barcode_number) {
+          const barcode = (activeOrder as any).barcode_number;
+          setKitCode(barcode);
+          setKitLinked(true);
+          setLinkedOrderId(activeOrder.id);
+        }
+      } catch (err) {
+        console.error('Failed to recover collection progress:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    recoverProgress();
+  }, [state.auth.clientId]);
 
   useEffect(() => {
     const initOrderId = (location.state as any)?.orderId;
@@ -215,6 +273,17 @@ const CollectionStepsScreen: React.FC = () => {
     }
   };
 
+
+  if (loading) {
+    return (
+      <div className="steps-root" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: 24, background: '#fff' }}>
+        <div style={{ textAlign: 'center', color: '#417690' }}>
+          <div style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: 8 }}>Loading your progress...</div>
+          <div style={{ opacity: 0.6, fontSize: '0.9rem' }}>Please wait while Omiver restores your collection draft...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="steps-root">
