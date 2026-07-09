@@ -56,10 +56,15 @@ const CollectionStepsScreen: React.FC = () => {
   const [savedCollectionFinishedAt, setSavedCollectionFinishedAt] = useState('');
   const [collectionConfirmed, setCollectionConfirmed] = useState(false);
   const [finalizeError, setFinalizeError] = useState('');
+  const [recallError, setRecallError] = useState('');
   const [shippedLoading, setShippedLoading] = useState(false);
   const [shippedError, setShippedError] = useState('');
   const [preparedForShipment, setPreparedForShipment] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     const recoverProgress = async () => {
@@ -268,6 +273,18 @@ const CollectionStepsScreen: React.FC = () => {
       return;
     }
 
+    setRecallError('');
+
+    const hasDate = !!collectionDate;
+    const hasTime = !!collectionTime;
+    const hasDiet = !!dietaryRecall.trim();
+    const hasExercise = !!exerciseRecall.trim();
+
+    if (!hasDate || !hasTime || !hasDiet || !hasExercise) {
+      setRecallError('Please fill in all information (date, time, dietary recall, and exercise recall) before saving.');
+      return;
+    }
+
     setRecallSaving(true);
     try {
       if (isSampleCollected) {
@@ -309,15 +326,6 @@ const CollectionStepsScreen: React.FC = () => {
 
   const handleBarcodeInBox = () => {
     console.log("Finalizing collection confirmation with checks for date, time, and dietary recall");
-    setFinalizeError('');
-    const hasDate = !!collectionDate;
-    const hasTime = !!collectionTime;
-    const hasDiet = dietaryRecall.trim().length > 0;
-    if (!hasDate || !hasTime || !hasDiet) {
-      console.log("error missing info")
-      setFinalizeError('Please enter collection date, time, and a short dietary recall before confirming.');
-      return;
-    }
     setCollectionConfirmed(true);
   }
 
@@ -453,9 +461,8 @@ const CollectionStepsScreen: React.FC = () => {
         {/* Step 2: Collect Your Sample (Active) */}
         <div className="step-item">
           <div className="step-indicator">
-            <div className={`step-circle ${!collectionConfirmed ? 'active' : 'completed'}`}>
-              {collectionConfirmed ? <Check size={18} /> : <Check size={18} style={{ opacity: 0.3 }} />}
-              {/* Note: Icon usage here is a bit tricky, usually active step has a number or dot, using check for consistency with design mock which shows checkmark circle */}
+            <div className={`step-circle ${collectionConfirmed ? 'completed' : (kitLinked ? 'active' : '')}`}>
+              {collectionConfirmed ? <Check size={18} /> : <Check size={18} style={{ opacity: kitLinked ? 1 : 0.3 }} />}
             </div>
             <div className="step-line"></div>
           </div>
@@ -581,6 +588,11 @@ const CollectionStepsScreen: React.FC = () => {
                         rows={3}
                         style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e0e0e0', fontFamily: 'inherit', marginBottom: '12px' }}
                       />
+                      {recallError && (
+                        <div style={{ color: '#dc2626', fontSize: '0.85rem', marginBottom: 12, fontWeight: 600, textAlign: 'left' }}>
+                          {recallError}
+                        </div>
+                      )}
                       <button
                         onClick={handleSaveDietaryRecall}
                         disabled={recallSaving}
@@ -608,7 +620,7 @@ const CollectionStepsScreen: React.FC = () => {
             {isSampleCollected && !collectionConfirmed && (
               <div className="step-card">
                 <div style={{ marginBottom: 8, fontWeight: 600 }}>Final step: confirm barcode placement</div>
-                <div style={{ marginBottom: 12 }} className="barcode-instruction">Please write the barcode number on the silver foil envelope and place it inside the Omiver box.</div>
+                <div style={{ marginBottom: 12 }} className="barcode-instruction">Please write the barcode number on the silver foil envelope and place it inside the green Omiver box.</div>
                 {finalizeError && <div style={{ color: '#dc2626', marginBottom: 8 }}>{finalizeError}</div>}
                 <button
                   className="confirm-btn"
@@ -626,8 +638,8 @@ const CollectionStepsScreen: React.FC = () => {
         {/* Step 3: Prepare Your Sample for Shipment */}
         <div className="step-item">
           <div className="step-indicator">
-            <div className={`step-circle ${preparedForShipment ? 'completed' : 'active'}`}>
-              {preparedForShipment ? <Check size={18} /> : <Check size={18} style={{ opacity: 0.3 }} />}
+            <div className={`step-circle ${preparedForShipment ? 'completed' : (collectionConfirmed ? 'active' : '')}`}>
+              {preparedForShipment ? <Check size={18} /> : <Check size={18} style={{ opacity: collectionConfirmed ? 1 : 0.3 }} />}
             </div>
             <div className="step-line"></div>
           </div>
@@ -663,8 +675,8 @@ const CollectionStepsScreen: React.FC = () => {
         <div className="step-item">
           <div className="step-indicator">
             {/* Simulating this is next */}
-            <div className={`step-circle ${collectionConfirmed ? 'active' : ''}`} style={{ backgroundColor: collectionConfirmed ? '#6b9b8a' : '#e0e0e0' }}>
-              <Check size={18} style={{ opacity: collectionConfirmed ? 1 : 0.3 }} />
+            <div className={`step-circle ${preparedForShipment ? 'active' : ''}`} style={{ backgroundColor: preparedForShipment ? '#6b9b8a' : '#e0e0e0' }}>
+              <Check size={18} style={{ opacity: preparedForShipment ? 1 : 0.3 }} />
             </div>
             <div className="step-line"></div>
           </div>

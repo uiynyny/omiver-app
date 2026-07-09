@@ -121,6 +121,7 @@
   transition: all 0.2s;
   box-sizing: border-box; /* Create React App / Vite resets might needed */
   color: #333;
+  min-width: 0;
 }
 
 .text-input:focus {
@@ -150,6 +151,7 @@
 
 .form-row .input-group {
   flex: 1;
+  min-width: 0;
 }
 
 /* Security Note */

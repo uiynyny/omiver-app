@@ -14,7 +14,11 @@
   background-color: #6b9b8a;
   /* Sage green from designs */
   color: white;
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .steps-header h1 {
