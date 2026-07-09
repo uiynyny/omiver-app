@@ -1,0 +1,259 @@
+/* ProfileSettingsScreen.css */
+
+.settings-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f7f9f8;
+  color: #333333;
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #ffffff;
+  border-bottom: 1px solid #eaeaea;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.settings-back-btn-arrow {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.settings-back-btn-arrow:active {
+  transform: translateX(-4px);
+}
+
+.settings-header-logo {
+  object-fit: contain;
+}
+
+.settings-main-container {
+  flex: 1;
+  padding: 20px;
+  padding-bottom: 96px; /* Space for BottomNav */
+}
+
+.settings-page-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #2d3748;
+  margin: 0 0 20px 0;
+}
+
+/* Settings Options Groups */
+.settings-group {
+  margin-bottom: 24px;
+}
+
+.settings-group-header {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #a0aec0;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin: 0 0 10px 4px;
+}
+
+.settings-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #edf2f7;
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.01);
+  transition: all 0.2s ease;
+}
+
+.settings-list-item:active {
+  background: #f7fafc;
+  transform: scale(0.98);
+}
+
+.settings-item-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.settings-item-emoji {
+  width: 40px;
+  height: 40px;
+  background: #f0f4f2;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.settings-item-lbl {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #2d3748;
+  text-align: left;
+}
+
+.settings-item-sub {
+  font-size: 0.78rem;
+  color: #718096;
+  margin-top: 1px;
+  text-align: left;
+}
+
+.settings-logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff5f5;
+  color: #e53e3e;
+  border: 1px solid #fed7d7;
+  border-radius: 14px;
+  padding: 12px 24px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  width: 100%;
+  max-width: 280px;
+  transition: all 0.2s;
+}
+
+.settings-logout-btn:active {
+  background: #fff5f5;
+  opacity: 0.8;
+}
+
+/* Sub-Form Views Styles */
+.settings-subform-view h2 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #2d3748;
+  margin: 0 0 6px 0;
+}
+
+.settings-subform-desc {
+  font-size: 0.88rem;
+  color: #718096;
+  margin: 0 0 20px 0;
+  line-height: 1.45;
+}
+
+.settings-card-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #ffffff;
+  border: 1px solid #edf2f7;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
+
+.settings-field-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings-field-box label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #4a5568;
+}
+
+.settings-field-box input,
+.settings-field-box textarea,
+.settings-subform-select {
+  border: 1px solid #cbd5e0;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: #2d3748;
+  outline: none;
+  background: #fcfcfc;
+  transition: all 0.2s;
+}
+
+.settings-field-box input:focus,
+.settings-field-box textarea:focus,
+.settings-subform-select:focus {
+  border-color: #6b9b8a;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(107, 155, 138, 0.15);
+}
+
+.settings-field-box textarea {
+  resize: vertical;
+}
+
+.settings-subform-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234a5568' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.settings-sub-hint {
+  font-size: 0.78rem;
+  color: #a0aec0;
+  margin-top: 1px;
+}
+
+.settings-action-save {
+  background: #6b9b8a;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+
+.settings-action-save:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.settings-action-save:disabled {
+  background: #cbd5e0;
+  cursor: not-allowed;
+}
+
+/* Toast Message */
+.settings-toast-msg {
+  background: #f0fdf4;
+  color: #22543d;
+  border: 1px solid #c6f6d5;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 16px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

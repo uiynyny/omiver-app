@@ -13,6 +13,8 @@ const RegisterScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [matchError, setMatchError] = useState('');
 
   // Read referral code from URL (?ref=CODE) and persist in context
   useEffect(() => {
@@ -23,12 +25,50 @@ const RegisterScreen = () => {
     }
   }, [location.search, dispatch]);
 
-  const handleRegister = async () => {
-    // Validate passwords match
-    if (password !== confirmPassword) {
-      alert('Passwords do not match');
+  // Real-time password criteria validation
+  useEffect(() => {
+    if (!password) {
+      setPasswordError('');
       return;
     }
+
+    if (password.length < 8) {
+      setPasswordError('Password must be at least 8 characters.');
+    } else if (/^\d+$/.test(password)) {
+      setPasswordError('Password cannot be numeric-only.');
+    } else if (email && password.toLowerCase() === email.toLowerCase().split('@')[0]) {
+      setPasswordError('Password cannot be similar to your email name.');
+    } else if (email && email.toLowerCase().includes(password.toLowerCase()) && password.length >= 4) {
+      setPasswordError('Password cannot be part of your email.');
+    } else {
+      setPasswordError('');
+    }
+  }, [password, email]);
+
+  // Real-time password match validation
+  useEffect(() => {
+    if (!confirmPassword) {
+      setMatchError('');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setMatchError('Passwords do not match.');
+    } else {
+      setMatchError('');
+    }
+  }, [password, confirmPassword]);
+
+  const handleRegister = async () => {
+    if (!email.trim() || !password || !confirmPassword) {
+      alert('Please fill out all fields.');
+      return;
+    }
+    if (passwordError || matchError) {
+      alert('Please fix password errors before registering.');
+      return;
+    }
+
     const res = await emailExist(email)
     if (res) {
       alert('Email already exists');
@@ -67,6 +107,24 @@ const RegisterScreen = () => {
       <h1 className="auth-title">Create Account</h1>
 
       <div className="form-container">
+        {(passwordError || matchError) && (
+          <div className="form-error-panel" style={{
+            background: '#fff5f5',
+            border: '1px solid #fed7d7',
+            borderRadius: '10px',
+            padding: '12px 16px',
+            marginBottom: '16px',
+            color: '#c53030',
+            fontSize: '0.85rem',
+            lineHeight: '1.4'
+          }}>
+            <ul style={{ margin: 0, paddingLeft: '20px' }}>
+              {passwordError && <li>{passwordError}</li>}
+              {matchError && <li>{matchError}</li>}
+            </ul>
+          </div>
+        )}
+
         <div className="input-group">
           <input
             type="email"

@@ -35,6 +35,23 @@ type RegistrationData = {
   fitness_goal?: string;
   nutritional_goal?: string;
   acceptedTerms?: boolean;
+  // Payment and Billing fields
+  cardholder_name?: string;
+  card_brand?: string;
+  card_last_four?: string;
+  expiry_month?: number;
+  expiry_year?: number;
+  billing_street?: string;
+  billing_city?: string;
+  billing_state?: string;
+  billing_zip?: string;
+  billing_country?: string;
+  // Shipping Address on profile fields
+  shipping_street?: string;
+  shipping_city?: string;
+  shipping_state?: string;
+  shipping_zip?: string;
+  shipping_country?: string;
   // Referral system
   referralCode?: string;      // provider's code (populated after registration)
   referredByCode?: string;    // code from URL ?ref= param (passed by patient)

@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'; // origin
+const API_URL = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/$/, '');
 const AUTH_TOKEN_KEY = 'omiver_auth_token';
 const PERSISTENT_LOGIN_KEY = 'omiver_persistent_login';
 
@@ -187,6 +187,7 @@ export interface Order {
     tracking?: string;
     status?: string;
     quantity?: number;
+    barcode_assignment?: { barcode_number: string } | null;
 }
 
 export interface DeliveryEvent {
@@ -209,6 +210,8 @@ export interface PaymentHistory {
     created_at: string;
     // optional billing details returned by API
     cardholder_name?: string;
+    card_brand?: string;
+    card_last_four?: string;
     billing_address?: {
         street_address?: string;
         city?: string;
@@ -528,6 +531,35 @@ export const linkBarcodeAssignment = async (data: {
     return response.json();
 }
 
+export const unlinkBarcodeAssignment = async (data: {
+    barcode_number: string;
+    client_id: number | string;
+}): Promise<{ unlinked: boolean }> => {
+    const token = getAuthToken();
+    const headers = withAuthHeaders({
+        'Content-Type': 'application/json',
+    });
+    const options: RequestInit = {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data),
+        credentials: 'include',
+    };
+
+    if (!token) {
+        (options.headers as Record<string, string>)['X-CSRFToken'] = getCookie('csrftoken') || '';
+    }
+
+    const response = await fetch(`${API_URL}/barcode/unlink`, options);
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || errorData.error || 'Failed to unlink barcode');
+    }
+
+    return response.json();
+}
+
 export const markBarcodeCollected = async (data: {
     barcode_number: string;
     client_id?: number | string;
@@ -736,6 +768,7 @@ export interface KitCollectionData {
     status: string;
     dietary_recall?: string | null;
     exercise_recall?: string | null;
+    collected_at?: string | null;
     created_at: string;
     updated_at: string;
 }
@@ -760,12 +793,12 @@ export const collectionScan = async (orderId: number | string, kitBarcode: strin
     return response.json();
 }
 
-export const collectionLog = async (orderId: number | string, dietaryRecall: string, exerciseRecall: string): Promise<KitCollectionData> => {
+export const collectionLog = async (orderId: number | string, dietaryRecall: string, exerciseRecall: string, collectedAt?: string): Promise<KitCollectionData> => {
     const response = await fetch(`${API_URL}/collection/log`, {
         method: 'POST',
         headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
         credentials: 'include',
-        body: JSON.stringify({ order_id: orderId, dietary_recall: dietaryRecall, exercise_recall: exerciseRecall }),
+        body: JSON.stringify({ order_id: orderId, dietary_recall: dietaryRecall, exercise_recall: exerciseRecall, collected_at: collectedAt }),
     });
     if (!response.ok) throw new Error('Failed to save collection logs');
     return response.json();
@@ -779,5 +812,48 @@ export const collectionShip = async (orderId: number | string, trackingNumber?: 
         body: JSON.stringify({ order_id: orderId, tracking_number: trackingNumber }),
     });
     if (!response.ok) throw new Error('Failed to ship collection');
+    return response.json();
+}
+
+export interface MealPlanSuggestion {
+    meal: string;
+    suggestion: string;
+}
+
+export interface DietaryRecommendation {
+    summary: string;
+    dos?: string[];
+    donts?: string[];
+    sample_meal_plan?: MealPlanSuggestion[];
+}
+
+export interface ExerciseRecommendation {
+    summary: string;
+    frequency?: string;
+    activities?: string[];
+    precautions?: string[];
+}
+
+export interface RecommendationResponse {
+    id: number;
+    client: number;
+    biomarker_test?: number;
+    text?: string;
+    doctor_notes?: string;
+    dietary_final?: DietaryRecommendation;
+    exercise_final?: ExerciseRecommendation;
+    status: string;
+    approved_at?: string;
+    created_at?: string;
+}
+
+export const fetchRecommendations = async (clientId: string | number): Promise<RecommendationResponse[]> => {
+    const response = await fetch(`${API_URL}/recommendations?client_id=${clientId}`, {
+        headers: withAuthHeaders(),
+        credentials: 'include',
+    });
+    if (!response.ok) {
+        throw new Error('Failed to fetch recommendations');
+    }
     return response.json();
 }

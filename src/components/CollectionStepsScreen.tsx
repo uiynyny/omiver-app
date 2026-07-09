@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera, Check, Settings, Edit } from 'lucide-react';
+import { ArrowLeft, Camera, Check, Edit } from 'lucide-react';
 import './CollectionStepsScreen.css';
-import { updateClient, linkBarcodeAssignment, markBarcodeCollected, updateOrderStatus, collectionScan, collectionLog, collectionShip, getKitCollection } from '../api/user';
+import { updateClient, linkBarcodeAssignment, unlinkBarcodeAssignment, markBarcodeCollected, updateOrderStatus, fetchClient, fetchOrders, collectionScan, collectionLog, collectionShip, getKitCollection } from '../api/user';
 import { useAppContext } from '../context/AppContext';
 
 const CollectionStepsScreen: React.FC = () => {
@@ -97,16 +97,48 @@ const CollectionStepsScreen: React.FC = () => {
         // 2. Recover barcode linkage from order history
         const orders = await fetchOrders(state.auth.clientId);
         const activeOrder = orders.find(o => o.status !== 'FINISHED' && o.status !== 'CANCELLED');
-        if (activeOrder && activeOrder.barcode_assignment) {
-          const barcode = activeOrder.barcode_assignment.barcode_number;
-          setKitCode(barcode);
-          setKitLinked(true);
+        console.log('Recovered active order:', activeOrder);
+        if (activeOrder) {
           setLinkedOrderId(activeOrder.id);
-        } else if (activeOrder && (activeOrder as any).barcode_number) {
-          const barcode = (activeOrder as any).barcode_number;
-          setKitCode(barcode);
-          setKitLinked(true);
-          setLinkedOrderId(activeOrder.id);
+          const barcode = (activeOrder as any).barcode_number || (activeOrder as any).kit_barcode;
+          if (barcode && !barcode.startsWith('KIT-') && barcode !== activeOrder.order_number) {
+            setKitCode(barcode);
+            setKitLinked(true);
+          } else {
+            setKitCode('');
+            setKitLinked(false);
+          }
+
+          try {
+            const data = await getKitCollection(activeOrder.id);
+            if (data.kit_barcode && !data.kit_barcode.startsWith('KIT-') && data.kit_barcode !== activeOrder.order_number) {
+              setKitCode(data.kit_barcode);
+              setKitLinked(true);
+            }
+            if (data.dietary_recall || data.exercise_recall) {
+              setIsSampleCollected(true);
+              setDietaryRecall(data.dietary_recall || '');
+              setExerciseRecall(data.exercise_recall || '');
+              setSavedDietary(data.dietary_recall || '');
+              setSavedExercise(data.exercise_recall || '');
+              setRecallCollapsed(true);
+            }
+            if (data.collected_at) {
+              setCollectionFinishedAt(data.collected_at);
+              const dt = splitDateTime(data.collected_at);
+              setCollectionDate(dt.date);
+              setCollectionTime(dt.time);
+              setSavedCollectionFinishedAt(data.collected_at);
+              setIsSampleCollected(true);
+            }
+            if (data.status === 'SHIPPING' || data.status === 'TESTING' || data.status === 'FINISHED') {
+              setIsSampleCollected(true);
+              setCollectionConfirmed(true);
+              setPreparedForShipment(true);
+            }
+          } catch (err) {
+            console.log('No collection session started yet for active order.');
+          }
         }
       } catch (err) {
         console.error('Failed to recover collection progress:', err);
@@ -134,6 +166,14 @@ const CollectionStepsScreen: React.FC = () => {
           setSavedDietary(data.dietary_recall || '');
           setSavedExercise(data.exercise_recall || '');
           setRecallCollapsed(true);
+        }
+        if (data.collected_at) {
+          setCollectionFinishedAt(data.collected_at);
+          const dt = splitDateTime(data.collected_at);
+          setCollectionDate(dt.date);
+          setCollectionTime(dt.time);
+          setSavedCollectionFinishedAt(data.collected_at);
+          setIsSampleCollected(true);
         }
         if (data.status === 'SHIPPING' || data.status === 'TESTING' || data.status === 'FINISHED') {
           setIsSampleCollected(true);
@@ -185,6 +225,39 @@ const CollectionStepsScreen: React.FC = () => {
     }
   };
 
+  const [unlinkLoading, setUnlinkLoading] = useState(false);
+
+  const handleUnlinkKit = async () => {
+    if (!state.auth.clientId) return;
+    if (!window.confirm("Are you sure you want to unlink this kit? This will reset your collection progress.")) {
+      return;
+    }
+    
+    setUnlinkLoading(true);
+    try {
+      await unlinkBarcodeAssignment({
+        barcode_number: kitCode,
+        client_id: state.auth.clientId,
+      });
+      setKitCode('');
+      setKitLinked(false);
+      setAssignmentMessage('');
+      setKitError('');
+      setIsSampleCollected(false);
+      setCollectionDate('');
+      setCollectionTime('');
+      setCollectionFinishedAt('');
+      setRecallCollapsed(false);
+      setCollectionConfirmed(false);
+      setPreparedForShipment(false);
+    } catch (err: any) {
+      console.error("Error unlinking kit:", err);
+      alert(err.message || "Failed to unlink kit.");
+    } finally {
+      setUnlinkLoading(false);
+    }
+  };
+
   const handleSaveDietaryRecall = async () => {
     if (!state.auth.clientId) {
       console.error('Client ID not found');
@@ -213,7 +286,12 @@ const CollectionStepsScreen: React.FC = () => {
 
       const orderIdToLog = linkedOrderId || (location.state as any)?.orderId;
       if (orderIdToLog) {
-        await collectionLog(orderIdToLog, dietaryRecall, exerciseRecall);
+        await collectionLog(
+          orderIdToLog,
+          dietaryRecall,
+          exerciseRecall,
+          collectionFinishedAt ? new Date(collectionFinishedAt).toISOString() : undefined
+        );
       }
 
       // store saved values and collapse the form
@@ -293,7 +371,6 @@ const CollectionStepsScreen: React.FC = () => {
         </button>
         <h1>Complete your Test</h1>
         <button className="steps-settings-btn">
-          <Settings size={22} />
         </button>
       </header>
 
@@ -313,12 +390,32 @@ const CollectionStepsScreen: React.FC = () => {
             <div className="barcode-hint">Tip: The barcode is on the bottom-right corner of the box.</div>
             <div className="step-card">
               {kitLinked ? (
-                <div className="kit-linked-box">
-                  <Check size={18} fill="#0f5132" />
-                  <div>
-                    <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>Kit Linked</div>
-                    <div>Code: {kitCode}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div className="kit-linked-box" style={{ margin: 0 }}>
+                    <Check size={18} fill="#0f5132" />
+                    <div>
+                      <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>Kit Linked</div>
+                      <div>Code: {kitCode}</div>
+                    </div>
                   </div>
+                  <button 
+                    onClick={handleUnlinkKit} 
+                    disabled={unlinkLoading}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#dc2626',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      padding: '4px 6px',
+                      textDecoration: 'underline',
+                      alignSelf: 'flex-start'
+                    }}
+                  >
+                    {unlinkLoading ? 'Unlinking...' : 'Unlink / Change Kit'}
+                  </button>
                 </div>
               ) : (
                 <>

@@ -51,61 +51,102 @@ const PaymentForm: React.FC = () => {
     city: '',
     state: '',
     zipCode: '',
-    country: ''
+    country: 'United States'
   });
+
+  const [hasSavedCard, setHasSavedCard] = useState(false);
+  const [useSavedCard, setUseSavedCard] = useState(false);
+  const [savedCardText, setSavedCardText] = useState('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   useEffect(() => {
+    // 1. Check local registration context for saved card
+    const reg = state.registration;
+    if (reg.card_last_four) {
+      setHasSavedCard(true);
+      setUseSavedCard(true);
+      setSavedCardText(`${reg.card_brand || 'Visa'} •••• ${reg.card_last_four}`);
+    }
+
     if (clientId) {
       fetchDefaultShippingAddress(clientId).then((addr) => {
         if (addr && Object.keys(addr).length) {
           setFormData((prev) => ({
             ...prev,
-            streetAddress: addr?.street_address || '',
-            city: addr?.city || '',
-            state: addr?.state || '',
-            zipCode: addr?.zip_code || '',
-            country: addr?.country || '',
+            cardholderName: prev.cardholderName || reg.cardholder_name || `${reg.first_name || ''} ${reg.last_name || ''}`.trim() || 'Omiver User',
+            streetAddress: addr?.street_address || reg.shipping_street || reg.billing_street || '',
+            city: addr?.city || reg.shipping_city || reg.billing_city || '',
+            state: addr?.state || reg.shipping_state || reg.billing_state || '',
+            zipCode: addr?.zip_code || reg.shipping_zip || reg.billing_zip || '',
+            country: addr?.country || reg.shipping_country || reg.billing_country || 'United States',
           }));
         } else {
+          // Fallback to local context address
+          setFormData((prev) => ({
+            ...prev,
+            cardholderName: prev.cardholderName || reg.cardholder_name || `${reg.first_name || ''} ${reg.last_name || ''}`.trim() || 'Omiver User',
+            streetAddress: reg.shipping_street || reg.billing_street || '',
+            city: reg.shipping_city || reg.billing_city || '',
+            state: reg.shipping_state || reg.billing_state || '',
+            zipCode: reg.shipping_zip || reg.billing_zip || '',
+            country: reg.shipping_country || reg.billing_country || 'United States',
+          }));
+
           fetchPayments(clientId).then((data) => {
             if (data && data.length > 0) {
               const latestPayment = data[0];
+              setHasSavedCard(true);
+              setUseSavedCard(true);
+              setSavedCardText(`${latestPayment.card_brand || 'Visa'} •••• ${latestPayment.card_last_four}`);
+              
               setFormData((prev) => ({
                 ...prev,
-                cardholderName: latestPayment?.cardholder_name || '',
-                streetAddress: latestPayment?.billing_address?.street_address || '',
-                city: latestPayment?.billing_address?.city || '',
-                state: latestPayment?.billing_address?.state || '',
-                zipCode: latestPayment?.billing_address?.zip_code || '',
-                country: '',
+                cardholderName: prev.cardholderName || latestPayment?.cardholder_name || '',
+                streetAddress: prev.streetAddress || latestPayment?.billing_address?.street_address || reg.shipping_street || reg.billing_street || '',
+                city: prev.city || latestPayment?.billing_address?.city || reg.shipping_city || reg.billing_city || '',
+                state: prev.state || latestPayment?.billing_address?.state || reg.shipping_state || reg.billing_state || '',
+                zipCode: prev.zipCode || latestPayment?.billing_address?.zip_code || reg.shipping_zip || reg.billing_zip || '',
               }));
             }
           }).catch((error) => console.error(error));
         }
       }).catch(() => {
+        // Safe fallback if endpoint errors or offline
+        setFormData((prev) => ({
+          ...prev,
+          cardholderName: prev.cardholderName || reg.cardholder_name || `${reg.first_name || ''} ${reg.last_name || ''}`.trim() || 'Omiver User',
+          streetAddress: reg.shipping_street || reg.billing_street || '',
+          city: reg.shipping_city || reg.billing_city || '',
+          state: reg.shipping_state || reg.billing_state || '',
+          zipCode: reg.shipping_zip || reg.billing_zip || '',
+          country: reg.shipping_country || reg.billing_country || 'United States',
+        }));
+
         fetchPayments(clientId).then((data) => {
           if (data && data.length > 0) {
             const latestPayment = data[0];
+            setHasSavedCard(true);
+            setUseSavedCard(true);
+            setSavedCardText(`${latestPayment.card_brand || 'Visa'} •••• ${latestPayment.card_last_four}`);
+            
             setFormData((prev) => ({
               ...prev,
-              cardholderName: latestPayment?.cardholder_name || '',
-              streetAddress: latestPayment?.billing_address?.street_address || '',
-              city: latestPayment?.billing_address?.city || '',
-              state: latestPayment?.billing_address?.state || '',
-              zipCode: latestPayment?.billing_address?.zip_code || '',
-              country: '',
+              cardholderName: prev.cardholderName || latestPayment?.cardholder_name || '',
+              streetAddress: prev.streetAddress || latestPayment?.billing_address?.street_address || reg.shipping_street || reg.billing_street || '',
+              city: prev.city || latestPayment?.billing_address?.city || reg.shipping_city || reg.billing_city || '',
+              state: prev.state || latestPayment?.billing_address?.state || reg.shipping_state || reg.billing_state || '',
+              zipCode: prev.zipCode || latestPayment?.billing_address?.zip_code || reg.shipping_zip || reg.billing_zip || '',
             }));
           }
         }).catch((error) => console.error(error));
       });
     }
-  }, [clientId]);
+  }, [clientId, state.registration]);
 
-  const handlePay = async (e: React.FormEvent) => {
+  const handlePay = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setLoading(true);
 
@@ -132,7 +173,25 @@ const PaymentForm: React.FC = () => {
         return;
       }
 
-      // Paid order flow
+      // Pay with card on file (development shortcut / one-click checkout)
+      if (useSavedCard) {
+        await confirmPaymentApi({
+            payment_intent_id: 'saved_card_checkout',
+            test_kit_id: kit.id || 1,
+            quantity,
+            street_address: formData.streetAddress,
+            city: formData.city,
+            state: formData.state,
+            zip_code: formData.zipCode,
+            country: formData.country,
+            cardholder_name: formData.cardholderName,
+        });
+        setLoading(false);
+        navigate('/orders');
+        return;
+      }
+
+      // Paid order flow via Stripe Elements
       if (!stripe || !elements) {
         setLoading(false);
         return;
@@ -230,26 +289,58 @@ const PaymentForm: React.FC = () => {
             <div className="form-section">
               <label className="form-label">
                 <h3>Card Information</h3>
+                
+                {hasSavedCard && (
+                  <div className="saved-card-checkout-toggle" style={{
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    padding: '12px 16px',
+                    marginBottom: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer'
+                  }} onClick={() => setUseSavedCard(!useSavedCard)}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <span style={{ fontSize: 22 }}>💳</span>
+                      <div style={{ textAlign: 'left' }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#2d3748' }}>Use Saved Card on File</div>
+                        <div style={{ fontSize: '0.8rem', color: '#6b9b8a', fontWeight: 600 }}>{savedCardText}</div>
+                      </div>
+                    </div>
+                    <input type="checkbox" checked={useSavedCard} onChange={(e) => setUseSavedCard(e.target.checked)} style={{ width: 18, height: 18, accentColor: '#6b9b8a' }} onClick={(e) => e.stopPropagation()} />
+                  </div>
+                )}
+
                 <div className="input-group">
                   <input type="text" name="cardholderName" className="text-input" placeholder="Cardholder Name" value={formData.cardholderName} onChange={handleInputChange} required />
                 </div>
 
-                <div className="input-group card-input-container" style={{ padding: '12px', border: '1px solid #ccc', borderRadius: '4px' }}>
-                  <CardElement options={{
-                    style: {
-                      base: {
-                        fontSize: '16px',
-                        color: '#424770',
-                        '::placeholder': {
-                          color: '#aab7c4',
+                {!useSavedCard && (
+                  <div className="input-group card-input-container" style={{ padding: '12px', border: '1px solid #ccc', borderRadius: '4px', background: 'white' }}>
+                    <CardElement options={{
+                      style: {
+                        base: {
+                          fontSize: '16px',
+                          color: '#424770',
+                          '::placeholder': {
+                            color: '#aab7c4',
+                          },
+                        },
+                        invalid: {
+                          color: '#9e2146',
                         },
                       },
-                      invalid: {
-                        color: '#9e2146',
-                      },
-                    },
-                  }} />
-                </div>
+                    }} />
+                  </div>
+                )}
+
+                {useSavedCard && (
+                  <div style={{ background: '#f0fff4', border: '1px solid #c6f6d5', color: '#22543d', padding: '12px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span>✨</span> One-Click Checkout enabled with your saved card ({savedCardText})
+                  </div>
+                )}
               </label>
             </div>
           )}

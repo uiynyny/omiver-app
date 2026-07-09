@@ -257,3 +257,265 @@
 .icon-btn {
   cursor: pointer;
 }
+
+/* ────────────────────────────────────────────────────────
+   Rich AI Recommendations & Doctor Workflows Styling
+   ──────────────────────────────────────────────────────── */
+
+/* Doctor Notes Section */
+.doctor-notes-section {
+  background: #fbf5fa;
+  border-left: 4px solid #8a4b7d;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 10px rgba(138, 75, 125, 0.05);
+}
+
+.dr-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.dr-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #8a4b7d;
+}
+
+.dr-body-content p {
+  margin: 0;
+  font-size: 0.95rem;
+  font-style: italic;
+  color: #4a4a4a;
+  line-height: 1.5;
+}
+
+/* Rich Recommendation Card Content */
+.rich-rec-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.rec-summary-text {
+  margin: 0;
+  font-size: 1rem;
+  color: #444;
+  line-height: 1.55;
+}
+
+/* Workout Frequency Badging */
+.frequency-badge-container {
+  display: flex;
+}
+
+.freq-badge {
+  background: #e6f6f5;
+  color: #2c7a7b;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 99px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Activities Grid and tags */
+.activities-list-container h4,
+.sample-meals-container h4 {
+  margin: 0 0 10px 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.activities-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.activity-tag {
+  background: #f0fdf4;
+  color: #276749;
+  border: 1px solid #c6f6d5;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+}
+
+/* Precautions Card Box */
+.precautions-container {
+  background: #fffaf0;
+  border: 1px solid #feebc8;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.precaution-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #dd6b20;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+.precautions-container ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.precautions-container li {
+  font-size: 0.88rem;
+  color: #7b341e;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.precautions-container li:last-child {
+  margin-bottom: 0;
+}
+
+/* Foods Dos and Donts */
+.dos-donts-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+@media (min-width: 600px) {
+  .dos-donts-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.food-list-card {
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.food-list-card h5 {
+  margin: 0 0 10px 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.food-list-card ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.food-list-card li {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
+.food-list-card li:last-child {
+  margin-bottom: 0;
+}
+
+.include-card {
+  background: #f0fdf4;
+  border: 1px solid #c6f6d5;
+}
+
+.include-card h5 {
+  color: #22543d;
+}
+
+.include-card li {
+  color: #276749;
+}
+
+.limit-card {
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+}
+
+.limit-card h5 {
+  color: #742a2a;
+}
+
+.limit-card li {
+  color: #9b2c2c;
+}
+
+/* Daily Sample Meal Timeline */
+.sample-meals-container {
+  margin-top: 10px;
+}
+
+.meals-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.timeline-meal-item {
+  display: flex;
+  gap: 14px;
+  background: #fcfcfc;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.meal-time-icon {
+  font-size: 24px;
+  width: 44px;
+  height: 44px;
+  background: #f0f4f2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.meal-details-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meal-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.meal-desc {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #666;
+  line-height: 1.45;
+}
+
+/* Highlight Score */
+.health-value-highlight {
+  font-size: 1.4rem;
+  color: #6b9b8a;
+  font-weight: 800;
+  text-align: center;
+}
+
+.pulse-icon {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
