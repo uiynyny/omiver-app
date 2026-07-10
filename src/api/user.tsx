@@ -804,6 +804,17 @@ export const collectionLog = async (orderId: number | string, dietaryRecall: str
     return response.json();
 }
 
+export const collectionConfirm = async (orderId: number | string): Promise<KitCollectionData> => {
+    const response = await fetch(`${API_URL}/collection/confirm`, {
+        method: 'POST',
+        headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
+        body: JSON.stringify({ order_id: orderId }),
+    });
+    if (!response.ok) throw new Error('Failed to confirm collection');
+    return response.json();
+}
+
 export const collectionShip = async (orderId: number | string, trackingNumber?: string): Promise<KitCollectionData> => {
     const response = await fetch(`${API_URL}/collection/ship`, {
         method: 'POST',

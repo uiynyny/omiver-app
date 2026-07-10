@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Camera, Check, Edit } from 'lucide-react';
 import './CollectionStepsScreen.css';
-import { updateClient, linkBarcodeAssignment, unlinkBarcodeAssignment, markBarcodeCollected, updateOrderStatus, fetchClient, fetchOrders, collectionScan, collectionLog, collectionShip, getKitCollection } from '../api/user';
+import { updateClient, linkBarcodeAssignment, unlinkBarcodeAssignment, markBarcodeCollected, updateOrderStatus, fetchClient, fetchOrders, collectionScan, collectionLog, collectionShip, getKitCollection, collectionConfirm } from '../api/user';
 import { useAppContext } from '../context/AppContext';
 
 const CollectionStepsScreen: React.FC = () => {
@@ -136,7 +136,11 @@ const CollectionStepsScreen: React.FC = () => {
               setSavedCollectionFinishedAt(data.collected_at);
               setIsSampleCollected(true);
             }
-            if (data.status === 'SHIPPING' || data.status === 'TESTING' || data.status === 'FINISHED') {
+            if (data.status === 'COLLECTED') {
+              setIsSampleCollected(true);
+              setCollectionConfirmed(true);
+              setPreparedForShipment(false);
+            } else if (data.status === 'SHIPPING' || data.status === 'TESTING' || data.status === 'FINISHED') {
               setIsSampleCollected(true);
               setCollectionConfirmed(true);
               setPreparedForShipment(true);
@@ -180,7 +184,11 @@ const CollectionStepsScreen: React.FC = () => {
           setSavedCollectionFinishedAt(data.collected_at);
           setIsSampleCollected(true);
         }
-        if (data.status === 'SHIPPING' || data.status === 'TESTING' || data.status === 'FINISHED') {
+        if (data.status === 'COLLECTED') {
+          setIsSampleCollected(true);
+          setCollectionConfirmed(true);
+          setPreparedForShipment(false);
+        } else if (data.status === 'SHIPPING' || data.status === 'TESTING' || data.status === 'FINISHED') {
           setIsSampleCollected(true);
           setCollectionConfirmed(true);
           setPreparedForShipment(true);
@@ -324,9 +332,29 @@ const CollectionStepsScreen: React.FC = () => {
     }
   };
 
-  const handleBarcodeInBox = () => {
+  const handleBarcodeInBox = async () => {
     console.log("Finalizing collection confirmation with checks for date, time, and dietary recall");
-    setCollectionConfirmed(true);
+    setFinalizeError('');
+    const hasDate = !!collectionDate;
+    const hasTime = !!collectionTime;
+    const hasDiet = dietaryRecall.trim().length > 0;
+    if (!hasDate || !hasTime || !hasDiet) {
+      setFinalizeError('Please enter collection date, time, and a short dietary recall before confirming.');
+      return;
+    }
+
+    const orderIdToConfirm = linkedOrderId || (location.state as any)?.orderId;
+    if (orderIdToConfirm) {
+      try {
+        await collectionConfirm(orderIdToConfirm);
+        setCollectionConfirmed(true);
+      } catch (err) {
+        console.error('Failed to confirm collection:', err);
+        setFinalizeError('Failed to confirm collection in database. Please try again.');
+      }
+    } else {
+      setCollectionConfirmed(true);
+    }
   }
 
   const handleConfirmSampleCollected = async () => {

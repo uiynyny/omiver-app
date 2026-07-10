@@ -24,6 +24,7 @@ import CollectionStepsScreen from './components/CollectionStepsScreen';
 import ForgotPasswordScreen from './components/ForgotPasswordScreen';
 import PaymentScreen from './components/PaymentScreen';
 import PatientDetailScreen from './components/PatientDetailScreen';
+import AuthValidator from './components/AuthValidator';
 import './App.css';
 
 const baseRoute = import.meta.env.VITE_WEB ? '/app' : '/';
@@ -31,6 +32,7 @@ function App() {
   return (
     <AppProvider>
       <BrowserRouter basename={baseRoute}>
+        <AuthValidator />
         <Routes>
           <Route path="/" element={<SplashScreen />} />
           <Route path="/login" element={<LoginScreen />} />
