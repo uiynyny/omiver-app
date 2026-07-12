@@ -55,6 +55,8 @@ type RegistrationData = {
   // Referral system
   referralCode?: string;      // provider's code (populated after registration)
   referredByCode?: string;    // code from URL ?ref= param (passed by patient)
+  security_question?: string;
+  security_answer?: string;
 };
 
 type AuthState = {

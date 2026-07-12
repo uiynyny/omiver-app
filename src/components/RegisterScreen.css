@@ -160,3 +160,20 @@
   color: #000;
   text-decoration: underline;
 }
+
+.auth-section-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-top: 1.8rem;
+  margin-bottom: 0.8rem;
+  color: #333;
+  width: 100%;
+  text-align: left;
+}
+
+.auth-select-outline {
+  border: 2px solid #6B9B8A !important;
+  background: white !important;
+  outline: none;
+}
+

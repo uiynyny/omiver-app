@@ -869,3 +869,72 @@ export const fetchRecommendations = async (clientId: string | number): Promise<R
     }
     return response.json();
 }
+
+export interface SecurityQuestionResponse {
+    security_question: string;
+    security_question_display: string;
+}
+
+export const fetchSecurityQuestion = async (email: string): Promise<SecurityQuestionResponse> => {
+    const response = await fetch(`${API_URL}/password-recovery/question`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken') || '',
+        },
+        body: JSON.stringify({ email }),
+        credentials: 'include',
+    });
+    if (!response.ok) {
+        throw new Error('Failed to retrieve security question');
+    }
+    return response.json();
+};
+
+export const verifySecurityAnswer = async (
+    email: string,
+    securityQuestion: string,
+    securityAnswer: string
+): Promise<{ token: string }> => {
+    const response = await fetch(`${API_URL}/password-recovery/verify-answer`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken') || '',
+        },
+        body: JSON.stringify({
+            email,
+            security_question: securityQuestion,
+            security_answer: securityAnswer,
+        }),
+        credentials: 'include',
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw errorData;
+    }
+    return response.json();
+};
+
+export const resetPasswordWithToken = async (
+    token: string,
+    newPassword: string
+): Promise<{ message?: string; password?: string[] }> => {
+    const response = await fetch(`${API_URL}/password-recovery/reset-with-token`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken') || '',
+        },
+        body: JSON.stringify({
+            token,
+            new_password: newPassword,
+        }),
+        credentials: 'include',
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw errorData;
+    }
+    return response.json();
+};

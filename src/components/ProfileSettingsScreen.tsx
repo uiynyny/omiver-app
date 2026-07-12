@@ -37,6 +37,8 @@ const ProfileSettingsScreen: React.FC = () => {
   const [dob, setDob] = useState(reg.date_of_birth ?? '');
   const [heightValue, setHeightValue] = useState<number>(reg.height ?? 68);
   const [weightValue, setWeightValue] = useState<number>(reg.weight ?? 150);
+  const [securityQuestion, setSecurityQuestion] = useState(reg.security_question ?? '');
+  const [securityAnswer, setSecurityAnswer] = useState('');
 
   // Billing & Payment info
   const [cardholderName, setCardholderName] = useState(reg.cardholder_name ?? '');
@@ -62,6 +64,7 @@ const ProfileSettingsScreen: React.FC = () => {
       if (reg.date_of_birth !== undefined) setDob(reg.date_of_birth ?? '');
       if (reg.height !== undefined) setHeightValue(reg.height ?? 68);
       if (reg.weight !== undefined) setWeightValue(reg.weight ?? 150);
+      if (reg.security_question !== undefined) setSecurityQuestion(reg.security_question ?? '');
 
       if (reg.cardholder_name !== undefined) setCardholderName(reg.cardholder_name ?? '');
       if (reg.card_brand !== undefined) {
@@ -133,6 +136,12 @@ const ProfileSettingsScreen: React.FC = () => {
         shipping_zip: shippingZip,
         shipping_country: shippingCountry,
       };
+      if (securityQuestion) {
+        payload.security_question = securityQuestion;
+      }
+      if (securityAnswer.trim()) {
+        payload.security_answer = securityAnswer.trim();
+      }
     } else if (tab === 'payment') {
       const lastFour = cardNumber ? cardNumber.slice(-4) : (cardLastFour || '9999');
       const finalBrand = isEditingCard ? inputCardBrand : cardBrand;
@@ -306,6 +315,39 @@ const ProfileSettingsScreen: React.FC = () => {
               <div className="settings-field-box">
                 <label>Weight (lbs)</label>
                 <input type="number" value={weightValue} onChange={e => setWeightValue(parseInt(e.target.value) || 0)} />
+              </div>
+
+              <h3 style={{ margin: '12px 0 2px 0', fontSize: '0.95rem', color: '#555', borderTop: '1px solid #eee', paddingTop: '16px' }}>Security Question Recovery</h3>
+              <div className="settings-field-box">
+                <label>Security Question</label>
+                <select
+                  value={securityQuestion}
+                  onChange={e => setSecurityQuestion(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: '1px solid #ddd',
+                    background: 'white',
+                    color: '#333'
+                  }}
+                >
+                  <option value="">Select Security Question...</option>
+                  <option value="PET">What was the name of your first pet?</option>
+                  <option value="MOTHER">What is your mother's maiden name?</option>
+                  <option value="CITY">In what city were you born?</option>
+                  <option value="SCHOOL">What was the name of your first school?</option>
+                  <option value="CAR">What was the make of your first car?</option>
+                </select>
+              </div>
+              <div className="settings-field-box">
+                <label>Security Answer</label>
+                <input
+                  type="text"
+                  value={securityAnswer}
+                  onChange={e => setSecurityAnswer(e.target.value)}
+                  placeholder="Enter new answer to update"
+                />
               </div>
 
               <h3 style={{ margin: '12px 0 2px 0', fontSize: '0.95rem', color: '#555', borderTop: '1px solid #eee', paddingTop: '16px' }}>Preferred Shipping Address</h3>

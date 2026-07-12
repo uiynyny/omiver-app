@@ -41,6 +41,8 @@ const TermsScreen = () => {
       first_name: reg.first_name,
       last_name: reg.last_name,
       type: reg.accountType === 'healthcare' ? 'PROVIDER' : 'INDIVIDUAL',
+      security_question: reg.security_question,
+      security_answer: reg.security_answer,
     };
 
     // Individual-only fields

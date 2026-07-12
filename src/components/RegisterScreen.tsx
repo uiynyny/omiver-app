@@ -15,6 +15,8 @@ const RegisterScreen = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [matchError, setMatchError] = useState('');
+  const [securityQuestion, setSecurityQuestion] = useState('');
+  const [securityAnswer, setSecurityAnswer] = useState('');
 
   // Read referral code from URL (?ref=CODE) and persist in context
   useEffect(() => {
@@ -60,7 +62,7 @@ const RegisterScreen = () => {
   }, [password, confirmPassword]);
 
   const handleRegister = async () => {
-    if (!email.trim() || !password || !confirmPassword) {
+    if (!email.trim() || !password || !confirmPassword || !securityQuestion || !securityAnswer.trim()) {
       alert('Please fill out all fields.');
       return;
     }
@@ -82,12 +84,29 @@ const RegisterScreen = () => {
       // Skip account type selection and default to individual user with referral
       dispatch({ 
         type: 'UPDATE_REGISTRATION', 
-        payload: { email, password, username: email, accountType: 'individual', referredByCode: refCode } 
+        payload: { 
+          email, 
+          password, 
+          username: email, 
+          accountType: 'individual', 
+          referredByCode: refCode,
+          security_question: securityQuestion,
+          security_answer: securityAnswer
+        } 
       });
       navigate('/register/personal-info');
     } else {
       // Save email/password to registration context then ask for account type
-      dispatch({ type: 'UPDATE_REGISTRATION', payload: { email, password, username: email } });
+      dispatch({ 
+        type: 'UPDATE_REGISTRATION', 
+        payload: { 
+          email, 
+          password, 
+          username: email,
+          security_question: securityQuestion,
+          security_answer: securityAnswer
+        } 
+      });
       navigate('/register/account-type');
     }
   };
@@ -155,9 +174,41 @@ const RegisterScreen = () => {
           />
         </div>
 
-        <p className="terms-text">
+        <p className="terms-text" style={{ textAlign: 'left', marginTop: '0.2rem', marginBottom: '1.2rem' }}>
           Passwords must be at least 8 characters and should not be common, numeric-only, or similar to your email or username.
         </p>
+
+        <h3 className="auth-section-title">Security Question</h3>
+
+        <div className="input-group">
+          <select
+            value={securityQuestion}
+            onChange={(e) => setSecurityQuestion(e.target.value)}
+            className="auth-input auth-select-outline"
+            style={{ 
+              appearance: 'none', 
+              cursor: 'pointer',
+              color: securityQuestion ? '#000' : '#757575'
+            }}
+          >
+            <option value="" style={{ color: '#757575' }}>Select Security Question...</option>
+            <option value="PET" style={{ color: '#000' }}>What was the name of your first pet?</option>
+            <option value="MOTHER" style={{ color: '#000' }}>What is your mother's maiden name?</option>
+            <option value="CITY" style={{ color: '#000' }}>In what city were you born?</option>
+            <option value="SCHOOL" style={{ color: '#000' }}>What was the name of your first school?</option>
+            <option value="CAR" style={{ color: '#000' }}>What was the make of your first car?</option>
+          </select>
+        </div>
+
+        <div className="input-group">
+          <input
+            type="text"
+            placeholder="Security Answer:"
+            value={securityAnswer}
+            onChange={(e) => setSecurityAnswer(e.target.value)}
+            className="auth-input"
+          />
+        </div>
 
         <button onClick={handleRegister} className="primary-button">
           Register <ChevronRight size={20} />
