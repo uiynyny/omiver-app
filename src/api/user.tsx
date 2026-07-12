@@ -188,6 +188,7 @@ export interface Order {
     status?: string;
     quantity?: number;
     barcode_assignment?: { barcode_number: string } | null;
+    collection_status?: string;
 }
 
 export interface DeliveryEvent {

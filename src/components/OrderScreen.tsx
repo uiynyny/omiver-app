@@ -69,6 +69,7 @@ const OrderScreen: React.FC = () => {
   const orderDate = formatOrderDate(order?.order_date || order?.created_at || order?.date);
   const forwardTrackingNumber = order?.forward_tracking_number || order?.tracking_number || order?.tracking;
   const returnTrackingNumber = order?.return_tracking_number || '';
+  const isShipped = ['SHIPPING', 'TESTING', 'FINISHED'].includes(order?.collection_status || '');
   const orderStatus = order?.status || 'PENDING';
   const getStatusMessage = () => {
     switch (orderStatus) {
@@ -249,7 +250,7 @@ const OrderScreen: React.FC = () => {
 
             <section className="next-card">
               <h3>Next Steps</h3>
-              {returnTrackingNumber ? (
+              {isShipped ? (
                 <div style={{ color: '#777' }}>Please wait patiently for an update from us.</div>
               ) : (
                 <>
