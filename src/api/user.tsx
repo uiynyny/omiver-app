@@ -24,14 +24,14 @@ export const clearCustomProfileKey = (): void => {
 export const decryptProfileData = async <T extends Record<string, any>>(data: T): Promise<T> => {
     if (!data) return data;
     const key = getCustomProfileKey();
-    const result = { ...data };
+    const result = { ...data } as any;
     if (typeof result.first_name === 'string' && result.first_name.startsWith('client_enc:')) {
         result.first_name = key ? await decryptName(result.first_name, key) : '[Locked]';
     }
     if (typeof result.last_name === 'string' && result.last_name.startsWith('client_enc:')) {
         result.last_name = key ? await decryptName(result.last_name, key) : '[Locked]';
     }
-    return result;
+    return result as T;
 };
 
 export const decryptPatientsArray = async (patients: any[]): Promise<any[]> => {
@@ -44,7 +44,7 @@ export const decryptDashboardData = async (data: any): Promise<any> => {
     const key = getCustomProfileKey();
     const result = { ...data };
     if (result.profile && typeof result.profile.name === 'string') {
-        const name = result.profile.name;
+        const name = result.profile.name as string;
         const parts = name.split(' ');
         const decryptedParts = await Promise.all(parts.map(async part => {
             if (part.startsWith('client_enc:')) {
