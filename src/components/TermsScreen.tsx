@@ -40,6 +40,7 @@ const TermsScreen = () => {
       email: reg.email,
       first_name: reg.first_name,
       last_name: reg.last_name,
+      use_custom_key: reg.use_custom_key,
       type: reg.accountType === 'healthcare' ? 'PROVIDER' : 'INDIVIDUAL',
       security_question: reg.security_question,
       security_answer: reg.security_answer,

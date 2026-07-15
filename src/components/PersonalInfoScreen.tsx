@@ -1,15 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import './AccountTypeScreen.css';
 import { useAppContext } from '../context/AppContext';
-import { checkReferralCode } from '../api/user';
+import { checkReferralCode, setCustomProfileKey, getCustomProfileKey } from '../api/user';
+import { encryptName, decryptName } from '../utils/crypto';
 
 const PersonalInfoScreen = () => {
   const navigate = useNavigate();
   const { state, dispatch } = useAppContext();
-  const [first_name, setFirstName] = useState(state.registration.first_name ?? '');
-  const [last_name, setLastName] = useState(state.registration.last_name ?? '');
+  const [first_name, setFirstName] = useState('');
+  const [last_name, setLastName] = useState('');
+  const [useCustomKey, setUseCustomKey] = useState(false);
+  const [customKey, setCustomKey] = useState('');
   const [date_of_birth, setDateOfBirth] = useState(state.registration.date_of_birth ?? '');
   const [gender, setGender] = useState(state.registration.gender ?? 'Male');
   const [ethnicity, setEthnicity] = useState(state.registration.ethnicity ?? '');
@@ -17,11 +20,34 @@ const PersonalInfoScreen = () => {
   const [weight, setWeight] = useState<number>(state.registration.weight ?? 0);
   const [referredByCode, setReferredByCode] = useState(state.registration.referredByCode ?? '');
 
-  // Derived local variables computed from height state
+  useEffect(() => {
+    const initNames = async () => {
+      let fname = state.registration.first_name ?? '';
+      let lname = state.registration.last_name ?? '';
+      const savedKey = getCustomProfileKey();
+      
+      if (fname.startsWith('client_enc:') && savedKey) {
+        fname = await decryptName(fname, savedKey);
+        setUseCustomKey(true);
+        setCustomKey(savedKey);
+      }
+      if (lname.startsWith('client_enc:') && savedKey) {
+        lname = await decryptName(lname, savedKey);
+      }
+      
+      setFirstName(fname);
+      setLastName(lname);
+    };
+    initNames();
+  }, [state.registration]);
 
   const handleContinue = async () => {
     if (!first_name || !last_name || !date_of_birth || !ethnicity || !gender || !height || !weight || !referredByCode.trim()) {
       alert('Please fill in all required fields, including your referral code');
+      return;
+    }
+    if (useCustomKey && !customKey.trim()) {
+      alert('Please enter a custom encryption key or disable key protection');
       return;
     }
     console.log('Validating referral code:', referredByCode);
@@ -36,11 +62,24 @@ const PersonalInfoScreen = () => {
       alert('An error occurred while validating the referral code. Please try again later.');
       return;
     }
+
+    let finalFirstName = first_name;
+    let finalLastName = last_name;
+
+    if (useCustomKey) {
+      setCustomProfileKey(customKey);
+      finalFirstName = await encryptName(first_name, customKey);
+      finalLastName = await encryptName(last_name, customKey);
+    } else {
+      setCustomProfileKey(null);
+    }
+
     dispatch({
       type: 'UPDATE_REGISTRATION',
       payload: {
-        first_name: first_name,
-        last_name: last_name,
+        first_name: finalFirstName,
+        last_name: finalLastName,
+        use_custom_key: useCustomKey,
         date_of_birth,
         gender,
         ethnicity,
@@ -104,6 +143,30 @@ const PersonalInfoScreen = () => {
               onChange={(e) => setLastName(e.target.value)}
               className="form-input"
             />
+          </div>
+
+          <div className="input-group" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px', padding: '8px 0' }}>
+            <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={useCustomKey}
+                onChange={(e) => setUseCustomKey(e.target.checked)}
+                style={{ width: '18px', height: '18px' }}
+              />
+              <span style={{ fontSize: '0.9rem', color: '#333', fontWeight: 500 }}>
+                Protect my name with a custom key (offline encryption)
+              </span>
+            </label>
+            {useCustomKey && (
+              <input
+                type="password"
+                placeholder="Enter Profile Encryption Key (Passphrase):"
+                value={customKey}
+                onChange={(e) => setCustomKey(e.target.value)}
+                className="form-input"
+                style={{ marginTop: '8px', border: '1px solid #67997D' }}
+              />
+            )}
           </div>
 
           <div className="input-group">

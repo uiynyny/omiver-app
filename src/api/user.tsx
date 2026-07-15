@@ -1,6 +1,61 @@
+import { encryptName, decryptName } from '../utils/crypto';
+
 const API_URL = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/$/, '');
 const AUTH_TOKEN_KEY = 'omiver_auth_token';
 const PERSISTENT_LOGIN_KEY = 'omiver_persistent_login';
+const CUSTOM_PROFILE_KEY = 'omiver_custom_profile_key';
+
+export const getCustomProfileKey = (): string | null => {
+    return localStorage.getItem(CUSTOM_PROFILE_KEY);
+};
+
+export const setCustomProfileKey = (key?: string | null): void => {
+    if (!key) {
+        localStorage.removeItem(CUSTOM_PROFILE_KEY);
+    } else {
+        localStorage.setItem(CUSTOM_PROFILE_KEY, key);
+    }
+};
+
+export const clearCustomProfileKey = (): void => {
+    localStorage.removeItem(CUSTOM_PROFILE_KEY);
+};
+
+export const decryptProfileData = async <T extends Record<string, any>>(data: T): Promise<T> => {
+    if (!data) return data;
+    const key = getCustomProfileKey();
+    const result = { ...data };
+    if (typeof result.first_name === 'string' && result.first_name.startsWith('client_enc:')) {
+        result.first_name = key ? await decryptName(result.first_name, key) : '[Locked]';
+    }
+    if (typeof result.last_name === 'string' && result.last_name.startsWith('client_enc:')) {
+        result.last_name = key ? await decryptName(result.last_name, key) : '[Locked]';
+    }
+    return result;
+};
+
+export const decryptPatientsArray = async (patients: any[]): Promise<any[]> => {
+    if (!patients) return patients;
+    return Promise.all(patients.map(p => decryptProfileData(p)));
+};
+
+export const decryptDashboardData = async (data: any): Promise<any> => {
+    if (!data || !data.profile) return data;
+    const key = getCustomProfileKey();
+    const result = { ...data };
+    if (result.profile && typeof result.profile.name === 'string') {
+        const name = result.profile.name;
+        const parts = name.split(' ');
+        const decryptedParts = await Promise.all(parts.map(async part => {
+            if (part.startsWith('client_enc:')) {
+                return key ? await decryptName(part, key) : '[Locked]';
+            }
+            return part;
+        }));
+        result.profile.name = decryptedParts.join(' ').trim();
+    }
+    return result;
+};
 
 export const setAuthToken = (token?: string | null): void => {
     if (!token) {
@@ -286,7 +341,7 @@ export const login = async (username: string, password: string): Promise<LoginRe
     }
     const data = await response.json();
     setAuthToken(data.token ?? data.access_token ?? null);
-    return data;
+    return decryptProfileData(data);
 }
 
 export const register = async (user: Record<string, unknown>): Promise<RegisterResponse> => {
@@ -345,7 +400,8 @@ export const fetchDashboard = async (clientId: string | number): Promise<Dashboa
     if (!response.ok) {
         throw new Error('Failed to fetch dashboard data');
     }
-    return response.json();
+    const data = await response.json();
+    return decryptDashboardData(data);
 }
 
 export const fetchKits = async (): Promise<Kit[]> => {
@@ -402,7 +458,8 @@ export const getProviderPatients = async (clientId: string | number): Promise<Pa
     if (!response.ok) {
         throw new Error('Failed to fetch provider patients');
     }
-    return response.json();
+    const data = await response.json();
+    return decryptPatientsArray(data);
 }
 
 export const fetchPayments = async (clientId: string | number): Promise<PaymentHistory[]> => {
@@ -696,16 +753,27 @@ export const fetchClient = async (clientId: string | number): Promise<any> => {
     if (!response.ok) {
         throw new Error('Failed to fetch client data');
     }
-    return response.json();
+    const data = await response.json();
+    return decryptProfileData(data);
 }
 
 export const updateClient = async (clientId: string | number, data: Partial<Patient & Record<string, unknown>>): Promise<ClientUpdateResponse> => {
+    const key = getCustomProfileKey();
+    let payload = { ...data };
+    if (key) {
+        if (typeof payload.first_name === 'string' && payload.first_name && !payload.first_name.startsWith('client_enc:')) {
+            payload.first_name = await encryptName(payload.first_name, key);
+        }
+        if (typeof payload.last_name === 'string' && payload.last_name && !payload.last_name.startsWith('client_enc:')) {
+            payload.last_name = await encryptName(payload.last_name, key);
+        }
+    }
     const response = await fetch(`${API_URL}/client/${clientId}`, {
         method: 'PATCH',
         headers: withAuthHeaders({
             'Content-Type': 'application/json',
         }),
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
         credentials: 'include',
     });
 
@@ -714,7 +782,8 @@ export const updateClient = async (clientId: string | number, data: Partial<Pati
         throw new Error(errorData.error || 'Failed to update client');
     }
 
-    return response.json();
+    const resData = await response.json();
+    return decryptProfileData(resData);
 }
 
 export const checkReferralCode = async (code: string): Promise<boolean> => {

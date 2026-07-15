@@ -4,7 +4,7 @@ import BottomNav from './BottomNav';
 import { useAppContext } from '../context/AppContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, User, CreditCard, Heart, Target, LogOut, ChevronRight, Apple } from 'lucide-react';
-import { clearAuthToken, logoutApi, clearPersistentLogin, updateClient } from '../api/user';
+import { clearAuthToken, logoutApi, clearPersistentLogin, updateClient, getCustomProfileKey, setCustomProfileKey } from '../api/user';
 import omiver from '../assets/omiver.svg';
 
 const ProfileSettingsScreen: React.FC = () => {
@@ -39,6 +39,8 @@ const ProfileSettingsScreen: React.FC = () => {
   const [weightValue, setWeightValue] = useState<number>(reg.weight ?? 150);
   const [securityQuestion, setSecurityQuestion] = useState(reg.security_question ?? '');
   const [securityAnswer, setSecurityAnswer] = useState('');
+  const [useCustomKey, setUseCustomKey] = useState(!!getCustomProfileKey());
+  const [customKey, setCustomKey] = useState(getCustomProfileKey() ?? '');
 
   // Billing & Payment info
   const [cardholderName, setCardholderName] = useState(reg.cardholder_name ?? '');
@@ -124,9 +126,22 @@ const ProfileSettingsScreen: React.FC = () => {
     let payload: Record<string, any> = {};
 
     if (tab === 'profile') {
+      if (useCustomKey && !customKey.trim()) {
+        alert('Please enter a custom encryption key or disable key protection');
+        setSaving(false);
+        return;
+      }
+
+      if (useCustomKey) {
+        setCustomProfileKey(customKey);
+      } else {
+        setCustomProfileKey(null);
+      }
+
       payload = {
         first_name: firstName,
         last_name: lastName,
+        use_custom_key: useCustomKey,
         date_of_birth: dob,
         height: heightValue,
         weight: weightValue,
@@ -302,6 +317,34 @@ const ProfileSettingsScreen: React.FC = () => {
               <div className="settings-field-box">
                 <label>Last Name</label>
                 <input type="text" value={lastName} onChange={e => setLastName(e.target.value)} />
+              </div>
+              <div className="settings-field-box" style={{ borderTop: '1px solid #eee', paddingTop: '16px', marginTop: '16px' }}>
+                <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: '8px' }}>
+                  <input
+                    type="checkbox"
+                    checked={useCustomKey}
+                    onChange={(e) => setUseCustomKey(e.target.checked)}
+                    style={{ width: '18px', height: '18px', margin: 0 }}
+                  />
+                  <span style={{ fontSize: '0.9rem', color: '#333', fontWeight: 600 }}>
+                    Protect first name and last name with a custom key
+                  </span>
+                </label>
+                {useCustomKey && (
+                  <div style={{ marginTop: '8px' }}>
+                    <label style={{ fontSize: '0.8rem', color: '#666', display: 'block', marginBottom: '4px' }}>Profile Encryption Key (Passphrase)</label>
+                    <input
+                      type="password"
+                      placeholder="Enter Key..."
+                      value={customKey}
+                      onChange={(e) => setCustomKey(e.target.value)}
+                      style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
+                    />
+                    <span style={{ fontSize: '0.75rem', color: '#999', display: 'block', marginTop: '4px' }}>
+                      Keep this key safe. Your name cannot be recovered if you lose it.
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="settings-field-box">
                 <label>Date of Birth</label>

@@ -14,6 +14,7 @@ type RegistrationData = {
   type?: 'PROVIDER' | 'INDIVIDUAL' | null;
   first_name?: string;
   last_name?: string;
+  use_custom_key?: boolean;
   date_of_birth?: string;
   gender?: string;
   ethnicity?: string;

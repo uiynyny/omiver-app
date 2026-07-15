@@ -6,14 +6,19 @@ import { useAppContext } from '../context/AppContext';
 import './HomeScreen.css';
 import BottomNav from './BottomNav';
 import omiver from '../assets/omiver.svg';
-import { fetchDashboard, type BiomarkerSection, type Dashboard } from '../api/user';
+import { fetchDashboard, fetchClient, setCustomProfileKey, getCustomProfileKey, type BiomarkerSection, type Dashboard } from '../api/user';
 
 const HomeScreen = () => {
   const navigate = useNavigate();
-  const { state } = useAppContext();
+  const { state, dispatch } = useAppContext();
   const personal = state.registration;
   const displayName = `${state.registration.first_name ?? ''} ${state.registration.last_name ?? ''}`.trim();
   
+  const isLocked = !!state.registration.use_custom_key && !getCustomProfileKey();
+  const [unlockKey, setUnlockKey] = useState('');
+  const [unlockError, setUnlockError] = useState('');
+  const [unlocking, setUnlocking] = useState(false);
+
   const clientId = state.auth.clientId;
   const [dashboardData, setDashboardData] = useState<Dashboard | null>(null);
 
@@ -24,6 +29,33 @@ const HomeScreen = () => {
       }).catch((error) => console.error(error));
     }
   }, [clientId]);
+
+  const handleUnlock = async () => {
+    if (!unlockKey.trim() || !clientId) return;
+    setUnlocking(true);
+    setUnlockError('');
+    try {
+      setCustomProfileKey(unlockKey);
+      const clientData = await fetchClient(clientId);
+      if (clientData.first_name === '[Locked]' || clientData.last_name === '[Locked]') {
+        setCustomProfileKey(null);
+        setUnlockError('Incorrect passphrase. Please try again.');
+      } else {
+        dispatch({
+          type: 'UPDATE_REGISTRATION',
+          payload: clientData,
+        });
+        const dashData = await fetchDashboard(clientId);
+        setDashboardData(dashData);
+      }
+    } catch (err) {
+      console.error(err);
+      setCustomProfileKey(null);
+      setUnlockError('An error occurred during decryption. Please try again.');
+    } finally {
+      setUnlocking(false);
+    }
+  };
 
   const biomarkers = useMemo(() => {
     if (!dashboardData?.biomarker_results) return [];
@@ -64,6 +96,61 @@ const HomeScreen = () => {
       </header>
 
       <main className="home-main">
+        {isLocked && (
+          <div className="unlock-profile-card" style={{
+            background: '#fff2eb',
+            border: '1px solid #ffdecb',
+            borderRadius: '16px',
+            padding: '20px',
+            marginBottom: '20px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px'
+          }}>
+            <h3 style={{ margin: 0, color: '#d97736', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              🔒 Profile Locked (Offline Encryption)
+            </h3>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: '#666', lineHeight: 1.4 }}>
+              Your profile first and last name are encrypted offline with a custom key. Please enter your passphrase to unlock.
+            </p>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+              <input
+                type="password"
+                placeholder="Enter Encryption Key..."
+                value={unlockKey}
+                onChange={(e) => setUnlockKey(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  border: '1px solid #ddd',
+                  fontSize: '0.95rem'
+                }}
+              />
+              <button
+                onClick={handleUnlock}
+                disabled={unlocking || !unlockKey.trim()}
+                style={{
+                  background: '#d97736',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '10px 16px',
+                  fontWeight: 600,
+                  fontSize: '0.95rem',
+                  cursor: 'pointer',
+                  opacity: (unlocking || !unlockKey.trim()) ? 0.7 : 1
+                }}
+              >
+                {unlocking ? 'Unlocking...' : 'Unlock'}
+              </button>
+            </div>
+            {unlockError && (
+              <span style={{ color: '#dc2626', fontSize: '0.82rem', fontWeight: 500 }}>{unlockError}</span>
+            )}
+          </div>
+        )}
         <div className="top-summary">
           <section className="score-card">
             <div className='score' >
