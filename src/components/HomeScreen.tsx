@@ -89,6 +89,20 @@ const HomeScreen = () => {
     }
   }, [dashboardData?.profile?.height, personal.height]);
 
+  const [showFullReport, setShowFullReport] = useState(false);
+
+  const criticalBiomarkers = useMemo(() => {
+    const list: Array<{ name: string; value: number; unit: string; tag: string; section: string }> = [];
+    biomarkers.forEach(sec => {
+      sec.items.forEach(item => {
+        if (item.tag === 'LOW' || item.tag === 'HIGH' || item.tag === 'Low' || item.tag === 'High') {
+          list.push({ ...item, section: sec.section });
+        }
+      });
+    });
+    return list;
+  }, [biomarkers]);
+
   return (
     <div className="screen-root">
       <header className="home-header">
@@ -198,32 +212,113 @@ const HomeScreen = () => {
             </div>
           </section>
 
-          {biomarkers.map((section) => (
-            <section className="biomarker-section" key={section.section}>
-              <div className="section-header">
-                <div className="section-title">{section.section}</div>
-                <div className="section-count">{section.count} Biomarkers</div>
+          {biomarkers.length > 0 && !showFullReport && (
+            <section className="report-abstract-card" style={{
+              background: '#fcfcfc',
+              border: '1px solid #eee',
+              borderRadius: '16px',
+              padding: '16px',
+              marginTop: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', color: '#111' }}>Test Report Abstract</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', textAlign: 'center' }}>
+                <div style={{ background: '#f8f8f8', padding: '10px', borderRadius: '10px' }}>
+                  <div style={{ fontSize: '0.8rem', color: '#666' }}>Total</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 'bold', marginTop: '4px' }}>{dashboardData?.total_biomarkers ?? 0}</div>
+                </div>
+                <div style={{ background: '#e8f5ef', padding: '10px', borderRadius: '10px' }}>
+                  <div style={{ fontSize: '0.8rem', color: '#2f6b54' }}>Optimal</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#2f6b54', marginTop: '4px' }}>{dashboardData?.optimal_biomarkers ?? 0}</div>
+                </div>
+                <div style={{ background: '#fef2f2', padding: '10px', borderRadius: '10px' }}>
+                  <div style={{ fontSize: '0.8rem', color: '#991b1b' }}>To Watch</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#991b1b', marginTop: '4px' }}>
+                    {(dashboardData?.total_biomarkers ?? 0) - (dashboardData?.optimal_biomarkers ?? 0)}
+                  </div>
+                </div>
               </div>
 
-              <div className="biomarker-cards">
-                {section.items.map((item: { value: number; unit: string; name: string; note: string; tag: string }) => (
-                  <div className="biomarker-card" key={item.name}>
-                    <div className="biomarker-left">
-                      <div className="biomarker-value">{item.value}</div>
-                      <div className="biomarker-unit">{item.unit}</div>
-                    </div>
-                    <div className="biomarker-mid">
-                      <div className="biomarker-name">{item.name}</div>
-                      <div className="biomarker-note">{item.note}</div>
-                    </div>
-                    <div className={`biomarker-tag ${item.tag === 'Optimal' ? 'tag-optimal' : 'tag-normal'}`}>
-                      {item.tag}
-                    </div>
+              {criticalBiomarkers.length > 0 && (
+                <div>
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: '#b91c1c' }}>Biomarkers to Watch ({criticalBiomarkers.length})</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
+                    {criticalBiomarkers.map(item => (
+                      <div key={item.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#fff5f5', borderRadius: '8px', border: '1px solid #fee2e2' }}>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+                          <span style={{ fontWeight: 600, fontSize: '0.85rem', color: '#333' }}>{item.name}</span>
+                          <span style={{ fontSize: '0.7rem', color: '#888' }}>{item.section}</span>
+                        </div>
+                        <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{item.value} {item.unit}</span>
+                          <span style={{ fontSize: '0.7rem', fontWeight: 'bold', padding: '2px 6px', borderRadius: '4px', background: '#fca5a5', color: '#991b1b' }}>{item.tag}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              <button onClick={() => setShowFullReport(true)} className="order-kit-btn" style={{
+                fontSize: '1rem',
+                padding: '10px 20px',
+                marginTop: '8px',
+                width: '100%',
+                fontWeight: 600,
+                borderRadius: '12px'
+              }}>
+                View Full Report
+              </button>
             </section>
-          ))}
+          )}
+
+          {biomarkers.length > 0 && showFullReport && (
+            <div style={{ display: 'flex', flexDirection: 'column', marginTop: '16px' }}>
+              <button onClick={() => setShowFullReport(false)} style={{
+                background: '#e5e7eb',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '8px 14px',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                marginBottom: '16px',
+                width: 'fit-content',
+                alignSelf: 'flex-start'
+              }}>
+                ← Back to Summary
+              </button>
+
+              {biomarkers.map((section) => (
+                <section className="biomarker-section" key={section.section}>
+                  <div className="section-header">
+                    <div className="section-title">{section.section}</div>
+                    <div className="section-count">{section.count} Biomarkers</div>
+                  </div>
+
+                  <div className="biomarker-cards">
+                    {section.items.map((item: { value: number; unit: string; name: string; note: string; tag: string }) => (
+                      <div className="biomarker-card" key={item.name}>
+                        <div className="biomarker-left">
+                          <div className="biomarker-value">{item.value}</div>
+                          <div className="biomarker-unit">{item.unit}</div>
+                        </div>
+                        <div className="biomarker-mid">
+                          <div className="biomarker-name">{item.name}</div>
+                          <div className="biomarker-note">{item.note}</div>
+                        </div>
+                        <div className={`biomarker-tag ${item.tag === 'OPTIMAL' || item.tag === 'Optimal' ? 'tag-optimal' : 'tag-normal'}`}>
+                          {item.tag}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          )}
 
           <section className="recommendations">
             {biomarkers.length === 0 ? (
