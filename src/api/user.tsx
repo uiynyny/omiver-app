@@ -404,6 +404,57 @@ export const fetchDashboard = async (clientId: string | number): Promise<Dashboa
     return decryptDashboardData(data);
 }
 
+export interface BiomarkerTest {
+    id: number;
+    client: number;
+    recorded_at: string;
+    result_count: number;
+    created_at: string;
+}
+
+export interface BiomarkerTestDetail {
+    id: number;
+    client: number;
+    recorded_at: string;
+    results: {
+        id: number;
+        biomarker: number;
+        biomarker_name: string;
+        description?: string;
+        category: string;
+        value: number;
+        unit: string;
+        status: string;
+        normal_range: string;
+    }[];
+    created_at: string;
+    kit_name?: string | null;
+    barcode_number?: string | null;
+    data?: any;
+}
+
+export const fetchBiomarkerTests = async (clientId: string | number): Promise<BiomarkerTest[]> => {
+    const response = await fetch(`${API_URL}/biomarker-tests?client_id=${clientId}`, {
+        headers: withAuthHeaders(),
+        credentials: 'include',
+    });
+    if (!response.ok) {
+        throw new Error('Failed to fetch biomarker tests');
+    }
+    return response.json();
+}
+
+export const fetchBiomarkerTestDetail = async (testId: string | number): Promise<BiomarkerTestDetail> => {
+    const response = await fetch(`${API_URL}/biomarker-tests/${testId}`, {
+        headers: withAuthHeaders(),
+        credentials: 'include',
+    });
+    if (!response.ok) {
+        throw new Error('Failed to fetch biomarker test details');
+    }
+    return response.json();
+}
+
 export const fetchKits = async (): Promise<Kit[]> => {
     const response = await fetch(`${API_URL}/kits`, {
         headers: withAuthHeaders(),
@@ -928,8 +979,11 @@ export interface RecommendationResponse {
     created_at?: string;
 }
 
-export const fetchRecommendations = async (clientId: string | number): Promise<RecommendationResponse[]> => {
-    const response = await fetch(`${API_URL}/recommendations?client_id=${clientId}`, {
+export const fetchRecommendations = async (clientId: string | number, testId?: string | number): Promise<RecommendationResponse[]> => {
+    const url = testId 
+        ? `${API_URL}/recommendations?client_id=${clientId}&biomarker_test_id=${testId}`
+        : `${API_URL}/recommendations?client_id=${clientId}`;
+    const response = await fetch(url, {
         headers: withAuthHeaders(),
         credentials: 'include',
     });
