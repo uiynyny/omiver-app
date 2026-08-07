@@ -1,7 +1,8 @@
 .screen-root {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background: #f6f6f6;
   color: #0f1720;
 }
@@ -26,7 +27,10 @@
 }
 
 .home-main {
+  flex-grow: 1;
+  overflow-y: auto;
   padding-bottom: 96px;
+  -webkit-overflow-scrolling: touch;
   /* leave room for bottom nav */
 }
 
