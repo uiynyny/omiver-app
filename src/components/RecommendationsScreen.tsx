@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Target, Utensils, Lightbulb, ShieldAlert, Award, HeartHandshake } from 'lucide-react';
+import { Lightbulb } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { fetchDashboard, fetchRecommendations, type Dashboard, type RecommendationResponse } from '../api/user';
+import { fetchDashboard, fetchBiomarkerReports, type Dashboard, type BiomarkerReportResponse } from '../api/user';
 
 import './RecommendationsScreen.css';
 import BottomNav from './BottomNav';
@@ -13,24 +13,32 @@ const RecommendationsScreen: React.FC = () => {
   const { state } = useAppContext();
   const clientId = state.auth.clientId;
   const [dashboardData, setDashboardData] = useState<Dashboard | null>(null);
-  const [recommendation, setRecommendation] = useState<RecommendationResponse | null>(null);
+  const [reports, setReports] = useState<BiomarkerReportResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedReports, setExpandedReports] = useState<Record<number, boolean>>({});
+
+  const toggleReport = (id: number) => {
+    setExpandedReports(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
 
   useEffect(() => {
     if (clientId) {
       Promise.all([
         fetchDashboard(clientId),
-        fetchRecommendations(clientId)
+        fetchBiomarkerReports(clientId)
       ])
-        .then(([dashData, recs]) => {
+        .then(([dashData, reportData]) => {
           setDashboardData(dashData);
-          // Find the latest approved recommendation
-          const approved = recs.find(r => r.status === 'APPROVED');
-          setRecommendation(approved || null);
+          // Sort reports in reverse chronological order (newest first)
+          const sorted = reportData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+          setReports(sorted);
           setLoading(false);
         })
         .catch((error) => {
-          console.error('Error fetching recommendations:', error);
+          console.error('Error fetching data:', error);
           setLoading(false);
         });
     } else {
@@ -75,156 +83,50 @@ const RecommendationsScreen: React.FC = () => {
           </div>
         ) : (
           <div className="bottom-card">
-            {/* Doctor Notes Callout */}
-            {recommendation?.doctor_notes && (
-              <section className="doctor-notes-section">
-                <div className="dr-header">
-                  <HeartHandshake size={20} color="#8a4b7d" />
-                  <h3>Message From Your Practitioner</h3>
-                </div>
-                <div className="dr-body-content">
-                  <p>"{recommendation.doctor_notes}"</p>
-                </div>
-              </section>
-            )}
-
-            {/* Exercise Recommendations */}
-            <section className="recommendation-section exercise-section">
-              <div className="section-header">
-                <div className="section-icon exercise-icon">💪</div>
-                <div>
-                  <h2>Exercise Prescription</h2>
-                  <p className="section-goal">Target: {exerciseGoal}</p>
-                </div>
-              </div>
-
-              {recommendation?.exercise_final ? (
-                <div className="rich-rec-content">
-                  <p className="rec-summary-text">{recommendation.exercise_final.summary}</p>
+            {reports.length > 0 ? (
+              reports.map((report) => (
+                <section key={report.primary_id} className="recommendation-section report-section" style={{ marginBottom: '20px' }}>
+                  <div 
+                    className="section-header" 
+                    onClick={() => toggleReport(report.primary_id)}
+                    style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <div className="section-icon report-icon" style={{ marginRight: '10px' }}>📋</div>
+                      <div>
+                        <h2 style={{ margin: 0, fontSize: '1.25rem' }}>Biomarker Report</h2>
+                        <p className="section-goal" style={{ margin: 0 }}>Generated on {new Date(report.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '1.25rem', color: '#6b9b8a', paddingLeft: '10px', userSelect: 'none' }}>
+                      {expandedReports[report.primary_id] ? '▲' : '▼'}
+                    </div>
+                  </div>
                   
-                  {recommendation.exercise_final.frequency && (
-                    <div className="frequency-badge-container">
-                      <span className="freq-badge">⏰ Frequency: {recommendation.exercise_final.frequency}</span>
+                  {expandedReports[report.primary_id] && (
+                    <div className="report-iframe-container" style={{ marginTop: '15px' }}>
+                      <iframe
+                        srcDoc={report.report}
+                        title={`Biomarker Report ${report.primary_id}`}
+                        className="report-iframe"
+                        style={{
+                          width: '100%',
+                          height: '600px',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          backgroundColor: '#ffffff',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                        }}
+                      />
                     </div>
                   )}
-
-                  {recommendation.exercise_final.activities && recommendation.exercise_final.activities.length > 0 && (
-                    <div className="activities-list-container">
-                      <h4>Suggested Physical Activities</h4>
-                      <div className="activities-grid">
-                        {recommendation.exercise_final.activities.map((act, idx) => (
-                          <span key={idx} className="activity-tag">🚴 {act}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {recommendation.exercise_final.precautions && recommendation.exercise_final.precautions.length > 0 && (
-                    <div className="precautions-container">
-                      <div className="precaution-header">
-                        <ShieldAlert size={16} color="#c05621" />
-                        <span>Precautions & Safety Guidelines</span>
-                      </div>
-                      <ul>
-                        {recommendation.exercise_final.precautions.map((prec, idx) => (
-                          <li key={idx}>{prec}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="recommendation-item placeholder">
-                  <div className="rec-bullet">→</div>
-                  <p>Once your physical biomarker results are processed, your doctor will approve and publish your custom athletic routine here.</p>
-                </div>
-              )}
-            </section>
-
-            {/* Meal Plan Recommendations */}
-            <section className="recommendation-section meal-section">
-              <div className="section-header">
-                <div className="section-icon meal-icon">🍽️</div>
-                <div>
-                  <h2>Nutrition & Meal Plan</h2>
-                  <p className="section-goal">Dietary Profile: {dietaryPref}</p>
-                </div>
+                </section>
+              ))
+            ) : (
+              <div className="recommendation-item placeholder" style={{ padding: '40px 20px', textAlign: 'center' }}>
+                <div className="rec-bullet" style={{ fontSize: '2rem', marginBottom: '10px' }}>→</div>
+                <p>Once your blood analysis is complete, your personalized biomarker delta reports and precision plans will appear here.</p>
               </div>
-
-              {recommendation?.dietary_final ? (
-                <div className="rich-rec-content">
-                  <p className="rec-summary-text">{recommendation.dietary_final.summary}</p>
-
-                  {/* Dos and Donts Grid */}
-                  <div className="dos-donts-grid">
-                    {recommendation.dietary_final.dos && recommendation.dietary_final.dos.length > 0 && (
-                      <div className="food-list-card include-card">
-                        <h5>🥗 Foods to Emphasize</h5>
-                        <ul>
-                          {recommendation.dietary_final.dos.map((item, idx) => (
-                            <li key={idx}>{item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {recommendation.dietary_final.donts && recommendation.dietary_final.donts.length > 0 && (
-                      <div className="food-list-card limit-card">
-                        <h5>⚠️ Foods to Limit</h5>
-                        <ul>
-                          {recommendation.dietary_final.donts.map((item, idx) => (
-                            <li key={idx}>{item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Daily Sample Meal Plan */}
-                  {recommendation.dietary_final.sample_meal_plan && recommendation.dietary_final.sample_meal_plan.length > 0 && (
-                    <div className="sample-meals-container">
-                      <h4>Daily Sample Meal Planner</h4>
-                      <div className="meals-timeline">
-                        {recommendation.dietary_final.sample_meal_plan.map((mealObj, idx) => (
-                          <div key={idx} className="timeline-meal-item">
-                            <span className="meal-time-icon">{getMealIcon(mealObj.meal)}</span>
-                            <div className="meal-details-body">
-                              <span className="meal-name">{mealObj.meal}</span>
-                              <p className="meal-desc">{mealObj.suggestion}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="recommendation-item placeholder">
-                  <div className="rec-bullet">→</div>
-                  <p>Once your blood analysis is complete, your personalized meal blueprint and nutrient guidelines will appear here.</p>
-                </div>
-              )}
-            </section>
-
-            {/* Health Profile Score card */}
-            {dashboardData?.health_score !== null && dashboardData?.health_score !== undefined && (
-              <section className="recommendation-section insights-section">
-                <div className="section-header">
-                  <Award size={22} color="#6b9b8a" />
-                  <h2>Your Health Blueprint Summary</h2>
-                </div>
-
-                <div className="health-profile-grid">
-                  <div className="health-item">
-                    <span className="health-label">Metabolic Health Score</span>
-                    <span className="health-value-highlight">{dashboardData.health_score} / 100</span>
-                  </div>
-                  <div className="health-item">
-                    <span className="health-label">Optimal Biomarkers</span>
-                    <span className="health-value">{dashboardData.optimal_biomarkers} / {dashboardData.total_biomarkers}</span>
-                  </div>
-                </div>
-              </section>
             )}
 
             {/* Action Buttons */}

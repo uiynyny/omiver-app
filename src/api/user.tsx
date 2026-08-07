@@ -993,6 +993,26 @@ export const fetchRecommendations = async (clientId: string | number, testId?: s
     return response.json();
 }
 
+export interface BiomarkerReportResponse {
+    primary_id: number;
+    report: string;
+    created_at: string;
+    client: number;
+    test_ids: number[];
+}
+
+export const fetchBiomarkerReports = async (clientId: string | number): Promise<BiomarkerReportResponse[]> => {
+    const url = `${API_URL}/biomarker-reports?client_id=${clientId}`;
+    const response = await fetch(url, {
+        headers: withAuthHeaders(),
+        credentials: 'include',
+    });
+    if (!response.ok) {
+        throw new Error('Failed to fetch biomarker reports');
+    }
+    return response.json();
+}
+
 export interface SecurityQuestionResponse {
     security_question: string;
     security_question_display: string;
