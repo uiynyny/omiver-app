@@ -184,7 +184,7 @@ const HomeScreen = () => {
 
     const total = selectedTestDetail.data.result.length;
 
-    const optimal = selectedTestDetail.data.result.filter(r => r.status === 'OPTIMAL' || r.status === 'NORMAL' || r.status === 'Optimal' || r.status === 'Normal').length;
+    const optimal = selectedTestDetail.data.result.filter((r :any) => r.status === 'OPTIMAL' || r.status === 'NORMAL' || r.status === 'Optimal' || r.status === 'Normal').length;
 
     const healthScore = total > 0 ? Math.round((optimal / total) * 100) : 0;
 
@@ -208,7 +208,7 @@ const HomeScreen = () => {
 
     const map: Record<number, string> = {};
 
-    selectedTestDetail?.data?.result?.forEach(r => {
+    selectedTestDetail?.data?.result?.forEach((r:any) => {
 
       map[r.ionIdx] = r.name;
 
@@ -224,7 +224,7 @@ const HomeScreen = () => {
 
     const map: Record<number, string> = {};
 
-    selectedTestDetail?.data?.result?.forEach(r => {
+    selectedTestDetail?.data?.result?.forEach((r:any) => {
 
       map[r.ionIdx] = r.description || '';
 
@@ -242,7 +242,7 @@ const HomeScreen = () => {
 
     const grouped: Record<string, typeof selectedTestDetail.data.results> = {};
 
-    selectedTestDetail.data.results.forEach(r => {
+    selectedTestDetail.data.results.forEach((r:any) => {
 
       const cat = r.category || 'General';
 
@@ -262,7 +262,7 @@ const HomeScreen = () => {
 
       count: results.length,
 
-      items: results.map((r) => ({
+      items: results.map((r:any) => ({
 
         value: r.value,
 
@@ -1166,7 +1166,7 @@ const HomeScreen = () => {
 
                     <div className="biomarker-cards" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
 
-                      {selectedTestDetail.data.result.map((r) => (
+                      {selectedTestDetail.data.result.map((r:any) => (
 
                         <div className="biomarker-card" key={r.id} style={{
 
