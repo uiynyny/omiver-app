@@ -782,58 +782,6 @@ const HomeScreen = () => {
 
               </section>
 
-              {/* Collapsed Overall Biomarkers Watch List */}
-              {criticalBiomarkers.length > 0 && (
-                <section className="overall-biomarkers-section" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <h3 style={{ margin: '16px 0 0 0', fontSize: '1rem', color: '#111', textAlign: 'left' }}>Overall Biomarkers Watch List</h3>
-
-                  <div style={{
-                    maxHeight: '200px',
-                    overflowY: 'auto',
-                    border: '1px solid #fee2e2',
-                    borderRadius: '12px',
-                    background: '#fffbfb',
-                    padding: '12px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px'
-                  }}>
-                    {criticalBiomarkers.map((item) => (
-                      <div key={item.name} style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        background: '#ffffff',
-                        border: '1px solid #fee2e2',
-                        borderRadius: '10px',
-                        padding: '10px 12px'
-                      }}>
-                        <div style={{ textAlign: 'left', flex: 1 }}>
-                          <div style={{ fontWeight: 600, fontSize: '0.88rem', color: '#111827' }}>{item.name}</div>
-                          <div style={{ fontSize: '0.72rem', color: '#6b7280', marginTop: '2px' }}>{item.section}</div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'right' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                            <div style={{ fontSize: '0.95rem', fontWeight: 'bold', color: '#111827' }}>{item.value}</div>
-                            <div style={{ fontSize: '0.7rem', color: '#6b7280' }}>{item.unit}</div>
-                          </div>
-                          <div style={{
-                            fontSize: '0.7rem',
-                            fontWeight: 600,
-                            padding: '3px 8px',
-                            borderRadius: '5px',
-                            background: '#fee2e2',
-                            color: '#991b1b'
-                          }}>
-                            {item.tag}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
-
             </div>
 
           )}
