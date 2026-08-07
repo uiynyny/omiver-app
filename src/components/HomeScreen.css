@@ -307,8 +307,7 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  margin-top: -16px;
-  /* Overlap the top section slightly */
+  margin-top: 0;
 }
 
 .no-data-cta {

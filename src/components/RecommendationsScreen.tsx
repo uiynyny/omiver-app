@@ -71,7 +71,7 @@ const RecommendationsScreen: React.FC = () => {
         <div className="recommendations-title-section">
           <Lightbulb size={32} color="#6b9b8a" />
           <h1>Personalized Recommendations</h1>
-          <p className="recommendations-subtitle">Approved by your clinical team & powered by Omiver AI</p>
+          <p className="recommendations-subtitle">Powered by Omiver AI</p>
         </div>
 
         {loading ? (

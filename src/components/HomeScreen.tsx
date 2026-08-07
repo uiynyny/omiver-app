@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useNavigate } from 'react-router-dom';
 
-import { HeartPulse } from 'lucide-react';
-
 import { useAppContext } from '../context/AppContext';
 
 
@@ -14,7 +12,7 @@ import BottomNav from './BottomNav';
 
 import omiver from '../assets/omiver.svg';
 
-import { fetchDashboard, fetchClient, setCustomProfileKey, getCustomProfileKey, fetchBiomarkerTests, fetchBiomarkerTestDetail, fetchRecommendations, type BiomarkerSection, type Dashboard, type BiomarkerTest, type BiomarkerTestDetail } from '../api/user';
+import { fetchDashboard, fetchClient, setCustomProfileKey, getCustomProfileKey, fetchBiomarkerTests, fetchBiomarkerTestDetail, fetchRecommendations, fetchBiomarkerReports, type BiomarkerSection, type Dashboard, type BiomarkerTest, type BiomarkerTestDetail } from '../api/user';
 
 
 
@@ -27,8 +25,6 @@ const HomeScreen = () => {
   const personal = state.registration;
 
   const displayName = `${state.registration.first_name ?? ''} ${state.registration.last_name ?? ''}`.trim();
-
-  
 
   const isLocked = !!state.registration.use_custom_key && !getCustomProfileKey();
 
@@ -58,7 +54,7 @@ const HomeScreen = () => {
 
   const [viewMode, setViewMode] = useState<'category' | 'flat'>('category');
 
-  const [showRawJson, setShowRawJson] = useState(false);
+  const [hasReports, setHasReports] = useState(false);
 
 
 
@@ -77,6 +73,12 @@ const HomeScreen = () => {
       fetchBiomarkerTests(clientId).then((data) => {
 
         setBiomarkerTests(data);
+
+      }).catch((error) => console.error(error));
+
+      fetchBiomarkerReports(clientId).then((data) => {
+
+        setHasReports(data.length > 0);
 
       }).catch((error) => console.error(error));
 
@@ -184,7 +186,7 @@ const HomeScreen = () => {
 
     const total = selectedTestDetail.data.result.length;
 
-    const optimal = selectedTestDetail.data.result.filter((r :any) => r.status === 'OPTIMAL' || r.status === 'NORMAL' || r.status === 'Optimal' || r.status === 'Normal').length;
+    const optimal = selectedTestDetail.data.result.filter((r: any) => r.status === 'OPTIMAL' || r.status === 'Optimal').length;
 
     const healthScore = total > 0 ? Math.round((optimal / total) * 100) : 0;
 
@@ -208,9 +210,9 @@ const HomeScreen = () => {
 
     const map: Record<number, string> = {};
 
-    selectedTestDetail?.data?.result?.forEach((r:any) => {
+    selectedTestDetail?.data?.result?.forEach((r: any) => {
 
-      map[r.ionIdx] = r.name;
+      map[r.biomarker] = r.name;
 
     });
 
@@ -221,28 +223,29 @@ const HomeScreen = () => {
 
 
   const ionDescMap = useMemo(() => {
-
     const map: Record<number, string> = {};
 
-    selectedTestDetail?.data?.result?.forEach((r:any) => {
-
-      map[r.ionIdx] = r.description || '';
-
+    selectedTestDetail?.data?.result?.forEach((r: any) => {
+      const info = r.additional_information;
+      if (info) {
+        map[r.biomarker] = `Formula: ${info.ionTopFormula || 'N/A'} | m/z: ${info.ionMz || 'N/A'} | Mod: ${info.ionTopMod || 'N/A'}`;
+      } else {
+        map[r.biomarker] = 'No metadata available.';
+      }
     });
 
     return map;
-
   }, [selectedTestDetail]);
 
 
 
   const selectedTestBiomarkers = useMemo(() => {
 
-    if (!selectedTestDetail?.data?.results) return [];
+    if (!selectedTestDetail?.data?.result) return [];
 
-    const grouped: Record<string, typeof selectedTestDetail.data.results> = {};
+    const grouped: Record<string, any[]> = {};
 
-    selectedTestDetail.data.results.forEach((r:any) => {
+    selectedTestDetail.data.result.forEach((r: any) => {
 
       const cat = r.category || 'General';
 
@@ -262,7 +265,7 @@ const HomeScreen = () => {
 
       count: results.length,
 
-      items: results.map((r:any) => ({
+      items: results.map((r: any) => ({
 
         value: r.value,
 
@@ -326,7 +329,7 @@ const HomeScreen = () => {
 
 
 
-  const heightFormatted = useMemo(() => {  
+  const heightFormatted = useMemo(() => {
 
     const h = personal.height;
 
@@ -354,7 +357,7 @@ const HomeScreen = () => {
 
       sec.items.forEach(item => {
 
-        if (item.tag === 'LOW' || item.tag === 'HIGH' || item.tag === 'Low' || item.tag === 'High') {
+        if (item.tag !== 'OPTIMAL' && item.tag !== 'Optimal') {
 
           list.push({ ...item, section: sec.section });
 
@@ -364,7 +367,12 @@ const HomeScreen = () => {
 
     });
 
-    return list;
+    // Sort LOW/HIGH first (highest priority) and NORMAL last (lower priority)
+    return list.sort((a, b) => {
+      const aCritical = (a.tag === 'LOW' || a.tag === 'HIGH' || a.tag === 'Low' || a.tag === 'High') ? 0 : 1;
+      const bCritical = (b.tag === 'LOW' || b.tag === 'HIGH' || b.tag === 'Low' || b.tag === 'High') ? 0 : 1;
+      return aCritical - bCritical;
+    });
 
   }, [biomarkers]);
 
@@ -494,70 +502,6 @@ const HomeScreen = () => {
 
         )}
 
-        <div className="top-summary">
-
-          <section className="score-card">
-
-            <div className='score' >
-
-              <div className="score-left">
-
-                <div className="score-label">
-
-                  {selectedTestId && selectedTestMetadata ? "Selected Test Health Score" : "Overall Health Score"}
-
-                </div>
-
-                <div className="score-value">
-
-                  {selectedTestId && selectedTestMetadata 
-
-                    ? selectedTestMetadata.healthScore 
-
-                    : (dashboardData?.health_score ?? 0)}%
-
-                </div>
-
-              </div>
-
-              <div className="score-right">
-
-                <HeartPulse className='score-circle' size={36} strokeWidth={1} />
-
-              </div>
-
-            </div>
-
-
-
-            <div className="score-bar">
-
-              <div className="score-fill" style={{ 
-
-                width: `${selectedTestId && selectedTestMetadata 
-
-                  ? selectedTestMetadata.healthScore 
-
-                  : (dashboardData?.health_score ?? 0)}%` 
-
-              }} />
-
-              <div className="score-sub">
-
-                {selectedTestId && selectedTestMetadata 
-
-                  ? `${selectedTestMetadata.optimal} out of ${selectedTestMetadata.total} biomarkers in optimal range`
-
-                  : `${dashboardData?.optimal_biomarkers ?? 0} out of ${dashboardData?.total_biomarkers ?? 0} biomarkers in optimal range`}
-
-              </div>
-
-            </div>
-
-          </section>
-
-        </div>
-
         <div className='bottom-card'>
 
           <section className="profile-summary">
@@ -682,29 +626,45 @@ const HomeScreen = () => {
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
 
-                      {criticalBiomarkers.map(item => (
+                      {criticalBiomarkers.map(item => {
+                        const isNormal = item.tag === 'NORMAL' || item.tag === 'Normal';
+                        return (
+                          <div key={item.name} style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '8px 12px',
+                            background: isNormal ? '#fffbeb' : '#fff5f5',
+                            borderRadius: '8px',
+                            border: isNormal ? '1px solid #fef3c7' : '1px solid #fee2e2'
+                          }}>
 
-                        <div key={item.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#fff5f5', borderRadius: '8px', border: '1px solid #fee2e2' }}>
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
 
-                          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+                              <span style={{ fontWeight: 600, fontSize: '0.85rem', color: '#333' }}>{item.name}</span>
 
-                            <span style={{ fontWeight: 600, fontSize: '0.85rem', color: '#333' }}>{item.name}</span>
+                              <span style={{ fontSize: '0.7rem', color: '#888' }}>{item.section}</span>
 
-                            <span style={{ fontSize: '0.7rem', color: '#888' }}>{item.section}</span>
+                            </div>
+
+                            <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '8px' }}>
+
+                              <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{item.value} {item.unit}</span>
+
+                              <span style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 'bold',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                background: isNormal ? '#fef08a' : '#fca5a5',
+                                color: isNormal ? '#854d0e' : '#991b1b'
+                              }}>{item.tag}</span>
+
+                            </div>
 
                           </div>
-
-                          <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '8px' }}>
-
-                            <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{item.value} {item.unit}</span>
-
-                            <span style={{ fontSize: '0.7rem', fontWeight: 'bold', padding: '2px 6px', borderRadius: '4px', background: '#fca5a5', color: '#991b1b' }}>{item.tag}</span>
-
-                          </div>
-
-                        </div>
-
-                      ))}
+                        );
+                      })}
 
                     </div>
 
@@ -752,9 +712,9 @@ const HomeScreen = () => {
 
                     return (
 
-                      <div 
+                      <div
 
-                        key={test.id} 
+                        key={test.id}
 
                         onClick={() => handleSelectTest(test.id)}
 
@@ -821,6 +781,58 @@ const HomeScreen = () => {
                 </div>
 
               </section>
+
+              {/* Collapsed Overall Biomarkers Watch List */}
+              {criticalBiomarkers.length > 0 && (
+                <section className="overall-biomarkers-section" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <h3 style={{ margin: '16px 0 0 0', fontSize: '1rem', color: '#111', textAlign: 'left' }}>Overall Biomarkers Watch List</h3>
+
+                  <div style={{
+                    maxHeight: '200px',
+                    overflowY: 'auto',
+                    border: '1px solid #fee2e2',
+                    borderRadius: '12px',
+                    background: '#fffbfb',
+                    padding: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
+                  }}>
+                    {criticalBiomarkers.map((item) => (
+                      <div key={item.name} style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        background: '#ffffff',
+                        border: '1px solid #fee2e2',
+                        borderRadius: '10px',
+                        padding: '10px 12px'
+                      }}>
+                        <div style={{ textAlign: 'left', flex: 1 }}>
+                          <div style={{ fontWeight: 600, fontSize: '0.88rem', color: '#111827' }}>{item.name}</div>
+                          <div style={{ fontSize: '0.72rem', color: '#6b7280', marginTop: '2px' }}>{item.section}</div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'right' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                            <div style={{ fontSize: '0.95rem', fontWeight: 'bold', color: '#111827' }}>{item.value}</div>
+                            <div style={{ fontSize: '0.7rem', color: '#6b7280' }}>{item.unit}</div>
+                          </div>
+                          <div style={{
+                            fontSize: '0.7rem',
+                            fontWeight: 600,
+                            padding: '3px 8px',
+                            borderRadius: '5px',
+                            background: '#fee2e2',
+                            color: '#991b1b'
+                          }}>
+                            {item.tag}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
 
             </div>
 
@@ -962,9 +974,9 @@ const HomeScreen = () => {
 
                         </div>
 
-                        
 
-                      
+
+
 
                         <div style={{
 
@@ -986,11 +998,11 @@ const HomeScreen = () => {
 
                               <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #e2e8f0' }}>
 
-                                <th style={{ padding: '8px 12px', fontWeight: 600, color: '#475569' }}>core_biomarker name</th>
+                                <th style={{ padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Biomarker Name</th>
 
-                                <th style={{ padding: '8px 12px', fontWeight: 600, color: '#475569', width: '100px' }}>value</th>
+                                <th style={{ padding: '8px 12px', fontWeight: 600, color: '#475569', width: '120px' }}>Value (Intensity)</th>
 
-                                <th style={{ padding: '8px 12px', fontWeight: 600, color: '#475569' }}>description</th>
+                                <th style={{ padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Detail</th>
 
                               </tr>
 
@@ -998,11 +1010,17 @@ const HomeScreen = () => {
 
                             <tbody>
 
-                              {selectedTestDetail.data.result.map((item: { ionIdx: number; value: number }, idx: number) => {
+                              {selectedTestDetail.data.result.map((item: { biomarker: number; value: number; biomarker_name?: string; additional_information?: any }, idx: number) => {
 
-                                const name = ionNameMap[item.ionIdx] || `Biomarker #${item.ionIdx}`;
+                                const name = item.biomarker_name || ionNameMap[item.biomarker] || `Biomarker #${item.biomarker}`;
 
-                                const desc = ionDescMap[item.ionIdx] || 'No description available.';
+                                const info = item.additional_information;
+
+                                const detailText = info
+
+                                  ? `Formula: ${info.ionTopFormula || 'N/A'} | m/z: ${info.ionMz || 'N/A'} | Mod: ${info.ionTopMod || 'N/A'}`
+
+                                  : ionDescMap[item.biomarker] || 'No metadata available.';
 
                                 return (
 
@@ -1016,7 +1034,7 @@ const HomeScreen = () => {
 
                                     </td>
 
-                                    <td style={{ padding: '8px 12px', color: '#4b5563', fontSize: '0.75rem' }}>{desc}</td>
+                                    <td style={{ padding: '8px 12px', color: '#4b5563', fontSize: '0.75rem' }}>{detailText}</td>
 
                                   </tr>
 
@@ -1030,7 +1048,7 @@ const HomeScreen = () => {
 
                         </div>
 
-                        
+
 
                       </div>
 
@@ -1166,7 +1184,7 @@ const HomeScreen = () => {
 
                     <div className="biomarker-cards" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
 
-                      {selectedTestDetail.data.result.map((r:any) => (
+                      {selectedTestDetail.data.result.map((r: any) => (
 
                         <div className="biomarker-card" key={r.id} style={{
 
@@ -1343,25 +1361,53 @@ const HomeScreen = () => {
               </div>
 
             ) : (
-
               <>
-
                 <h3>Personalized Recommendations</h3>
-
                 <p className="rec-lead">Based on your biomarker results and health goals, we recommend:</p>
-
                 <ul className="rec-list">
-
                   {(dashboardData?.recommendations || []).map((rec: string, index: number) => (
-
                     <li key={index}>{rec}</li>
-
                   ))}
-
                 </ul>
 
+                {hasReports && (
+                  <div className="plans-quick-links" style={{
+                    marginTop: '16px',
+                    padding: '16px',
+                    background: '#f0fdf4',
+                    borderRadius: '12px',
+                    border: '1px solid #bbf7d0',
+                    textAlign: 'left',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
+                  }}>
+                    <h4 style={{ margin: 0, color: '#166534', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      🥗 Precision Diet & Exercise Plans Available
+                    </h4>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#14532d', lineHeight: 1.4 }}>
+                      Your personalized metabolic nutrition blueprints and physical training protocols have been generated!
+                    </p>
+                    <button
+                      onClick={() => navigate('/recommendations')}
+                      style={{
+                        background: '#166534',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '8px 14px',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        marginTop: '4px',
+                        width: 'fit-content'
+                      }}
+                    >
+                      View Diet & Exercise Plans →
+                    </button>
+                  </div>
+                )}
               </>
-
             )}
 
           </section>
