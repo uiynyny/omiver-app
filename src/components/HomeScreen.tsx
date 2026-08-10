@@ -642,7 +642,7 @@ const HomeScreen = () => {
 
                           <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
 
-                            {test.result_count} biomarkers analyzed
+                            {test.result_count ?? 0} biomarkers analyzed
 
                           </span>
 
