@@ -22,7 +22,10 @@ const LoginScreen = () => {
       // Persist profile data so provider dashboard can show the name
       dispatch({
         type: 'UPDATE_REGISTRATION',
-        payload: {...data},
+        payload: {
+          ...data,
+          healthConditions: data.health_conditions || '',
+        },
       });
       dispatch({
         type: 'SET_AUTH',

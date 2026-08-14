@@ -260,3 +260,95 @@
   margin-bottom: 18px;
 }
 
+/* Group buttons (Dietary / Exercise) */
+.profile-group-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  text-align: left;
+  background: #f7faf9;
+  border: 1px solid #e6efeb;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2d3748;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.profile-group-btn:hover {
+  background: #eef5f2;
+  border-color: #cfe3db;
+}
+.profile-group-btn:active {
+  transform: scale(0.99);
+}
+
+/* Detail overlay */
+.profile-detail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+}
+.profile-detail-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 22px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.2s ease-out;
+}
+.profile-detail-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 14px;
+}
+.profile-detail-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.profile-detail-row {
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+.profile-detail-row-label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+.profile-detail-row-value {
+  color: #444;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.profile-detail-close {
+  background: #6b9b8a;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s;
+}
+.profile-detail-close:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+

@@ -114,7 +114,10 @@ const HomeScreen = () => {
 
           type: 'UPDATE_REGISTRATION',
 
-          payload: clientData,
+          payload: {
+            ...clientData,
+            healthConditions: clientData.health_conditions || clientData.healthConditions || '',
+          },
 
         });
 
@@ -331,7 +334,7 @@ const HomeScreen = () => {
 
   const heightFormatted = useMemo(() => {
 
-    const h = personal.height;
+    const h = Number(personal.height);
 
     if (!h) return '—';
 
