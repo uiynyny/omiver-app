@@ -573,7 +573,7 @@ const CollectionStepsScreen: React.FC = () => {
             <button className="instruction-save-btn" type="button" onClick={handleInstructionNext}>
               {(instructionStep === 1 ? 'Next step' : 'Finish')}
             </button>
-            {instructionStep === 2 && <button className="instruction-secondary-btn" type="button" onClick={() => { setInstructionStep(1); setInstructionSavedStep(null); }}>Back</button>}
+            {instructionStep === 2 && <button className="instruction-secondary-btn" type="button" onClick={() => { setInstructionStep(1) }}>Back</button>}
           </section>
         </div>
       )}
