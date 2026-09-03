@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera, Check, Edit } from 'lucide-react';
+import { ArrowLeft, Camera, Check, X } from 'lucide-react';
 import './CollectionStepsScreen.css';
-import { updateClient, linkBarcodeAssignment, unlinkBarcodeAssignment, markBarcodeCollected, updateOrderStatus, fetchClient, fetchOrders, collectionScan, collectionLog, collectionShip, getKitCollection, collectionConfirm } from '../api/user';
+import { updateClient, linkBarcodeAssignment, unlinkBarcodeAssignment, markBarcodeCollected, updateOrderStatus, fetchClient, fetchOrders, collectionScan, collectionShip, getKitCollection, collectionConfirm } from '../api/user';
 import { useAppContext } from '../context/AppContext';
 
 const CollectionStepsScreen: React.FC = () => {
@@ -17,50 +17,14 @@ const CollectionStepsScreen: React.FC = () => {
   const [kitError, setKitError] = useState('');
   const [assignmentMessage, setAssignmentMessage] = useState('');
   const [linkedOrderId, setLinkedOrderId] = useState<number | null>(null);
-  const [dietaryRecall, setDietaryRecall] = useState('');
-  const [exerciseRecall, setExerciseRecall] = useState('');
-  const [collectionFinishedAt, setCollectionFinishedAt] = useState(() => {
-    const d = new Date();
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  });
-
-  // Split date/time for better mobile-friendly inputs
-  const splitDateTime = (iso?: string) => {
-    if (!iso) return { date: '', time: '' };
-    const parts = iso.split('T');
-    return { date: parts[0] || '', time: (parts[1] || '').slice(0, 5) };
-  };
-  const initialDT = splitDateTime(collectionFinishedAt);
-  const [collectionDate, setCollectionDate] = useState(initialDT.date);
-  const [collectionTime, setCollectionTime] = useState(initialDT.time);
-
-  const combineDateTime = (date: string, time: string) => {
-    if (!date) return '';
-    return `${date}T${time || '00:00'}`;
-  };
-
-  const setNow = () => {
-    const d = new Date();
-    const pad = (n: number) => String(n).padStart(2, '0');
-    const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-    const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    setCollectionDate(date);
-    setCollectionTime(time);
-    setCollectionFinishedAt(`${date}T${time}`);
-  };
-  const [recallSaving, setRecallSaving] = useState(false);
-  const [recallCollapsed, setRecallCollapsed] = useState(false);
-  const [savedDietary, setSavedDietary] = useState('');
-  const [savedExercise, setSavedExercise] = useState('');
-  const [savedCollectionFinishedAt, setSavedCollectionFinishedAt] = useState('');
   const [collectionConfirmed, setCollectionConfirmed] = useState(false);
   const [finalizeError, setFinalizeError] = useState('');
-  const [recallError, setRecallError] = useState('');
   const [shippedLoading, setShippedLoading] = useState(false);
   const [shippedError, setShippedError] = useState('');
   const [preparedForShipment, setPreparedForShipment] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [instructionsOpen, setInstructionsOpen] = useState(true);
+  const [instructionStep, setInstructionStep] = useState<number>(1);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -73,28 +37,13 @@ const CollectionStepsScreen: React.FC = () => {
         return;
       }
       try {
-        // 1. Recover recalls and collection finished time
+        // 1. Recover collection progress
         const clientData = await fetchClient(state.auth.clientId);
-        if (clientData.dietary_recall) {
-          setDietaryRecall(clientData.dietary_recall);
-          setSavedDietary(clientData.dietary_recall);
-        }
-        if (clientData.exercise_recall) {
-          setExerciseRecall(clientData.exercise_recall);
-          setSavedExercise(clientData.exercise_recall);
-        }
         if (clientData.collection_finished_at) {
-          setCollectionFinishedAt(clientData.collection_finished_at);
-          const dt = splitDateTime(clientData.collection_finished_at);
-          setCollectionDate(dt.date);
-          setCollectionTime(dt.time);
-          setSavedCollectionFinishedAt(clientData.collection_finished_at);
           setIsSampleCollected(true);
         }
         
-        // If recalls and collection time are recorded, collapse they are finished
-        if (clientData.dietary_recall && clientData.exercise_recall && clientData.collection_finished_at) {
-          setRecallCollapsed(true);
+        if (clientData.collection_finished_at) {
           setCollectionConfirmed(true);
           setPreparedForShipment(true);
         }
@@ -120,20 +69,7 @@ const CollectionStepsScreen: React.FC = () => {
               setKitCode(data.kit_barcode);
               setKitLinked(true);
             }
-            if (data.dietary_recall || data.exercise_recall) {
-              setIsSampleCollected(true);
-              setDietaryRecall(data.dietary_recall || '');
-              setExerciseRecall(data.exercise_recall || '');
-              setSavedDietary(data.dietary_recall || '');
-              setSavedExercise(data.exercise_recall || '');
-              setRecallCollapsed(true);
-            }
             if (data.collected_at) {
-              setCollectionFinishedAt(data.collected_at);
-              const dt = splitDateTime(data.collected_at);
-              setCollectionDate(dt.date);
-              setCollectionTime(dt.time);
-              setSavedCollectionFinishedAt(data.collected_at);
               setIsSampleCollected(true);
             }
             if (data.status === 'COLLECTED') {
@@ -145,7 +81,7 @@ const CollectionStepsScreen: React.FC = () => {
               setCollectionConfirmed(true);
               setPreparedForShipment(true);
             }
-          } catch (err) {
+          } catch {
             console.log('No collection session started yet for active order.');
           }
         }
@@ -168,20 +104,7 @@ const CollectionStepsScreen: React.FC = () => {
           setKitCode(data.kit_barcode);
           setKitLinked(true);
         }
-        if (data.dietary_recall || data.exercise_recall) {
-          setIsSampleCollected(true);
-          setDietaryRecall(data.dietary_recall || '');
-          setExerciseRecall(data.exercise_recall || '');
-          setSavedDietary(data.dietary_recall || '');
-          setSavedExercise(data.exercise_recall || '');
-          setRecallCollapsed(true);
-        }
         if (data.collected_at) {
-          setCollectionFinishedAt(data.collected_at);
-          const dt = splitDateTime(data.collected_at);
-          setCollectionDate(dt.date);
-          setCollectionTime(dt.time);
-          setSavedCollectionFinishedAt(data.collected_at);
           setIsSampleCollected(true);
         }
         if (data.status === 'COLLECTED') {
@@ -197,13 +120,13 @@ const CollectionStepsScreen: React.FC = () => {
     }
   }, [location.state]);
 
-  const handleLinkKit = async () => {
+  const handleLinkKit = async (): Promise<boolean> => {
     const code = kitCode.trim();
-    if (!code) return;
+    if (!code) return false;
 
     if (!state.auth.clientId) {
       setKitError('Client account not found. Please log in again.');
-      return;
+      return false;
     }
 
     setKitLoading(true);
@@ -229,13 +152,16 @@ const CollectionStepsScreen: React.FC = () => {
         }
       } else {
         setKitError('Barcode could not be linked. Please try again.');
+        return false;
       }
     } catch (error) {
       console.error(error);
       setKitError('Failed to link barcode. Please try again.');
+      return false;
     } finally {
       setKitLoading(false);
     }
+    return true;
   };
 
   const [unlinkLoading, setUnlinkLoading] = useState(false);
@@ -257,10 +183,6 @@ const CollectionStepsScreen: React.FC = () => {
       setAssignmentMessage('');
       setKitError('');
       setIsSampleCollected(false);
-      setCollectionDate('');
-      setCollectionTime('');
-      setCollectionFinishedAt('');
-      setRecallCollapsed(false);
       setCollectionConfirmed(false);
       setPreparedForShipment(false);
     } catch (err: any) {
@@ -271,78 +193,8 @@ const CollectionStepsScreen: React.FC = () => {
     }
   };
 
-  const handleSaveDietaryRecall = async () => {
-    if (!state.auth.clientId) {
-      console.error('Client ID not found');
-      return;
-    }
-    if (!kitLinked || !kitCode.trim()) {
-      console.error('Kit code not linked');
-      return;
-    }
-
-    setRecallError('');
-
-    const hasDate = !!collectionDate;
-    const hasTime = !!collectionTime;
-    const hasDiet = !!dietaryRecall.trim();
-    const hasExercise = !!exerciseRecall.trim();
-
-    if (!hasDate || !hasTime || !hasDiet || !hasExercise) {
-      setRecallError('Please fill in all information (date, time, dietary recall, and exercise recall) before saving.');
-      return;
-    }
-
-    setRecallSaving(true);
-    try {
-      if (isSampleCollected) {
-        await markBarcodeCollected({
-          barcode_number: kitCode.trim(),
-          client_id: state.auth.clientId,
-          collected_at: collectionFinishedAt ? new Date(collectionFinishedAt).toISOString() : undefined,
-        });
-      }
-
-      await updateClient(state.auth.clientId, {
-        dietary_recall: dietaryRecall,
-        exercise_recall: exerciseRecall,
-        collection_finished_at: collectionFinishedAt ? new Date(collectionFinishedAt).toISOString() : null,
-      });
-
-      const orderIdToLog = linkedOrderId || (location.state as any)?.orderId;
-      if (orderIdToLog) {
-        await collectionLog(
-          orderIdToLog,
-          dietaryRecall,
-          exerciseRecall,
-          collectionFinishedAt ? new Date(collectionFinishedAt).toISOString() : undefined
-        );
-      }
-
-      // store saved values and collapse the form
-      setSavedDietary(dietaryRecall);
-      setSavedExercise(exerciseRecall);
-      setSavedCollectionFinishedAt(collectionFinishedAt);
-      setRecallCollapsed(true);
-      console.log('Dietary, exercise recall and collection time saved successfully');
-    } catch (error) {
-      console.error('Failed to save dietary recall:', error);
-    } finally {
-      setRecallSaving(false);
-    }
-  };
-
   const handleBarcodeInBox = async () => {
-    console.log("Finalizing collection confirmation with checks for date, time, and dietary recall");
     setFinalizeError('');
-    const hasDate = !!collectionDate;
-    const hasTime = !!collectionTime;
-    const hasDiet = dietaryRecall.trim().length > 0;
-    if (!hasDate || !hasTime || !hasDiet) {
-      setFinalizeError('Please enter collection date, time, and a short dietary recall before confirming.');
-      return;
-    }
-
     const orderIdToConfirm = linkedOrderId || (location.state as any)?.orderId;
     if (orderIdToConfirm) {
       try {
@@ -358,7 +210,39 @@ const CollectionStepsScreen: React.FC = () => {
   }
 
   const handleConfirmSampleCollected = async () => {
-    setIsSampleCollected(true);
+    if (!state.auth.clientId || !kitLinked || !kitCode.trim()) return false;
+
+    const collectedAt = new Date().toISOString();
+    try {
+      await markBarcodeCollected({
+        barcode_number: kitCode.trim(),
+        client_id: state.auth.clientId,
+        collected_at: collectedAt,
+      });
+      await updateClient(state.auth.clientId, { collection_finished_at: collectedAt });
+      const orderIdToConfirm = linkedOrderId || (location.state as any)?.orderId;
+      if (orderIdToConfirm) await collectionConfirm(orderIdToConfirm);
+      setIsSampleCollected(true);
+      setCollectionConfirmed(true);
+      return true;
+    } catch (error) {
+      console.error('Failed to save collection step:', error);
+      setFinalizeError('Unable to save this step right now. Please try again.');
+      return false;
+    }
+  };
+
+  const handleInstructionNext = async () => {
+      setInstructionStep(prev => {
+        const nextStep = prev + 1;
+        if (nextStep > 2) {
+          setInstructionStep(1);
+          setInstructionsOpen(false);
+          return prev;
+        }
+        return nextStep;
+      });
+
   };
 
   const handleMarkShipped = async () => {
@@ -411,7 +295,12 @@ const CollectionStepsScreen: React.FC = () => {
       </header>
 
       <div className="steps-content">
-        <div className="steps-intro">Follow the steps below</div>
+        <div className="steps-intro-row">
+          <div className="steps-intro">Follow the steps below</div>
+          <button className="instructions-btn" type="button" onClick={() => setInstructionsOpen(true)}>
+            Collection instructions
+          </button>
+        </div>
 
         {/* Step 1: Link Your Kit */}
         <div className="step-item">
@@ -527,123 +416,6 @@ const CollectionStepsScreen: React.FC = () => {
               </div>
             )}
 
-            {isSampleCollected && (
-              <div className="step-card">
-                <div style={{ marginBottom: 12 }}>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 8, color: '#333' }}>
-                    When did you finish the collection?
-                  </div>
-                  {recallCollapsed ? (
-                    <div className="recall-summary">
-                      <div className="recall-row recall-row-top">
-                        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flex: 1 }}>
-                          <div className="recall-label">Collection finished:</div>
-                          <div className="recall-value">{savedCollectionFinishedAt ? savedCollectionFinishedAt.replace('T', ' ') : 'Not set'}</div>
-                        </div>
-                        <button
-                          className="recall-edit-btn"
-                          onClick={() => setRecallCollapsed(false)}
-                          aria-label="Edit recalls"
-                        >
-                          <Edit size={16} />
-                        </button>
-                      </div>
-                      <div className="recall-row">
-                        <div className="recall-label">Dietary recall:</div>
-                        <div className="recall-value">{savedDietary || 'Not provided'}</div>
-                      </div>
-                      <div className="recall-row">
-                        <div className="recall-label">Exercise recall:</div>
-                        <div className="recall-value">{savedExercise || 'Not provided'}</div>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="collection-time-row" style={{ marginBottom: 12 }}>
-                        <input
-                          type="date"
-                          value={collectionDate}
-                          onChange={(e) => {
-                            const d = e.target.value;
-                            setCollectionDate(d);
-                            const combined = combineDateTime(d, collectionTime);
-                            setCollectionFinishedAt(combined);
-                          }}
-                        />
-                        <input
-                          type="time"
-                          value={collectionTime}
-                          onChange={(e) => {
-                            const t = e.target.value;
-                            setCollectionTime(t);
-                            const combined = combineDateTime(collectionDate, t);
-                            setCollectionFinishedAt(combined);
-                          }}
-                        />
-                      </div>
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
-                        <button
-                          type="button"
-                          className="small-plain-btn"
-                          onClick={setNow}
-                          style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #e0e0e0', background: 'white', cursor: 'pointer' }}
-                        >
-                          Set to Now
-                        </button>
-                        <div style={{ fontSize: '0.9rem', color: '#555' }}>
-                          Selected: {collectionFinishedAt.replace('T', ' ')}
-                        </div>
-                      </div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 8, color: '#333' }}>
-                        Tell us what you ate in the last 24 hours
-                      </div>
-                      <textarea
-                        placeholder="24-hour dietary recall (e.g., breakfast: eggs and toast, lunch: chicken salad, dinner: pasta...)"
-                        value={dietaryRecall}
-                        onChange={(e) => setDietaryRecall(e.target.value)}
-                        className="form-textarea"
-                        rows={4}
-                        style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e0e0e0', fontFamily: 'inherit', marginBottom: '12px' }}
-                      />
-                      <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 8, color: '#333' }}>
-                        Tell us about your recent exercise
-                      </div>
-                      <textarea
-                        placeholder="Exercise recall (e.g., walked 30 minutes, strength training, yoga...)"
-                        value={exerciseRecall}
-                        onChange={(e) => setExerciseRecall(e.target.value)}
-                        className="form-textarea"
-                        rows={3}
-                        style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #e0e0e0', fontFamily: 'inherit', marginBottom: '12px' }}
-                      />
-                      {recallError && (
-                        <div style={{ color: '#dc2626', fontSize: '0.85rem', marginBottom: 12, fontWeight: 600, textAlign: 'left' }}>
-                          {recallError}
-                        </div>
-                      )}
-                      <button
-                        onClick={handleSaveDietaryRecall}
-                        disabled={recallSaving}
-                        style={{
-                          padding: '10px 16px',
-                          backgroundColor: '#6b9b8a',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '6px',
-                          fontSize: '0.9rem',
-                          fontWeight: 600,
-                          cursor: recallSaving ? 'not-allowed' : 'pointer',
-                          opacity: recallSaving ? 0.6 : 1,
-                        }}
-                      >
-                        {recallSaving ? 'Saving...' : 'Save Recall'}
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-
             {/* Final confirmation: ensure user wrote barcode on foil envelope and placed in box */}
             {isSampleCollected && !collectionConfirmed && (
               <div className="step-card">
@@ -654,7 +426,7 @@ const CollectionStepsScreen: React.FC = () => {
                   className="confirm-btn"
                   onClick={handleBarcodeInBox}
                   style={{ marginTop: 0 }}
-                  disabled={(collectionDate==null || collectionTime==null || recallSaving)}
+                  disabled={!kitLinked}
                 >
                   I placed the barcode inside the box
                 </button>
@@ -767,6 +539,44 @@ const CollectionStepsScreen: React.FC = () => {
           </button>
         </div>
 
+      {instructionsOpen && (
+        <div className="instructions-overlay" role="presentation" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setInstructionsOpen(false);
+        }}>
+          <section className="instructions-modal" role="dialog" aria-modal="true" aria-labelledby="instructions-title">
+            <div className="instructions-modal-header">
+              <div>
+                <div className="instructions-eyebrow">Sample collection</div>
+                <h2 id="instructions-title">Before you collect</h2>
+              </div>
+              <button className="instructions-close" type="button" onClick={() => setInstructionsOpen(false)} aria-label="Close collection instructions">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="instruction-step-list">
+              <div className={`instruction-step ${instructionStep === 1 ? 'current' : 'complete'}`}>
+                <span className="instruction-number">{instructionStep === 1 ? '1' : <Check size={16} />}</span>
+                <div>
+                  <h3>Open your box and scan the barcode</h3>
+                  <p>Find the barcode on the bottom-right corner of the box and scan it, or enter the code on the collection page.</p>
+                </div>
+              </div>
+              <div className={`instruction-step ${instructionStep === 2 ? 'current' : ''}`}>
+                <span className="instruction-number">2</span>
+                <div>
+                  <h3>Place the collection device on your arm</h3>
+                  <p>Follow the placement and collection instructions in the device manual. Keep the device in place for the recommended time.</p>
+                </div>
+              </div>
+            </div>
+            {kitError && instructionStep === 1 && <div className="instruction-error">{kitError}</div>}
+            <button className="instruction-save-btn" type="button" onClick={handleInstructionNext}>
+              {(instructionStep === 1 ? 'Next step' : 'Finish')}
+            </button>
+            {instructionStep === 2 && <button className="instruction-secondary-btn" type="button" onClick={() => { setInstructionStep(1); setInstructionSavedStep(null); }}>Back</button>}
+          </section>
+        </div>
+      )}
       </div>
     </div>
   );

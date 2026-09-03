@@ -272,7 +272,9 @@ const ProfileSettingsScreen: React.FC = () => {
                   <span className="settings-item-emoji"><Target size={20} color="#6b9b8a" /></span>
                   <div>
                     <div className="settings-item-lbl">Targets & Goals</div>
-                    <div className="settings-item-sub">Fitness goals and nutrition goals</div>
+                    <div className="settings-item-sub">
+                      Dietary preference: {dietaryPreferences} | Exercise preference: {fitnessGoal}
+                    </div>
                   </div>
                 </div>
                 <ChevronRight size={18} color="#ccc" />

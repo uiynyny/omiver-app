@@ -68,6 +68,108 @@
   margin-bottom: 12px;
 }
 
+.steps-intro-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.instructions-btn,
+.instruction-secondary-btn {
+  border: 1px solid #6b9b8a;
+  background: white;
+  color: #477465;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.instructions-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(28, 42, 38, 0.48);
+}
+
+.instructions-modal {
+  width: min(100%, 520px);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  background: white;
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
+}
+
+.instructions-modal-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.instructions-eyebrow {
+  color: #6b9b8a;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.instructions-modal h2,
+.instruction-step h3 {
+  margin: 0;
+  color: #333;
+}
+
+.instructions-modal h2 { font-size: 1.35rem; margin-top: 4px; }
+
+.instructions-close {
+  align-self: flex-start;
+  border: 0;
+  background: transparent;
+  color: #555;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.instruction-step-list { display: grid; gap: 12px; }
+.instruction-step {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #e7ecea;
+  border-radius: 10px;
+  background: #f8faf9;
+}
+.instruction-step.current { border-color: #6b9b8a; background: #f0f7f4; }
+.instruction-step.complete { border-color: #d1e7dd; }
+.instruction-number {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #6b9b8a;
+  color: white;
+  font-weight: 800;
+}
+.instruction-step h3 { font-size: 0.95rem; margin-bottom: 5px; }
+.instruction-step p { margin: 0; color: #5d6562; font-size: 0.86rem; line-height: 1.45; }
+.instruction-barcode-input { width: 100%; box-sizing: border-box; margin-top: 16px; padding: 12px; border: 1px solid #dfe6e3; border-radius: 8px; font: inherit; }
+.instruction-error { color: #b42318; font-size: 0.82rem; font-weight: 600; margin-top: 8px; }
+.instruction-save-btn { width: 100%; margin-top: 18px; padding: 13px; border: 0; border-radius: 8px; background: #d27644; color: white; font-weight: 800; cursor: pointer; }
+.instruction-save-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.instruction-secondary-btn { width: 100%; margin-top: 10px; }
+
 .step-item {
   display: flex;
   gap: 16px;

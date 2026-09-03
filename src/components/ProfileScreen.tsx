@@ -131,19 +131,15 @@ const ProfileScreen: React.FC = () => {
         {/* Dietary & Exercise Information */}
         <section className="recommendation-section exercise-section" style={{ marginTop: 18 }}>
           <div className="section-title">
-            <Target color="#6b9b8a" />
-            <p style={{ margin: 0 }}>Your Dietary & Exercise Info</p>
+            <Target color="#6b9b8a" /> 
+            <p style={{ margin: 0 }}>Diet and Exercise preferences</p>
           </div>
           <div className="section-content">
-            <button type="button" className="profile-group-btn" onClick={() => setDetail('dietary')}>
-              <span>Dietary Information</span>
-              <ChevronRight size={18} color="#6b9b8a" />
-            </button>
-            <div style={{ height: 10 }} />
-            <button type="button" className="profile-group-btn" onClick={() => setDetail('exercise')}>
-              <span>Exercise Information</span>
-              <ChevronRight size={18} color="#6b9b8a" />
-            </button>
+            <div style={{ fontWeight: 600, color: '#333', marginBottom: 4 }}>Nutrition Goal:</div>
+            <div>{reg.preferred_cuisines || 'None specified'}</div>
+            <div style={{ height: 12 }} />
+            <div style={{ fontWeight: 600, color: '#333', marginBottom: 4 }}>Fitness Goals:</div>
+            <div>{reg.weekly_exercise_routine || 'None specified'}</div>
           </div>
         </section>
 
