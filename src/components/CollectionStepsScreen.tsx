@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Camera, Check, X, CheckCircle2, Save, Info, BookOpen, ShieldCheck, Package } from 'lucide-react';
 import './CollectionStepsScreen.css';
 import { 
-  updateClient, 
   unlinkBarcodeAssignment, 
   fetchClient, 
   fetchOrders, 
@@ -41,11 +40,9 @@ const CollectionStepsScreen: React.FC = () => {
   const [savingStep1, setSavingStep1] = useState(false);
   const [savingStep2, setSavingStep2] = useState(false);
   const [savingStep3, setSavingStep3] = useState(false);
-  const [savingStep4, setSavingStep4] = useState(false);
   const [step1SavedTime, setStep1SavedTime] = useState<string | null>(null);
   const [step2SavedTime, setStep2SavedTime] = useState<string | null>(null);
   const [step3SavedTime, setStep3SavedTime] = useState<string | null>(null);
-  const [step4SavedTime, setStep4SavedTime] = useState<string | null>(null);
   const [feedbackBanner, setFeedbackBanner] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const showFeedback = (message: string, type: 'success' | 'error' = 'success') => {
@@ -58,9 +55,6 @@ const CollectionStepsScreen: React.FC = () => {
   // Instructional modal state
   const [instructionsOpen, setInstructionsOpen] = useState(false);
   const [instructionStep, setInstructionStep] = useState<number>(1);
-  const [modalBarcode, setModalBarcode] = useState('');
-  const [modalSaving, setModalSaving] = useState(false);
-  const [modalError, setModalError] = useState('');
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -79,7 +73,6 @@ const CollectionStepsScreen: React.FC = () => {
           const sp = progress.step_progress;
           if (sp.step1?.completed && sp.step1.barcode) {
             setKitCode(sp.step1.barcode);
-            setModalBarcode(sp.step1.barcode);
             setKitLinked(true);
             setStep1SavedTime(sp.step1.saved_at ? new Date(sp.step1.saved_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Saved');
           }
@@ -95,7 +88,7 @@ const CollectionStepsScreen: React.FC = () => {
             setStep3SavedTime(sp.step3.saved_at ? new Date(sp.step3.saved_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Saved');
           }
           if (sp.step4?.completed) {
-            setStep4SavedTime(sp.step4.saved_at ? new Date(sp.step4.saved_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Saved');
+            // Shipped
           }
         }
 
@@ -113,10 +106,9 @@ const CollectionStepsScreen: React.FC = () => {
         const activeOrder = orders.find(o => o.status !== 'FINISHED' && o.status !== 'CANCELLED');
         if (activeOrder) {
           setLinkedOrderId(activeOrder.id);
-          const barcode = (activeOrder as any).barcode_number || (activeOrder as any).kit_barcode;
+          const barcode = (activeOrder as { barcode_number?: string; kit_barcode?: string; order_number?: string }).barcode_number || (activeOrder as { barcode_number?: string; kit_barcode?: string; order_number?: string }).kit_barcode;
           if (barcode && !barcode.startsWith('KIT-') && barcode !== activeOrder.order_number) {
             setKitCode(barcode);
-            setModalBarcode(barcode);
             setKitLinked(true);
             setStep1SavedTime('Linked');
           }
@@ -125,7 +117,6 @@ const CollectionStepsScreen: React.FC = () => {
             const data = await getKitCollection(activeOrder.id);
             if (data.kit_barcode && !data.kit_barcode.startsWith('KIT-') && data.kit_barcode !== activeOrder.order_number) {
               setKitCode(data.kit_barcode);
-              setModalBarcode(data.kit_barcode);
               setKitLinked(true);
               setStep1SavedTime('Linked');
             }
@@ -146,24 +137,23 @@ const CollectionStepsScreen: React.FC = () => {
             // No collection session started yet
           }
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Failed to recover collection progress:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    recoverProgress();
+    void recoverProgress();
   }, [state.auth.clientId]);
 
   useEffect(() => {
-    const initOrderId = (location.state as any)?.orderId;
+    const initOrderId = (location.state as { orderId?: number } | null)?.orderId;
     if (initOrderId) {
       setLinkedOrderId(initOrderId);
       getKitCollection(initOrderId).then(data => {
         if (data.kit_barcode) {
           setKitCode(data.kit_barcode);
-          setModalBarcode(data.kit_barcode);
           setKitLinked(true);
           setStep1SavedTime('Linked');
         }
@@ -202,7 +192,7 @@ const CollectionStepsScreen: React.FC = () => {
     setAssignmentMessage('');
 
     try {
-      const orderIdToScan = linkedOrderId || (location.state as any)?.orderId;
+      const orderIdToScan = linkedOrderId || (location.state as { orderId?: number } | null)?.orderId;
       const res = await saveCollectionStep1(state.auth.clientId, code, orderIdToScan);
 
       if (res.success) {
@@ -217,9 +207,10 @@ const CollectionStepsScreen: React.FC = () => {
         setKitError('Barcode could not be verified. Please check the code and try again.');
         return false;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      const msg = error.message || 'Failed to save and link barcode. Please try again.';
+      const errObj = error as { message?: string };
+      const msg = errObj.message || 'Failed to save and link barcode. Please try again.';
       setKitError(msg);
       showFeedback(msg, 'error');
       return false;
@@ -244,7 +235,6 @@ const CollectionStepsScreen: React.FC = () => {
         client_id: state.auth.clientId,
       });
       setKitCode('');
-      setModalBarcode('');
       setKitLinked(false);
       setAssignmentMessage('');
       setKitError('');
@@ -254,9 +244,10 @@ const CollectionStepsScreen: React.FC = () => {
       setStep1SavedTime(null);
       setStep2SavedTime(null);
       setStep3SavedTime(null);
-    } catch (err: any) {
-      console.error("Error unlinking kit:", err);
-      alert(err.message || "Failed to unlink kit.");
+    } catch (err: unknown) {
+      const errObj = err as { message?: string };
+      console.error("Error unlinking kit:", errObj);
+      alert(errObj.message || "Failed to unlink kit.");
     } finally {
       setUnlinkLoading(false);
     }
@@ -273,7 +264,7 @@ const CollectionStepsScreen: React.FC = () => {
     setFinalizeError('');
 
     try {
-      const orderIdToConfirm = linkedOrderId || (location.state as any)?.orderId;
+      const orderIdToConfirm = linkedOrderId || (location.state as { orderId?: number } | null)?.orderId;
       const res = await saveCollectionStep2(state.auth.clientId, kitCode.trim(), orderIdToConfirm);
 
       if (res.success) {
@@ -285,9 +276,10 @@ const CollectionStepsScreen: React.FC = () => {
         return true;
       }
       return false;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to save collection step:', error);
-      const msg = error.message || 'Unable to save collection data right now. Please try again.';
+      const errObj = error as { message?: string };
+      const msg = errObj.message || 'Unable to save collection data right now. Please try again.';
       setFinalizeError(msg);
       showFeedback(msg, 'error');
       return false;
@@ -300,7 +292,7 @@ const CollectionStepsScreen: React.FC = () => {
   const handleBarcodeInBox = async () => {
     setFinalizeError('');
     setSavingStep2(true);
-    const orderIdToConfirm = linkedOrderId || (location.state as any)?.orderId;
+    const orderIdToConfirm = linkedOrderId || (location.state as { orderId?: number } | null)?.orderId;
     try {
       const res = await saveCollectionStep2Pouch(state.auth.clientId!, orderIdToConfirm);
       if (res.success) {
@@ -309,9 +301,10 @@ const CollectionStepsScreen: React.FC = () => {
         setStep2SavedTime(nowTime);
         showFeedback('✓ Specimen pouch confirmed inside kit box!', 'success');
       }
-    } catch (err: any) {
-      console.error('Failed to confirm collection:', err);
-      setFinalizeError(err.message || 'Failed to confirm placement in database. Please try again.');
+    } catch (err: unknown) {
+      const errObj = err as { message?: string };
+      console.error('Failed to confirm collection:', errObj);
+      setFinalizeError(errObj.message || 'Failed to confirm placement in database. Please try again.');
     } finally {
       setSavingStep2(false);
     }
@@ -321,7 +314,7 @@ const CollectionStepsScreen: React.FC = () => {
   const handleSavePreparation = async () => {
     setSavingStep3(true);
     try {
-      const orderIdToConfirm = linkedOrderId || (location.state as any)?.orderId;
+      const orderIdToConfirm = linkedOrderId || (location.state as { orderId?: number } | null)?.orderId;
       const res = await saveCollectionStep3(state.auth.clientId!, orderIdToConfirm);
       if (res.success) {
         setPreparedForShipment(true);
@@ -329,9 +322,10 @@ const CollectionStepsScreen: React.FC = () => {
         setStep3SavedTime(nowTime);
         showFeedback('✓ Step 3 saved: Drop-off preparation recorded in cloud!', 'success');
       }
-    } catch (err: any) {
-      console.error(err);
-      showFeedback(err.message || 'Failed to save Step 3 preparation.', 'error');
+    } catch (err: unknown) {
+      const errObj = err as { message?: string };
+      console.error(errObj);
+      showFeedback(errObj.message || 'Failed to save Step 3 preparation.', 'error');
     } finally {
       setSavingStep3(false);
     }
@@ -339,20 +333,17 @@ const CollectionStepsScreen: React.FC = () => {
 
   // Step 4: Save & Mark Shipped
   const handleMarkShipped = async () => {
-    const orderIdToShip = linkedOrderId || (location.state as any)?.orderId;
+    const orderIdToShip = linkedOrderId || (location.state as { orderId?: number } | null)?.orderId;
     if (!orderIdToShip) {
       setShippedError('Please link your barcode first so we know which order to ship.');
       return;
     }
 
     setShippedError('');
-    setSavingStep4(true);
     setShippedLoading(true);
     try {
       const res = await saveCollectionStep4(state.auth.clientId!, orderIdToShip);
       if (res.success) {
-        const nowTime = new Date(res.saved_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        setStep4SavedTime(nowTime);
         showFeedback('✓ Step 4 saved: Sample marked as shipped & tracking activated!', 'success');
         setTimeout(() => {
           navigate('/kits?tab=orders');
@@ -364,55 +355,7 @@ const CollectionStepsScreen: React.FC = () => {
       setShippedError(message);
       showFeedback(message, 'error');
     } finally {
-      setSavingStep4(false);
       setShippedLoading(false);
-    }
-  };
-
-  // Modal Next / Save Handlers
-  const handleModalSaveStep1 = async () => {
-    const code = modalBarcode.trim() || kitCode.trim();
-    if (!code) {
-      setModalError('Please enter or scan your barcode code to continue.');
-      return;
-    }
-    setModalSaving(true);
-    setModalError('');
-    try {
-      setKitCode(code);
-      if (state.auth.clientId) {
-        const orderIdToScan = linkedOrderId || (location.state as any)?.orderId;
-        const res = await saveCollectionStep1(state.auth.clientId, code, orderIdToScan);
-        if (res.success) {
-          setKitLinked(true);
-          if (res.order_id) setLinkedOrderId(res.order_id);
-          setStep1SavedTime(new Date(res.saved_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-        }
-      }
-      setInstructionStep(2);
-    } catch (err: any) {
-      console.error(err);
-      setModalError(err.message || 'Failed to save barcode.');
-      setInstructionStep(2);
-    } finally {
-      setModalSaving(false);
-    }
-  };
-
-  const handleModalSaveStep2 = async () => {
-    setModalSaving(true);
-    setModalError('');
-    try {
-      if (kitLinked && kitCode.trim() && state.auth.clientId) {
-        await handleConfirmSampleCollected();
-      }
-      setInstructionsOpen(false);
-      setInstructionStep(1);
-    } catch (err) {
-      console.error(err);
-      setInstructionsOpen(false);
-    } finally {
-      setModalSaving(false);
     }
   };
 
@@ -618,7 +561,7 @@ const CollectionStepsScreen: React.FC = () => {
             {!isSampleCollected && (
               <div className="step-card">
                 <div style={{ marginBottom: 10, fontWeight: 600, color: '#334155' }}>Video Walkthrough:</div>
-                <div className="video-container" style={{ width: '100%', aspectRatio: '16/9', borderRadius: 10, overflow: 'hidden', marginBottom: 14 }}>
+                <div style={{ width: '100%', aspectRatio: '16/9', borderRadius: 10, overflow: 'hidden', marginBottom: 14 }}>
                   <iframe
                     title="vimeo-player"
                     src="https://player.vimeo.com/video/1051338117?h=8f460a47f8"
@@ -892,16 +835,6 @@ const CollectionStepsScreen: React.FC = () => {
                   onClick={() => setInstructionsOpen(false)}
                 >
                   Got It ✓
-                </button>
-              )}
-
-              {instructionStep === 2 && (
-                <button 
-                  className="instruction-secondary-btn" 
-                  type="button" 
-                  onClick={() => setInstructionStep(1)}
-                >
-                  Back to Step 1
                 </button>
               )}
             </section>
