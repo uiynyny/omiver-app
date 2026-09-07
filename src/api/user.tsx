@@ -936,6 +936,117 @@ export const collectionConfirm = async (orderId: number | string): Promise<KitCo
     return response.json();
 }
 
+export interface StepProgressData {
+    step1?: { completed: boolean; barcode?: string; order_id?: number; saved_at?: string; message?: string };
+    step2?: { completed: boolean; collected_at?: string; notes?: string; saved_at?: string; message?: string };
+    step2_pouch?: { completed: boolean; confirmed_at?: string; saved_at?: string; message?: string };
+    step3?: { completed: boolean; prepared_at?: string; saved_at?: string; message?: string };
+    step4?: { completed: boolean; shipped_at?: string; status?: string; saved_at?: string; message?: string };
+}
+
+export interface CollectionStepResponse {
+    success: boolean;
+    step: number | string;
+    barcode?: string;
+    order_id?: number;
+    collected_at?: string;
+    status?: string;
+    saved_at: string;
+    message: string;
+    step_progress?: StepProgressData;
+}
+
+export interface CollectionProgressResponse {
+    id?: number;
+    order_id?: number;
+    kit_barcode?: string;
+    status: string;
+    collected_at?: string | null;
+    step_progress: StepProgressData;
+}
+
+export const saveCollectionStep1 = async (clientId: number | string, barcodeNumber: string, orderId?: number | string): Promise<CollectionStepResponse> => {
+    const response = await fetch(`${API_URL}/collection/step1-link`, {
+        method: 'POST',
+        headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
+        body: JSON.stringify({ client_id: clientId, barcode_number: barcodeNumber, order_id: orderId }),
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to save Step 1 barcode');
+    }
+    return response.json();
+};
+
+export const saveCollectionStep2 = async (clientId: number | string, barcodeNumber: string, orderId?: number | string, notes?: string): Promise<CollectionStepResponse> => {
+    const response = await fetch(`${API_URL}/collection/step2-collect`, {
+        method: 'POST',
+        headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
+        body: JSON.stringify({ client_id: clientId, barcode_number: barcodeNumber, order_id: orderId, notes }),
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to save Step 2 collection data');
+    }
+    return response.json();
+};
+
+export const saveCollectionStep2Pouch = async (clientId: number | string, orderId?: number | string): Promise<CollectionStepResponse> => {
+    const response = await fetch(`${API_URL}/collection/step2-pouch`, {
+        method: 'POST',
+        headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
+        body: JSON.stringify({ client_id: clientId, order_id: orderId }),
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to confirm specimen pouch');
+    }
+    return response.json();
+};
+
+export const saveCollectionStep3 = async (clientId: number | string, orderId?: number | string): Promise<CollectionStepResponse> => {
+    const response = await fetch(`${API_URL}/collection/step3-prepare`, {
+        method: 'POST',
+        headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
+        body: JSON.stringify({ client_id: clientId, order_id: orderId }),
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to save Step 3 preparation');
+    }
+    return response.json();
+};
+
+export const saveCollectionStep4 = async (clientId: number | string, orderId: number | string): Promise<CollectionStepResponse> => {
+    const response = await fetch(`${API_URL}/collection/step4-ship`, {
+        method: 'POST',
+        headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
+        body: JSON.stringify({ client_id: clientId, order_id: orderId }),
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to mark sample as shipped');
+    }
+    return response.json();
+};
+
+export const fetchCollectionProgress = async (clientId?: number | string, orderId?: number | string): Promise<CollectionProgressResponse> => {
+    const params = new URLSearchParams();
+    if (clientId) params.append('client_id', String(clientId));
+    if (orderId) params.append('order_id', String(orderId));
+    const response = await fetch(`${API_URL}/collection/progress?${params.toString()}`, {
+        headers: withAuthHeaders(),
+        credentials: 'include',
+    });
+    if (!response.ok) throw new Error('Failed to fetch collection progress');
+    return response.json();
+};
+
 export const collectionShip = async (orderId: number | string, trackingNumber?: string): Promise<KitCollectionData> => {
     const response = await fetch(`${API_URL}/collection/ship`, {
         method: 'POST',
