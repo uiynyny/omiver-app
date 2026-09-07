@@ -109,7 +109,7 @@ const CollectionStepsScreen: React.FC = () => {
         }
 
         // 3. Recover barcode linkage from order history
-        const orders = await fetchOrders(state.auth.clientId);
+        const orders = await fetchOrders(state.auth.clientId).catch(() => []);
         const activeOrder = orders.find(o => o.status !== 'FINISHED' && o.status !== 'CANCELLED');
         if (activeOrder) {
           setLinkedOrderId(activeOrder.id);
@@ -618,7 +618,7 @@ const CollectionStepsScreen: React.FC = () => {
             {!isSampleCollected && (
               <div className="step-card">
                 <div style={{ marginBottom: 10, fontWeight: 600, color: '#334155' }}>Video Walkthrough:</div>
-                <div style={{ height: 220, borderRadius: 10, overflow: 'hidden', marginBottom: 14 }}>
+                <div className="video-container" style={{ width: '100%', aspectRatio: '16/9', borderRadius: 10, overflow: 'hidden', marginBottom: 14 }}>
                   <iframe
                     title="vimeo-player"
                     src="https://player.vimeo.com/video/1051338117?h=8f460a47f8"

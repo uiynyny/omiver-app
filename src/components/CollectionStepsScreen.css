@@ -496,8 +496,54 @@
 }
 
 @media (max-width: 480px) {
-  .collection-time-row {
+  .steps-content {
+    padding: 12px;
+    gap: 16px;
+  }
+
+  .steps-header h1 {
+    font-size: 1rem;
+  }
+
+  .step-title {
+    font-size: 0.95rem;
+  }
+
+  .step-desc {
+    font-size: 0.85rem;
+  }
+
+  .url-row {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .link-btn {
+    width: 100%;
+    margin-top: 4px;
+    justify-content: center;
+  }
+
+  .step-card {
+    padding: 12px;
+  }
+
+  .instructions-modal {
+    padding: 16px;
+    margin: 10px;
+    width: 100%;
+  }
+
+  .instruction-step {
+    padding: 12px;
+  }
+
+  .instruction-step h3 {
+    font-size: 0.9rem;
+  }
+
+  .instruction-step p {
+    font-size: 0.8rem;
   }
 }
 
@@ -547,6 +593,98 @@
   opacity: 0.9;
 }
 
-.recall-actions {
-  display: none;
+.step-manual-guide {
+  background: #f8faf9;
+  border: 1px solid #e2ece7;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.step-manual-guide h4 {
+  margin: 0 0 10px 0;
+  font-size: 0.92rem;
+  color: #1b4332;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.manual-steps-list {
+  margin: 0;
+  padding-left: 20px;
+  color: #334155;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.manual-steps-list li {
+  margin-bottom: 8px;
+}
+
+.manual-steps-list li strong {
+  color: #1e293b;
+}
+
+.save-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 20px;
+  margin-top: 8px;
+}
+
+.save-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 18px;
+  background-color: #6b9b8a;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 10px;
+}
+
+.save-action-btn:hover {
+  background-color: #588776;
+}
+
+.save-action-btn:disabled {
+  background-color: #c4d7cf;
+  cursor: not-allowed;
+}
+
+.save-action-btn.secondary-save {
+  background-color: #d27644;
+}
+
+.save-action-btn.secondary-save:hover {
+  background-color: #b86233;
+}
+
+.save-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
