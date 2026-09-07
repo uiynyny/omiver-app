@@ -1001,6 +1001,50 @@ export interface BiomarkerReportResponse {
     test_ids: number[];
 }
 
+export const downloadRecommendationPdf = async (recommendationId: number | string, filename?: string): Promise<void> => {
+    const url = `${API_URL}/recommendations/${recommendationId}/pdf`;
+    const response = await fetch(url, {
+        headers: withAuthHeaders(),
+        credentials: 'include',
+    });
+    if (!response.ok) {
+        throw new Error('Failed to download recommendation PDF');
+    }
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename || `omiver-recommendation-${recommendationId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+        window.URL.revokeObjectURL(downloadUrl);
+        link.remove();
+    }, 150);
+};
+
+export const downloadBiomarkerReportPdf = async (reportId: number | string, filename?: string): Promise<void> => {
+    const url = `${API_URL}/biomarker-reports/${reportId}/pdf`;
+    const response = await fetch(url, {
+        headers: withAuthHeaders(),
+        credentials: 'include',
+    });
+    if (!response.ok) {
+        throw new Error('Failed to download biomarker report PDF');
+    }
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename || `omiver-biomarker-report-${reportId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+        window.URL.revokeObjectURL(downloadUrl);
+        link.remove();
+    }, 150);
+};
+
 export const fetchBiomarkerReports = async (clientId: string | number): Promise<BiomarkerReportResponse[]> => {
     const url = `${API_URL}/biomarker-reports?client_id=${clientId}`;
     const response = await fetch(url, {

@@ -1,8 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CircleUserRound, Calendar, Mail, Package, Save } from 'lucide-react';
+import { ArrowLeft, CircleUserRound, Calendar, Mail, Package, Save, Download, FileText } from 'lucide-react';
 import omiver from '../assets/omiver.svg';
-import { updateClient, type Patient, fetchDashboard, type BiomarkerSection, type Dashboard } from '../api/user';
+import { 
+  updateClient, 
+  type Patient, 
+  fetchDashboard, 
+  fetchRecommendations,
+  downloadRecommendationPdf,
+  type BiomarkerSection, 
+  type Dashboard,
+  type RecommendationResponse 
+} from '../api/user';
 
 import './PatientDetailScreen.css';
 
@@ -13,10 +22,13 @@ const PatientDetailScreen: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [editData, setEditData] = useState<Patient | null>(patient ?? null);
   const [dashboardData, setDashboardData] = useState<Dashboard | null>(null);
+  const [recommendations, setRecommendations] = useState<RecommendationResponse[]>([]);
+  const [downloadingRecId, setDownloadingRecId] = useState<number | null>(null);
 
   useEffect(() => {
     if (patient?.id) {
       fetchDashboard(patient.id).then(setDashboardData).catch(console.error);
+      fetchRecommendations(patient.id).then(setRecommendations).catch(console.error);
     }
   }, [patient?.id]);
 
@@ -51,6 +63,17 @@ const PatientDetailScreen: React.FC = () => {
   const age = patient.date_of_birth ?
     Math.floor((Date.now() - new Date(patient.date_of_birth).getTime()) / (1000 * 60 * 60 * 24 * 365.25))
     : 'N/A';
+
+  const handleDownloadPdf = async (recId: number) => {
+    try {
+      setDownloadingRecId(recId);
+      await downloadRecommendationPdf(recId);
+    } catch (err) {
+      console.error('Failed to download PDF:', err);
+    } finally {
+      setDownloadingRecId(null);
+    }
+  };
 
   const handleFieldChange = (field: keyof Patient | string, value: string) => {
     setEditData((prev) => (prev ? { ...prev, [field]: value } : prev));
@@ -292,8 +315,71 @@ const PatientDetailScreen: React.FC = () => {
           </section>
 
           <section className="detail-section card-glass">
-            <h3>Recommendation Plans</h3>
-            {dashboardData?.recommendations && dashboardData.recommendations.length > 0 ? (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <h3 style={{ margin: 0 }}>Recommendation Plans</h3>
+            </div>
+
+            {recommendations.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {recommendations.map((rec) => (
+                  <div 
+                    key={rec.id} 
+                    style={{ 
+                      padding: '14px', 
+                      background: 'rgba(255, 255, 255, 0.7)', 
+                      borderRadius: '10px', 
+                      border: '1px solid #e2e8f0',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '10px'
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <FileText size={18} color="#166534" />
+                        <strong style={{ fontSize: '0.95rem' }}>Plan #{rec.id}</strong>
+                        <span style={{ 
+                          fontSize: '0.75rem', 
+                          padding: '2px 8px', 
+                          borderRadius: '10px', 
+                          background: rec.status === 'APPROVED' ? '#dcfce7' : '#fef3c7',
+                          color: rec.status === 'APPROVED' ? '#15803d' : '#b45309',
+                          fontWeight: 700 
+                        }}>
+                          {rec.status}
+                        </span>
+                      </div>
+                      <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
+                        {rec.text ? rec.text.slice(0, 100) + '...' : 'Personalized metabolic plan'}
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => handleDownloadPdf(rec.id)}
+                      disabled={downloadingRecId === rec.id}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        background: '#166534',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '6px 12px',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        cursor: downloadingRecId === rec.id ? 'wait' : 'pointer'
+                      }}
+                    >
+                      <Download size={14} />
+                      <span>{downloadingRecId === rec.id ? 'Downloading...' : 'Download PDF'}</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : dashboardData?.recommendations && dashboardData.recommendations.length > 0 ? (
               <ul className="rec-list" style={{ paddingLeft: 20 }}>
                 {dashboardData.recommendations.map((rec, index) => (
                   <li key={index} style={{ marginBottom: 8 }}>{rec}</li>
