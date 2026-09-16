@@ -1,76 +1,835 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@import './styles/tokens.css';
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
-  color-scheme: light dark;
-  background-color: #242424;
+/* ============================================================
+   Reset
+   ============================================================ */
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+* {
+  margin: 0;
+  padding: 0;
 }
 
-a:hover {
-  color: #535bf2;
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  width:auto;
-  height: auto;
-  /* min-width: 320px; */
-  /* min-height: 100vh; */
-  /* Other styles above... */
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text);
+  background-color: var(--bg);
+  min-height: 100vh;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-synthesis: none;
+  /* Stops the rubber-band scroll revealing white behind the app. */
+  overscroll-behavior-y: none;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
 }
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+  background: none;
+  border: none;
   cursor: pointer;
-  transition: border-color 0.25s;
+  -webkit-tap-highlight-color: transparent;
 }
 
-button:hover {
-  border-color: #646cff;
+button:disabled {
+  cursor: not-allowed;
 }
 
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+a {
+  color: var(--accent-strong);
+  text-decoration: none;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
+ul,
+ol {
+  list-style: none;
+}
 
-  a:hover {
-    color: #747bff;
-  }
+/* One consistent, visible focus ring across the whole app.
+   :focus-visible so pointer users don't see it on click. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
 
-  button {
-    background-color: #f9f9f9;
-  }
+/* ============================================================
+   Typography
+   ============================================================ */
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-title);
+}
+
+h1 { font-size: var(--fs-display); letter-spacing: var(--tracking-display); }
+h2 { font-size: var(--fs-title); }
+h3 { font-size: var(--fs-heading); }
+
+/* ============================================================
+   Layout primitives
+   ============================================================ */
+
+.screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+  padding-top: var(--safe-top);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Screens that sit above the tab bar need room for it. */
+.screen--nav {
+  padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + var(--sp-4));
+}
+
+.container {
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-inline: var(--sp-4);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.stack-sm { display: flex; flex-direction: column; gap: var(--sp-2); }
+.stack-lg { display: flex; flex-direction: column; gap: var(--sp-6); }
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.spacer { flex: 1; }
+
+/* ============================================================
+   App header
+   ============================================================ */
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--header-height);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--header-bg);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--divider);
+}
+
+.app-header__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-heading);
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: var(--tracking-title);
+}
+
+/* ============================================================
+   Cards
+   ============================================================ */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4);
+}
+
+.card--flush { padding: 0; overflow: hidden; }
+.card--inset { background: var(--surface-2); border-color: transparent; }
+
+.card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.card__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-heading);
+  font-weight: 600;
+  letter-spacing: var(--tracking-title);
+}
+
+/* Interactive cards get a press affordance rather than a hover
+   glow — this is primarily a touch interface. */
+.card--tappable {
+  width: 100%;
+  text-align: left;
+  transition: background var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
+}
+
+.card--tappable:hover { background: var(--surface-hover); }
+.card--tappable:active { transform: scale(0.985); }
+
+/* ============================================================
+   Section heading
+   ============================================================ */
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: var(--fs-title);
+  font-weight: 700;
+  letter-spacing: var(--tracking-title);
+  margin-bottom: var(--sp-3);
+}
+
+.section-label {
+  font-size: var(--fs-label);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+}
+
+/* ============================================================
+   Stat — the signature "big number + small unit" pattern
+   ============================================================ */
+
+.stat__label {
+  font-size: var(--fs-label);
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+.stat__value {
+  font-family: var(--font-display);
+  font-size: var(--fs-stat);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-stat);
+  /* Tabular figures stop numbers jittering as values update. */
+  font-variant-numeric: tabular-nums;
+}
+
+.stat__value--display { font-size: var(--fs-display); letter-spacing: var(--tracking-display); }
+
+.stat__unit {
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0;
+  margin-left: 3px;
+}
+
+.stat__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--fs-label);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat__delta--up { color: var(--optimal); }
+.stat__delta--down { color: var(--risk); }
+
+/* ============================================================
+   Buttons
+   ============================================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 48px;
+  padding: 0 var(--sp-5);
+  border-radius: var(--r-full);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition: background var(--dur) var(--ease), transform var(--dur-fast) var(--ease),
+    opacity var(--dur) var(--ease);
+}
+
+.btn:active:not(:disabled) { transform: scale(0.97); }
+
+/* Fading the whole button works on a dark canvas but not a light one: it
+   fades a white label into a pale fill and the label disappears. Disabled
+   buttons instead drop to a neutral recess with muted ink — still legible,
+   still unmistakably inert. Specificity (class + pseudo-class) means this
+   beats the variant rules below without needing !important. */
+.btn:disabled {
+  background: var(--surface-3);
+  color: var(--text-tertiary);
+  box-shadow: none;
+}
+
+.btn--primary {
+  /* --accent-strong, not --accent: a white label on the brand green
+     is 3.27:1, which fails AA. Same hue, taken deep enough to pass. */
+  background: var(--accent-strong);
+  color: var(--text-inverse);
+  box-shadow: var(--shadow-accent);
+}
+
+.btn--primary:hover:not(:disabled) { background: var(--accent-strong-hover); }
+.btn--primary:active:not(:disabled) { background: var(--accent-strong-press); }
+
+.btn--secondary {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.btn--secondary:hover:not(:disabled) { background: var(--surface-3); }
+
+.btn--ghost { background: transparent; color: var(--text-secondary); }
+.btn--ghost:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+
+.btn--danger { background: var(--risk-soft); color: var(--risk); }
+/* colour-mix keeps the hover tied to --risk instead of hardcoding a second
+   red that then has to be remembered whenever the theme changes. */
+.btn--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--risk) 18%, transparent);
+}
+
+.btn--block { width: 100%; }
+.btn--sm { min-height: 38px; padding: 0 var(--sp-4); font-size: var(--fs-label); }
+
+/* Circular icon button — used for back, close, overflow. */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  color: var(--text);
+  transition: background var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
+}
+
+.icon-btn:hover { background: var(--surface-3); }
+.icon-btn:active { transform: scale(0.92); }
+.icon-btn--plain { background: transparent; }
+.icon-btn--plain:hover { background: var(--surface-2); }
+
+/* ============================================================
+   Brand wordmark
+   ============================================================ */
+
+/* The wordmark asset is a solid white-filled SVG, so it disappears on the
+   light canvas. Rather than keeping a second recoloured copy in sync, the
+   SVG is used as an alpha mask and the element is painted with a theme
+   token — so one asset serves both light chrome (brand ink) and dark
+   chrome (--brand-logo--inverse).
+   Sized by aspect-ratio because a masked box has no intrinsic size. */
+.brand-logo {
+  display: block;
+  aspect-ratio: 240 / 33;
+  background-color: var(--accent-strong);
+  -webkit-mask: url('./assets/omiver.svg') no-repeat center / contain;
+  mask: url('./assets/omiver.svg') no-repeat center / contain;
+}
+
+.brand-logo--inverse { background-color: var(--text-inverse); }
+
+
+/* ============================================================
+   Segmented control (1W / 1M / 3M …)
+   ============================================================ */
+
+.segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  background: var(--surface-2);
+  border-radius: var(--r-full);
+}
+
+.segmented--block { display: flex; width: 100%; }
+
+.segmented__item {
+  flex: 1;
+  min-height: 34px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--r-full);
+  font-size: var(--fs-label);
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.segmented__item:hover { color: var(--text); }
+
+.segmented__item[aria-selected='true'],
+.segmented__item.is-active {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+/* ============================================================
+   Chips / pills
+   ============================================================ */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 30px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  font-size: var(--fs-label);
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.chip--accent { background: var(--accent-soft); color: var(--accent-strong); }
+.chip--optimal { background: var(--optimal-soft); color: var(--optimal); }
+.chip--watch { background: var(--watch-soft); color: var(--watch); }
+.chip--risk { background: var(--risk-soft); color: var(--risk); }
+
+.chip__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-full);
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   List rows
+   ============================================================ */
+
+.list { display: flex; flex-direction: column; }
+
+.list__row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-4);
+  text-align: left;
+  background: transparent;
+  border-bottom: 1px solid var(--divider);
+  transition: background var(--dur) var(--ease);
+}
+
+.list__row:last-child { border-bottom: none; }
+button.list__row:hover { background: var(--surface-hover); }
+button.list__row:active { background: var(--surface-2); }
+
+/* Column, not just a flex item: the title and meta inside are `span`s, so
+   without this they run together on one line ("Personal ProfileName, DOB…")
+   and the title's ellipsis truncation — which needs a block box — is inert. */
+.list__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.list__title {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list__meta {
+  font-size: var(--fs-label);
+  color: var(--text-secondary);
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.list__chevron { color: var(--text-tertiary); flex-shrink: 0; }
+
+/* ============================================================
+   Forms
+   ============================================================ */
+
+.field { display: flex; flex-direction: column; gap: var(--sp-2); }
+
+.field__label {
+  font-size: var(--fs-label);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.field__hint { font-size: var(--fs-label); color: var(--text-tertiary); }
+.field__error { font-size: var(--fs-label); color: var(--risk); font-weight: 500; }
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  min-height: 50px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  font-size: var(--fs-body);
+  color: var(--text);
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+
+.input::placeholder,
+.textarea::placeholder { color: var(--text-tertiary); }
+
+/* Focus lifts the control out of its recess — white fill plus a soft ring.
+   On a light canvas a 1px border change alone is too quiet to notice. */
+.input:focus,
+.textarea:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+
+.input[aria-invalid='true'] { border-color: var(--risk); }
+
+.textarea { min-height: 104px; resize: vertical; line-height: var(--lh-body); }
+
+.select {
+  appearance: none;
+  /* Inline chevron keeps the control self-contained. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239b9ba1' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--sp-4) center;
+  padding-right: var(--sp-10);
+}
+
+/* ============================================================
+   Progress
+   ============================================================ */
+
+.progress {
+  height: 6px;
+  border-radius: var(--r-full);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.progress__fill {
+  height: 100%;
+  border-radius: var(--r-full);
+  background: var(--accent);
+  transition: width var(--dur-slow) var(--ease-out);
+}
+
+/* ============================================================
+   Feedback: empty, error, loading
+   ============================================================ */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--sp-3);
+  padding: var(--sp-12) var(--sp-6);
+}
+
+.empty-state__icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  color: var(--text-tertiary);
+}
+
+.empty-state__title { font-size: var(--fs-heading); font-weight: 600; }
+.empty-state__body { font-size: var(--fs-body); color: var(--text-secondary); max-width: 30ch; }
+
+.error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--risk-soft);
+  color: var(--risk);
+  font-size: var(--fs-body);
+  font-weight: 500;
+}
+
+/* Skeletons shimmer rather than spin, so layout doesn't jump
+   when real content arrives. */
+.skeleton {
+  border-radius: var(--r-md);
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 25%,
+    var(--surface-3) 50%,
+    var(--surface-2) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-sweep {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  /* Token, not a white overlay: the track has to be visible on a
+     light canvas as well as inside a dark filled button. */
+  border: 2px solid var(--border-strong);
+  border-top-color: currentColor;
+  border-radius: var(--r-full);
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   Utilities
+   ============================================================ */
+
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+.text-accent { color: var(--accent-strong); }
+.text-optimal { color: var(--optimal); }
+.text-watch { color: var(--watch); }
+.text-risk { color: var(--risk); }
+
+.text-label { font-size: var(--fs-label); }
+.text-body { font-size: var(--fs-body); }
+/* ---- Step wizard chrome ----
+   Used by the registration steps and by the sample-collection flow. Shared,
+   so it lives here: per-route CSS chunking means a rule defined in one
+   screen's stylesheet is simply absent when another route loads alone. */
+
+.wizard {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  background-color: var(--bg);
+  overflow: hidden;
+}
+
+.wizard__header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-2) var(--sp-4);
+  padding-top: calc(var(--sp-2) + var(--safe-top));
+  background: var(--header-bg);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--divider);
+}
+
+.wizard__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-heading);
+  font-weight: 600;
+  letter-spacing: var(--tracking-title);
+  color: var(--text);
+}
+
+/* Mirrors the back button's width so the title stays optically centred. */
+.wizard__header-spacer {
+  flex: 0 0 40px;
+  width: 40px;
+}
+
+.wizard__progress {
+  flex-shrink: 0;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border-bottom: 1px solid var(--divider);
+}
+
+.wizard__body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--sp-6) var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.wizard__step-container {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.wizard__step-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-6);
+}
+
+.wizard__step-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* Sticky action bar. Sits outside the scroll area so it is always reachable. */
+.wizard__footer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  padding-bottom: calc(var(--sp-4) + var(--safe-bottom));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.wizard__footer-content {
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  display: flex;
+  gap: var(--sp-3);
+}
+
+/* ---- Shared display primitives ----
+   These live here rather than in a screen stylesheet because more than one
+   route uses them. Vite emits a CSS chunk per lazily-loaded route, so a screen
+   that borrowed a *different* screen's stylesheet would render unstyled when
+   deep-linked — that chunk was never fetched. index.css is in the entry
+   bundle, so anything shared has to be here. */
+
+/* Large display name / page subject. */
+.display-name {
+  font-family: var(--font-display);
+  font-size: var(--fs-display);
+  font-weight: 700;
+  letter-spacing: var(--tracking-display);
+  line-height: var(--lh-tight);
+  /* This renders user-supplied data at display size, so a single long
+     unbroken token would otherwise widen the document and put the whole
+     app into horizontal scroll. Break it instead. */
+  overflow-wrap: anywhere;
+}
+
+/* Two-column key/value grid used for profile and report summaries. */
+.kv-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+
+.kv-grid__value {
+  margin-top: 2px;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.tabular { font-variant-numeric: tabular-nums; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Visible to screen readers only — for labels on icon-only
+   controls and for announcing async state changes. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.divider { height: 1px; background: var(--divider); border: none; }
+
+/* Horizontal scrollers (filter chips, kit carousels) lose their
+   scrollbar but keep momentum + snap. */
+.scroll-x {
+  display: flex;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+
+.scroll-x::-webkit-scrollbar { display: none; }
+
+/* ============================================================
+   Entrance animation
+   ============================================================ */
+
+.fade-in { animation: fade-in var(--dur-slow) var(--ease-out) both; }
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
 }

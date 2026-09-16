@@ -1,39 +1,64 @@
+/* ============================================================
+   Bottom tab bar
+   ============================================================ */
+
 .bottom-nav {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 62px;
-  display: flex;
-  gap: 0;
-  padding: 8px 0;
-  background: white;
-  border-top-left-radius: 18px;
-  border-top-right-radius: 18px;
-  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.06);
+  z-index: 50;
+  /* Translucent so content scrolling underneath stays legible, matching the
+     native iOS tab bar treatment. Uses the shared --header-bg so the top and
+     bottom chrome track the canvas together — this was a hardcoded near-black
+     left over from the dark theme, which read as a slab on a white app. */
+  background: var(--header-bg);
+  backdrop-filter: saturate(180%) blur(22px);
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
+  border-top: 1px solid var(--border);
+  padding-bottom: var(--safe-bottom);
 }
 
-.nav-item {
-  flex: 1 1 0;
-  min-width: 0;
-  background: transparent;
-  border: none;
-  border-radius: 12px;
-  padding: 8px;
-  font-weight: 600;
-  color: #666;
-  cursor: pointer;
+.bottom-nav__inner {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: stretch;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  height: var(--nav-height);
+}
+
+.bottom-nav__item {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  font-size: 0.75rem;
-  box-sizing: border-box;
+  gap: 3px;
+  color: var(--text-tertiary);
+  transition: color var(--dur) var(--ease);
 }
 
-.nav-item.active {
-  background: #ffffff;
-  color: #111;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+.bottom-nav__item:hover { color: var(--text-secondary); }
+.bottom-nav__item.is-active { color: var(--accent-strong); }
+
+.bottom-nav__item:active { transform: scale(0.94); }
+
+.bottom-nav__label {
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Short accent bar above the active tab. */
+.bottom-nav__item.is-active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 2px;
+  border-radius: 0 0 var(--r-full) var(--r-full);
+  background: var(--accent);
 }

@@ -1,7 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { CheckCircle2 } from 'lucide-react';
+import './RegisterScreen.css';
 import './ForgotPasswordScreen.css';
 import { fetchSecurityQuestion, verifySecurityAnswer, resetPasswordWithToken } from '../api/user';
+
+/** Narrows an unknown rejection to the loose error shape the API layer throws. */
+const errMessage = (err: unknown, fallback: string): string => {
+  const e = err as { message?: string; password?: string[] } | null;
+  if (e?.password?.length) return e.password.join(' ');
+  return e?.message || fallback;
+};
+
+const STEP_COUNT = 3;
 
 const ForgotPasswordScreen: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -26,8 +37,8 @@ const ForgotPasswordScreen: React.FC = () => {
       setSecurityQuestionCode(res.security_question);
       setSecurityQuestionDisplay(res.security_question_display);
       setStep(2);
-    } catch (err: any) {
-      setError(err?.message || 'Failed to retrieve security question. Please try again.');
+    } catch (err: unknown) {
+      setError(errMessage(err, 'Failed to retrieve security question. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -45,8 +56,8 @@ const ForgotPasswordScreen: React.FC = () => {
       );
       setResetToken(res.token);
       setStep(3);
-    } catch (err: any) {
-      setError(err?.message || 'Incorrect answer. Please try again.');
+    } catch (err: unknown) {
+      setError(errMessage(err, 'Incorrect answer. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -68,102 +79,159 @@ const ForgotPasswordScreen: React.FC = () => {
     try {
       await resetPasswordWithToken(resetToken, newPassword);
       setStep(4);
-    } catch (err: any) {
-      if (err?.password) {
-        setError(err.password.join(' '));
-      } else {
-        setError(err?.message || 'Failed to reset password. The link may have expired.');
-      }
+    } catch (err: unknown) {
+      setError(errMessage(err, 'Failed to reset password. The link may have expired.'));
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="forgot-root">
-      <header className="forgot-header">
-        <h1>Reset your password</h1>
-      </header>
+  const errorBanner = error && (
+    <div className="error-banner" role="alert">
+      {error}
+    </div>
+  );
 
-      <main className="forgot-main">
-        {step === 1 && (
-          <div className="forgot-card">
-            <p className="forgot-desc">Enter your email address to retrieve your security question.</p>
-            <input 
-              className="forgot-input" 
-              placeholder="your@email.com" 
-              value={email} 
-              onChange={e => setEmail(e.target.value)} 
-              type="email"
-            />
-            {error && <div className="forgot-error">{error}</div>}
-            <button className="forgot-btn" onClick={handleVerifyEmail} disabled={loading}>
-              {loading ? 'Verifying...' : 'Next'}
-            </button>
-            <button className="link-button" onClick={() => navigate('/login')}>Back to login</button>
+  return (
+    <div className="auth">
+      <div className="auth__inner fade-in">
+        <header className="auth__head">
+          <h1 className="auth__title">
+            {step === 4 ? 'Password updated' : 'Reset your password'}
+          </h1>
+          {step < 4 && (
+            <p className="auth__subtitle" aria-live="polite">
+              Step {step} of {STEP_COUNT}
+            </p>
+          )}
+        </header>
+
+        {step < 4 && (
+          <div className="progress forgot__progress">
+            <div className="progress__fill" style={{ width: `${(step / STEP_COUNT) * 100}%` }} />
           </div>
+        )}
+
+        {step === 1 && (
+          <form
+            className="auth__form"
+            onSubmit={(e) => { e.preventDefault(); handleVerifyEmail(); }}
+          >
+            <p className="auth__subtitle">
+              Enter your email address to retrieve your security question.
+            </p>
+            {errorBanner}
+            <div className="field">
+              <label className="field__label" htmlFor="forgot-email">Email</label>
+              <input
+                id="forgot-email"
+                className="input"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                type="email"
+                autoComplete="email"
+                required
+              />
+            </div>
+            <button type="submit" className="btn btn--primary btn--block" disabled={loading} aria-busy={loading}>
+              {loading ? 'Verifying…' : 'Continue'}
+            </button>
+            <button type="button" className="btn btn--ghost btn--block" onClick={() => navigate('/login')}>
+              Back to sign in
+            </button>
+          </form>
         )}
 
         {step === 2 && (
-          <div className="forgot-card">
-            <p className="forgot-question-label">Security Question:</p>
-            <p className="forgot-question-text">{securityQuestionDisplay}</p>
-            
-            <input 
-              className="forgot-input" 
-              placeholder="Security Answer" 
-              value={securityAnswer} 
-              onChange={e => setSecurityAnswer(e.target.value)} 
-              type="text"
-              autoComplete="off"
-            />
-
-            {error && <div className="forgot-error">{error}</div>}
-            
-            <button className="forgot-btn" onClick={handleVerifyAnswer} disabled={loading}>
-              {loading ? 'Verifying...' : 'Verify Answer'}
+          <form
+            className="auth__form"
+            onSubmit={(e) => { e.preventDefault(); handleVerifyAnswer(); }}
+          >
+            <div className="forgot__question">
+              <span className="forgot__question-label">Security question</span>
+              <p className="forgot__question-text">{securityQuestionDisplay}</p>
+            </div>
+            {errorBanner}
+            <div className="field">
+              <label className="field__label" htmlFor="forgot-answer">Your answer</label>
+              <input
+                id="forgot-answer"
+                className="input"
+                value={securityAnswer}
+                onChange={(e) => setSecurityAnswer(e.target.value)}
+                type="text"
+                autoComplete="off"
+                required
+              />
+            </div>
+            <button type="submit" className="btn btn--primary btn--block" disabled={loading} aria-busy={loading}>
+              {loading ? 'Verifying…' : 'Verify answer'}
             </button>
-            <button className="link-button" onClick={() => setStep(1)}>Back</button>
-          </div>
+            <button type="button" className="btn btn--ghost btn--block" onClick={() => { setError(''); setStep(1); }}>
+              Back
+            </button>
+          </form>
         )}
 
         {step === 3 && (
-          <div className="forgot-card">
-            <p className="forgot-desc">Your answer is verified. Enter your new password below.</p>
-
-            <input 
-              className="forgot-input" 
-              placeholder="New Password" 
-              value={newPassword} 
-              onChange={e => setNewPassword(e.target.value)} 
-              type="password"
-            />
-
-            <input 
-              className="forgot-input" 
-              placeholder="Confirm New Password" 
-              value={confirmPassword} 
-              onChange={e => setConfirmPassword(e.target.value)} 
-              type="password"
-            />
-
-            {error && <div className="forgot-error">{error}</div>}
-            
-            <button className="forgot-btn" onClick={handleResetPassword} disabled={loading}>
-              {loading ? 'Resetting...' : 'Reset Password'}
+          <form
+            className="auth__form"
+            onSubmit={(e) => { e.preventDefault(); handleResetPassword(); }}
+          >
+            <p className="auth__subtitle">Your answer is verified. Choose a new password.</p>
+            {errorBanner}
+            <div className="field">
+              <label className="field__label" htmlFor="forgot-new-password">New password</label>
+              <input
+                id="forgot-new-password"
+                className="input"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                type="password"
+                autoComplete="new-password"
+                aria-describedby="forgot-password-help"
+                required
+              />
+              <p className="auth__requirements" id="forgot-password-help">
+                At least 8 characters.
+              </p>
+            </div>
+            <div className="field">
+              <label className="field__label" htmlFor="forgot-confirm-password">Confirm new password</label>
+              <input
+                id="forgot-confirm-password"
+                className="input"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                type="password"
+                autoComplete="new-password"
+                required
+              />
+            </div>
+            <button type="submit" className="btn btn--primary btn--block" disabled={loading} aria-busy={loading}>
+              {loading ? 'Resetting…' : 'Reset password'}
             </button>
-            <button className="link-button" onClick={() => setStep(2)}>Back</button>
-          </div>
+            <button type="button" className="btn btn--ghost btn--block" onClick={() => { setError(''); setStep(2); }}>
+              Back
+            </button>
+          </form>
         )}
 
         {step === 4 && (
-          <div className="forgot-card">
-            <h2>Success!</h2>
-            <p className="forgot-desc">Your password has been successfully reset.</p>
-            <button className="forgot-btn" onClick={() => navigate('/login')}>Return to login</button>
+          <div className="auth__form forgot__success">
+            <span className="forgot__success-icon" aria-hidden="true">
+              <CheckCircle2 size={28} />
+            </span>
+            <p className="auth__subtitle">
+              Your password has been reset. You can sign in with it now.
+            </p>
+            <button type="button" className="btn btn--primary btn--block" onClick={() => navigate('/login')}>
+              Return to sign in
+            </button>
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 };

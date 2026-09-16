@@ -126,15 +126,35 @@ export const requestPasswordReset = async (email: string): Promise<boolean> => {
             credentials: 'include',
         });
         return res.ok;
-    } catch (err) {
-        console.error('requestPasswordReset error', err);
+    } catch {
+        // Not logged: this path handles an unauthenticated email address.
         return false;
     }
 };
 
+/**
+ * Builds the standard header set for an authenticated request.
+ *
+ * Both the bearer token AND the CSRF token are attached. The CSRF header used
+ * to be added only when there was *no* bearer token, which was wrong: every
+ * request in this module is sent with `credentials: 'include'`, so DRF's
+ * SessionAuthentication also runs and enforces CSRF on unsafe methods. Sending
+ * the header unconditionally is harmless when it is not required, and fixes the
+ * mutating endpoints that previously omitted it entirely.
+ *
+ * Note: `getCookie` is declared later in this module. That is safe — this is a
+ * function body, so the lookup happens at call time, long after module init.
+ */
 const withAuthHeaders = (headers: Record<string, string> = {}): Record<string, string> => {
+    const out: Record<string, string> = { ...headers };
+
     const token = getAuthToken();
-    return token ? { ...headers, Authorization: `Token ${token}` } : headers;
+    if (token) out.Authorization = `Token ${token}`;
+
+    const csrf = getCookie('csrftoken');
+    if (csrf) out['X-CSRFToken'] = csrf;
+
+    return out;
 };
 
 export interface LoginResponse {
@@ -227,6 +247,30 @@ export interface Kit {
     active?: boolean;
 }
 
+/**
+ * The order's position in the kit's round trip. The server derives this from
+ * the delivery-event feed; there is no status column behind it.
+ */
+export type OrderStatus =
+    | 'CREATED'
+    | 'SHIPPED'
+    | 'IN_TRANSIT'
+    | 'OUT_FOR_DELIVERY'
+    | 'DELIVERED'
+    | 'SAMPLE_SHIPPED'
+    | 'SAMPLE_DELIVERED'
+    | 'CANCELLED';
+
+/** One milestone of the round trip, as computed server-side. */
+export interface OrderProgressStage {
+    key: 'ORDER_PLACED' | 'SHIPPED' | 'DELIVERED' | 'SAMPLE_SHIPPED' | 'SAMPLE_DELIVERED';
+    label: string;
+    /** `outbound` = warehouse to you, `return` = you to the lab. */
+    leg: 'outbound' | 'return';
+    done: boolean;
+    timestamp: string | null;
+}
+
 export interface Order {
     id: number;
     order_number?: string | number;
@@ -240,7 +284,10 @@ export interface Order {
     testName?: string;
     date?: string;
     tracking?: string;
-    status?: string;
+    status?: OrderStatus;
+    /** Human-readable form of `status`, supplied by the server. */
+    status_display?: string;
+    progress?: OrderProgressStage[];
     quantity?: number;
     barcode_assignment?: { barcode_number: string } | null;
     collection_status?: string;
@@ -252,6 +299,7 @@ export interface DeliveryEvent {
     title: string;
     description?: string;
     is_completed?: boolean;
+    timestamp?: string;
 }
 
 export interface OrderDetail extends Order {
@@ -369,16 +417,41 @@ export const register = async (user: Record<string, unknown>): Promise<RegisterR
 }
 
 export const logoutApi = async (): Promise<void> => {
-    const token = getAuthToken();
     const headers = withAuthHeaders({ 'Content-Type': 'application/json' });
     const options: RequestInit = {
         method: 'POST',
         headers,
-        credentials: token ? undefined : 'include',
+        // Always send cookies so the server-side session is invalidated too,
+        // not just the bearer token.
+        credentials: 'include',
     };
     await fetch(`${API_URL}/logout`, options);
-    // Clear persistent login on logout
+};
+
+/**
+ * Tear down the whole client session.
+ *
+ * Every persisted key must be cleared here. `omiver_custom_profile_key` in
+ * particular used to survive logout, which meant the next person to use a
+ * shared device inherited the previous user's profile decryption passphrase.
+ *
+ * Network failure is deliberately swallowed: we still clear locally, so a
+ * user pressing "log out" offline is never left in a signed-in state.
+ */
+export const logout = async (): Promise<void> => {
+    try {
+        await logoutApi();
+    } catch {
+        /* Clear locally regardless. */
+    }
+    clearAuthToken();
     clearPersistentLogin();
+    clearCustomProfileKey();
+    try {
+        localStorage.removeItem('omiver_app_state');
+    } catch {
+        /* no-op */
+    }
 };
 
 export const emailExist = async (email: string): Promise<boolean> => {
@@ -796,6 +869,41 @@ export const confirmPaymentApi = async (data: {
     return response.json();
 }
 
+/**
+ * Order a kit whose catalogue price is $0.00, bypassing Stripe.
+ *
+ * The server recomputes the price and refuses anything that costs money, so
+ * this cannot be used to skip payment on a paid kit.
+ */
+export const claimComplimentaryKit = async (data: {
+    test_kit_id: number;
+    street_address: string;
+    city: string;
+    state: string;
+    zip_code: string;
+    country?: string;
+}): Promise<PaymentConfirmationResponse> => {
+    const token = getAuthToken();
+    const options: RequestInit = {
+        method: 'POST',
+        headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(data),
+        credentials: 'include',
+    };
+
+    if (!token) {
+        (options.headers as Record<string, string>)['X-CSRFToken'] = getCookie('csrftoken') || '';
+    }
+
+    const response = await fetch(`${API_URL}/complimentary-order`, options);
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Could not place your order');
+    }
+    return response.json();
+}
+
 export const fetchClient = async (clientId: string | number): Promise<any> => {
     const response = await fetch(`${API_URL}/client/${clientId}`, {
         headers: withAuthHeaders(),
@@ -810,7 +918,7 @@ export const fetchClient = async (clientId: string | number): Promise<any> => {
 
 export const updateClient = async (clientId: string | number, data: Partial<Patient & Record<string, unknown>>): Promise<ClientUpdateResponse> => {
     const key = getCustomProfileKey();
-    let payload = { ...data };
+    const payload = { ...data };
     if (key) {
         if (typeof payload.first_name === 'string' && payload.first_name && !payload.first_name.startsWith('client_enc:')) {
             payload.first_name = await encryptName(payload.first_name, key);

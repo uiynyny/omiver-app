@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
-import './AccountTypeScreen.css';
+import { ChevronLeft } from 'lucide-react';
+import './Onboarding.css';
 import { useAppContext } from '../context/AppContext';
 
 const DietaryQuestionnaireScreen = () => {
@@ -39,80 +39,92 @@ const DietaryQuestionnaireScreen = () => {
     navigate('/terms');
   };
 
-  const handleBack = () => {
-    navigate(-1);
-  };
-
   return (
-    <div className="registration-screen">
-      <header className="registration-header">
-        <button onClick={handleBack} className="back-button">
+    <div className="wizard">
+      <header className="wizard__header">
+        <button className="icon-btn" onClick={() => navigate(-1)} aria-label="Go back">
           <ChevronLeft size={24} />
         </button>
-        <h2>Dietary Preferences</h2>
+        <div className="wizard__title">Registration</div>
+        <div className="wizard__header-spacer" aria-hidden="true" />
       </header>
 
-      <div className="progress-bar">
-        <div className="progress-fill" style={{ width: '80%' }}></div>
-      </div>
-
-      <div className="registration-content">
-        <h1 className="registration-title">
-          Tell us about your <span className="highlight">diet</span>
-        </h1>
-
-        <div className="form-fields">
-            <div className="input-group" style={{ flexDirection: 'column' }}>
-              <textarea
-                placeholder="Preferred cuisines (e.g. Mediterranean, Korean, Mexican) *"
-                value={preferredCuisines}
-                onChange={(e) => {
-                  setPreferredCuisines(e.target.value);
-                  if (errors.preferredCuisines) setErrors(prev => ({ ...prev, preferredCuisines: undefined }));
-                }}
-                className={`form-textarea ${errors.preferredCuisines ? 'error' : ''}`}
-                rows={3}
-              />
-              {errors.preferredCuisines && <span className="error-text">{errors.preferredCuisines}</span>}
-            </div>
-
-            <div className="input-group" style={{ flexDirection: 'column' }}>
-              <textarea
-                placeholder="Cuisines you avoid or dislike *"
-                value={avoidedCuisines}
-                onChange={(e) => {
-                  setAvoidedCuisines(e.target.value);
-                  if (errors.avoidedCuisines) setErrors(prev => ({ ...prev, avoidedCuisines: undefined }));
-                }}
-                className={`form-textarea ${errors.avoidedCuisines ? 'error' : ''}`}
-                rows={3}
-              />
-              {errors.avoidedCuisines && <span className="error-text">{errors.avoidedCuisines}</span>}
-            </div>
-
-            <div className="input-group">
-              <label className="field-label">Do you want recommendations that are similar to your current diet or different?</label>
-              <select
-                className="form-input form-select"
-                value={preferenceMode}
-                onChange={(e) => setPreferenceMode(e.target.value)}
-              >
-                <option value="similar">Similar to my current diet</option>
-                <option value="different">Different from my current diet</option>
-                <option value="balanced">A balance of both</option>
-              </select>
-            </div>
-        </div>
-
-        <div className="button-group">
-          <button onClick={handleContinue} className="primary-button">
-            Continue <ChevronRight size={20} />
-          </button>
-          <button onClick={handleBack} className="secondary-button">
-            <ChevronLeft size={20} /> Go Back
-          </button>
+      <div className="wizard__progress">
+        <div className="progress">
+          <div className="progress__fill" style={{ width: '100%' }}></div>
         </div>
       </div>
+
+      <main className="wizard__body" aria-live="polite">
+        <div className="wizard__step-container">
+          <div className="fade-in">
+            <div className="wizard__step-header">
+              <span className="section-label">Step 4 of 4</span>
+              <h1 className="section-title">Dietary Preferences</h1>
+              <p className="text-secondary">Tell us about your diet.</p>
+            </div>
+            
+            <div className="wizard__step-content stack">
+              <div className="field">
+                <label className="field__label" htmlFor="preferredCuisines">Preferred cuisines</label>
+                <textarea
+                  id="preferredCuisines"
+                  placeholder="e.g. Mediterranean, Korean, Mexican"
+                  value={preferredCuisines}
+                  onChange={(e) => {
+                    setPreferredCuisines(e.target.value);
+                    if (errors.preferredCuisines) setErrors(prev => ({ ...prev, preferredCuisines: undefined }));
+                  }}
+                  className="textarea"
+                  aria-invalid={!!errors.preferredCuisines}
+                />
+                {errors.preferredCuisines && <span className="field__error" role="alert">{errors.preferredCuisines}</span>}
+              </div>
+
+              <div className="field">
+                <label className="field__label" htmlFor="avoidedCuisines">Cuisines you avoid or dislike</label>
+                <textarea
+                  id="avoidedCuisines"
+                  placeholder="e.g. Fast food, highly processed"
+                  value={avoidedCuisines}
+                  onChange={(e) => {
+                    setAvoidedCuisines(e.target.value);
+                    if (errors.avoidedCuisines) setErrors(prev => ({ ...prev, avoidedCuisines: undefined }));
+                  }}
+                  className="textarea"
+                  aria-invalid={!!errors.avoidedCuisines}
+                />
+                {errors.avoidedCuisines && <span className="field__error" role="alert">{errors.avoidedCuisines}</span>}
+              </div>
+
+              <div className="field">
+                <label className="field__label" htmlFor="preferenceMode">Do you want recommendations that are similar to your current diet or different?</label>
+                <select
+                  id="preferenceMode"
+                  className="select"
+                  value={preferenceMode}
+                  onChange={(e) => setPreferenceMode(e.target.value)}
+                >
+                  <option value="similar">Similar to my current diet</option>
+                  <option value="different">Different from my current diet</option>
+                  <option value="balanced">A balance of both</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer className="wizard__footer">
+        <div className="wizard__footer-content">
+          <button onClick={() => navigate(-1)} className="btn btn--secondary">
+            Back
+          </button>
+          <button onClick={handleContinue} className="btn btn--primary" style={{ flex: 1 }}>
+            Complete
+          </button>
+        </div>
+      </footer>
     </div>
   );
 };

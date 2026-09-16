@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
-import './AccountTypeScreen.css';
+import { ChevronLeft } from 'lucide-react';
+import './Onboarding.css';
 import { useAppContext } from '../context/AppContext';
 
 const HealthConditionsScreen = () => {
@@ -14,49 +14,57 @@ const HealthConditionsScreen = () => {
     navigate('/register/goals');
   };
 
-  const handleBack = () => {
-    navigate(-1);
-  };
-
   return (
-    <div className="registration-screen">
-      <header className="registration-header">
-        <button onClick={handleBack} className="back-button">
+    <div className="wizard">
+      <header className="wizard__header">
+        <button className="icon-btn" onClick={() => navigate(-1)} aria-label="Go back">
           <ChevronLeft size={24} />
         </button>
-        <h2>Health Conditions</h2>
+        <div className="wizard__title">Registration</div>
+        <div className="wizard__header-spacer" aria-hidden="true" />
       </header>
 
-      <div className="progress-bar">
-        <div className="progress-fill" style={{ width: '42%' }}></div>
+      <div className="wizard__progress">
+        <div className="progress">
+          <div className="progress__fill" style={{ width: '50%' }}></div>
+        </div>
       </div>
 
-      <div className="registration-content">
-        <h1 className="registration-title">
-          Help us understand your <span className="highlight">health history</span>
-        </h1>
-
-        <div className="form-fields">
-          <div className="input-group">
-            <textarea
-              placeholder="List any chronic conditions, diseases, or health concerns...&#10;&#10;&#10;Leave blank if none apply"
-              value={healthConditions}
-              onChange={(e) => setHealthConditions(e.target.value)}
-              className="form-textarea"
-              rows={10}
-            />
+      <main className="wizard__body" aria-live="polite">
+        <div className="wizard__step-container">
+          <div className="fade-in">
+            <div className="wizard__step-header">
+              <span className="section-label">Step 2 of 4</span>
+              <h1 className="section-title">Health Conditions</h1>
+              <p className="text-secondary">Help us understand your health history.</p>
+            </div>
+            
+            <div className="wizard__step-content stack">
+              <div className="field">
+                <label className="field__label" htmlFor="conditions">Chronic conditions, diseases, or health concerns</label>
+                <textarea
+                  id="conditions"
+                  placeholder="Leave blank if none apply..."
+                  value={healthConditions}
+                  onChange={(e) => setHealthConditions(e.target.value)}
+                  className="textarea"
+                />
+              </div>
+            </div>
           </div>
         </div>
+      </main>
 
-        <div className="button-group">
-          <button onClick={handleContinue} className="primary-button">
-            Continue <ChevronRight size={20} />
+      <footer className="wizard__footer">
+        <div className="wizard__footer-content">
+          <button onClick={() => navigate(-1)} className="btn btn--secondary">
+            Back
           </button>
-          <button onClick={handleBack} className="secondary-button">
-            <ChevronLeft size={20} /> Go Back
+          <button onClick={handleContinue} className="btn btn--primary" style={{ flex: 1 }}>
+            Continue
           </button>
         </div>
-      </div>
+      </footer>
     </div>
   );
 };

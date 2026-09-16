@@ -1,21 +1,82 @@
 import React, { useState, useEffect } from 'react';
-import { fetchPayments, createPaymentIntent, confirmPaymentApi, fetchDefaultShippingAddress } from '../api/user';
+import { createPaymentIntent, confirmPaymentApi, claimComplimentaryKit, fetchDefaultShippingAddress } from '../api/user';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { X, Lock, ChevronRight } from 'lucide-react';
+import { X, Lock, ShieldCheck } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import './PaymentScreen.css';
 
-const stripePromise = loadStripe('pk_test_placeholder');
+/**
+ * The publishable key is environment-driven. It is safe to expose (that is its
+ * purpose) but it must not be hardcoded, or a test key ships to production.
+ */
+const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
+const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
 
-const PaymentScreen: React.FC = () => {
-  return (
-    <Elements stripe={stripePromise}>
-      <PaymentForm />
-    </Elements>
-  );
+/**
+ * Styling for Stripe's hosted card field.
+ *
+ * These have to be literal colour values: the field renders inside a
+ * cross-origin iframe, which cannot resolve our CSS custom properties. The
+ * values mirror `--text`, `--text-tertiary`, `--accent` and `--risk` in
+ * `src/styles/tokens.css` — if those change, change these too.
+ */
+const STRIPE_ELEMENT_STYLE = {
+  base: {
+    fontSize: '15px',
+    color: '#0f1720',                            /* --text */
+    fontFamily: 'Inter, system-ui, sans-serif',
+    '::placeholder': { color: '#5d666e' },       /* --text-tertiary */
+    iconColor: '#67997d',                        /* --accent */
+  },
+  invalid: { color: '#94261f', iconColor: '#94261f' }, /* --risk */
+} as const;
+
+/** Normalised shape the checkout renders, regardless of where the kit came from. */
+type CheckoutKit = {
+  id: number;
+  name: string;
+  blurb: string;
+  price: number;
 };
+
+const toNumber = (value: unknown): number => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  if (typeof value === 'string') return parseFloat(value.replace(/[^0-9.]/g, '')) || 0;
+  return 0;
+};
+
+const formatUSD = (value: number): string =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+
+/**
+ * KitsScreen forwards the API `Kit` (name/description/numeric price) while
+ * older callers used title/badge/string price. Accept both so the summary
+ * never renders "undefined".
+ */
+const normaliseKit = (raw: unknown): CheckoutKit | null => {
+  if (!raw || typeof raw !== 'object') return null;
+  const k = raw as Record<string, unknown>;
+  const id = Number(k.id);
+  if (!Number.isFinite(id) || id <= 0) return null;
+
+  return {
+    id,
+    name: String(k.name ?? k.title ?? 'Test kit'),
+    blurb: String(k.description ?? k.subtitle ?? k.badge ?? ''),
+    price: toNumber(k.price),
+  };
+};
+
+const PaymentScreen: React.FC = () => (
+  // `Elements` tolerates a null `stripe` prop (it treats it as "still
+  // loading"), which lets a $0 kit check out on a build with no publishable
+  // key. The paid path reports the misconfiguration itself.
+  <Elements stripe={stripePromise}>
+    <PaymentForm />
+  </Elements>
+);
 
 const PaymentForm: React.FC = () => {
   const navigate = useNavigate();
@@ -26,184 +87,106 @@ const PaymentForm: React.FC = () => {
   const stripe = useStripe();
   const elements = useElements();
 
-  const kit = location.state?.kit || {
-    title: 'Premium Test',
-    price: '$499',
-    badge: '150 biomarkers tested' // Fallback
-  };
+  const kit = normaliseKit((location.state as { kit?: unknown } | null)?.kit);
 
-  // Parse price to determine if free
-  const parsePrice = (): number => {
-    if (typeof kit.price === 'number') return kit.price;
-    if (typeof kit.price === 'string') {
-      const numStr = kit.price.replace(/[^0-9.]/g, '');
-      return parseFloat(numStr) || 0;
-    }
-    return 0;
-  };
-  const isFreeOrder = parsePrice() === 0;
+  /**
+   * A $0.00 kit is settled without Stripe: the backend recomputes the price
+   * and only agrees when it is genuinely zero, so this is a UI affordance, not
+   * a trust decision. Free claims are capped at one unit server-side.
+   */
+  const isFree = !!kit && kit.price === 0;
 
   const [loading, setLoading] = useState(false);
-  const [quantity, setQuantity] = useState(location.state?.quantity || 1);
+  const [error, setError] = useState('');
+  const [quantity, setQuantity] = useState<number>(
+    Number((location.state as { quantity?: number } | null)?.quantity) || 1,
+  );
   const [formData, setFormData] = useState({
     cardholderName: '',
     streetAddress: '',
     city: '',
     state: '',
     zipCode: '',
-    country: 'United States'
+    country: 'United States',
   });
 
-  const [hasSavedCard, setHasSavedCard] = useState(false);
-  const [useSavedCard, setUseSavedCard] = useState(false);
-  const [savedCardText, setSavedCardText] = useState('');
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
+  // Prefill the shipping address from the saved default, if there is one.
   useEffect(() => {
-    // 1. Check local registration context for saved card
-    const reg = state.registration;
-    if (reg.card_last_four) {
-      setHasSavedCard(true);
-      setUseSavedCard(true);
-      setSavedCardText(`${reg.card_brand || 'Visa'} •••• ${reg.card_last_four}`);
-    }
+    if (!clientId) return;
+    let cancelled = false;
 
-    if (clientId) {
-      fetchDefaultShippingAddress(clientId).then((addr) => {
-        if (addr && Object.keys(addr).length) {
-          setFormData((prev) => ({
-            ...prev,
-            cardholderName: prev.cardholderName || reg.cardholder_name || `${reg.first_name || ''} ${reg.last_name || ''}`.trim() || 'Omiver User',
-            streetAddress: addr?.street_address || reg.shipping_street || reg.billing_street || '',
-            city: addr?.city || reg.shipping_city || reg.billing_city || '',
-            state: addr?.state || reg.shipping_state || reg.billing_state || '',
-            zipCode: addr?.zip_code || reg.shipping_zip || reg.billing_zip || '',
-            country: addr?.country || reg.shipping_country || reg.billing_country || 'United States',
-          }));
-        } else {
-          // Fallback to local context address
-          setFormData((prev) => ({
-            ...prev,
-            cardholderName: prev.cardholderName || reg.cardholder_name || `${reg.first_name || ''} ${reg.last_name || ''}`.trim() || 'Omiver User',
-            streetAddress: reg.shipping_street || reg.billing_street || '',
-            city: reg.shipping_city || reg.billing_city || '',
-            state: reg.shipping_state || reg.billing_state || '',
-            zipCode: reg.shipping_zip || reg.billing_zip || '',
-            country: reg.shipping_country || reg.billing_country || 'United States',
-          }));
-
-          fetchPayments(clientId).then((data) => {
-            if (data && data.length > 0) {
-              const latestPayment = data[0];
-              setHasSavedCard(true);
-              setUseSavedCard(true);
-              setSavedCardText(`${latestPayment.card_brand || 'Visa'} •••• ${latestPayment.card_last_four}`);
-              
-              setFormData((prev) => ({
-                ...prev,
-                cardholderName: prev.cardholderName || latestPayment?.cardholder_name || '',
-                streetAddress: prev.streetAddress || latestPayment?.billing_address?.street_address || reg.shipping_street || reg.billing_street || '',
-                city: prev.city || latestPayment?.billing_address?.city || reg.shipping_city || reg.billing_city || '',
-                state: prev.state || latestPayment?.billing_address?.state || reg.shipping_state || reg.billing_state || '',
-                zipCode: prev.zipCode || latestPayment?.billing_address?.zip_code || reg.shipping_zip || reg.billing_zip || '',
-              }));
-            }
-          }).catch((error) => console.error(error));
-        }
-      }).catch(() => {
-        // Safe fallback if endpoint errors or offline
+    fetchDefaultShippingAddress(clientId)
+      .then((address) => {
+        if (cancelled || !address) return;
         setFormData((prev) => ({
           ...prev,
-          cardholderName: prev.cardholderName || reg.cardholder_name || `${reg.first_name || ''} ${reg.last_name || ''}`.trim() || 'Omiver User',
-          streetAddress: reg.shipping_street || reg.billing_street || '',
-          city: reg.shipping_city || reg.billing_city || '',
-          state: reg.shipping_state || reg.billing_state || '',
-          zipCode: reg.shipping_zip || reg.billing_zip || '',
-          country: reg.shipping_country || reg.billing_country || 'United States',
+          streetAddress: address.street_address ?? prev.streetAddress,
+          city: address.city ?? prev.city,
+          state: address.state ?? prev.state,
+          zipCode: address.zip_code ?? prev.zipCode,
+          country: address.country ?? prev.country,
         }));
-
-        fetchPayments(clientId).then((data) => {
-          if (data && data.length > 0) {
-            const latestPayment = data[0];
-            setHasSavedCard(true);
-            setUseSavedCard(true);
-            setSavedCardText(`${latestPayment.card_brand || 'Visa'} •••• ${latestPayment.card_last_four}`);
-            
-            setFormData((prev) => ({
-              ...prev,
-              cardholderName: prev.cardholderName || latestPayment?.cardholder_name || '',
-              streetAddress: prev.streetAddress || latestPayment?.billing_address?.street_address || reg.shipping_street || reg.billing_street || '',
-              city: prev.city || latestPayment?.billing_address?.city || reg.shipping_city || reg.billing_city || '',
-              state: prev.state || latestPayment?.billing_address?.state || reg.shipping_state || reg.billing_state || '',
-              zipCode: prev.zipCode || latestPayment?.billing_address?.zip_code || reg.shipping_zip || reg.billing_zip || '',
-            }));
-          }
-        }).catch((error) => console.error(error));
+      })
+      .catch(() => {
+        /* No saved address is a normal state, not an error. */
       });
-    }
-  }, [clientId, state.registration]);
 
-  const handlePay = async (e: React.SubmitEvent) => {
+    return () => {
+      cancelled = true;
+    };
+  }, [clientId]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handlePay = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError('');
     setLoading(true);
 
     try {
       if (!numericClientId) {
         throw new Error('Missing client account. Please log in again.');
       }
+      if (!kit) {
+        throw new Error('No kit selected. Go back and choose a kit.');
+      }
 
-      // For free orders, skip Stripe and just confirm with shipping address
-      if (isFreeOrder) {
-        await confirmPaymentApi({
-            payment_intent_id: 'free_order',
-            test_kit_id: kit.id || 1,
-            quantity,
-            street_address: formData.streetAddress,
-            city: formData.city,
-            state: formData.state,
-            zip_code: formData.zipCode,
-            country: formData.country,
-            cardholder_name: formData.cardholderName || 'N/A',
+      // A free kit never touches Stripe. The server re-prices the kit and
+      // rejects the request if it is not actually $0.00.
+      if (isFree) {
+        await claimComplimentaryKit({
+          test_kit_id: kit.id,
+          street_address: formData.streetAddress,
+          city: formData.city,
+          state: formData.state,
+          zip_code: formData.zipCode,
+          country: formData.country,
         });
+
         setLoading(false);
         navigate('/orders');
         return;
       }
 
-      // Pay with card on file (development shortcut / one-click checkout)
-      if (useSavedCard) {
-        await confirmPaymentApi({
-            payment_intent_id: 'saved_card_checkout',
-            test_kit_id: kit.id || 1,
-            quantity,
-            street_address: formData.streetAddress,
-            city: formData.city,
-            state: formData.state,
-            zip_code: formData.zipCode,
-            country: formData.country,
-            cardholder_name: formData.cardholderName,
-        });
-        setLoading(false);
-        navigate('/orders');
-        return;
+      // Every paid order is settled through a PaymentIntent. The amount is
+      // derived server-side from test_kit_id, so the client cannot declare an
+      // order free or reuse a saved card by sending a sentinel value.
+      if (!publishableKey) {
+        throw new Error('Payments are not configured. Set VITE_STRIPE_PUBLISHABLE_KEY and rebuild.');
       }
-
-      // Paid order flow via Stripe Elements
       if (!stripe || !elements) {
-        setLoading(false);
-        return;
+        throw new Error('Payment is still loading. Please try again in a moment.');
       }
 
       const cardElement = elements.getElement(CardElement);
       if (!cardElement) {
-        setLoading(false);
-        return;
+        throw new Error('Enter your card details to continue.');
       }
 
-      const { clientSecret } = await createPaymentIntent(kit.id || 1, numericClientId, quantity);
+      const { clientSecret } = await createPaymentIntent(kit.id, numericClientId, quantity);
 
       const result = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
@@ -215,9 +198,9 @@ const PaymentForm: React.FC = () => {
               city: formData.city,
               state: formData.state,
               postal_code: formData.zipCode,
-            }
-          }
-        }
+            },
+          },
+        },
       });
 
       if (result.error) {
@@ -226,165 +209,243 @@ const PaymentForm: React.FC = () => {
 
       if (result.paymentIntent.status === 'succeeded') {
         await confirmPaymentApi({
-            payment_intent_id: result.paymentIntent.id,
-            street_address: formData.streetAddress,
-            city: formData.city,
-            state: formData.state,
-            zip_code: formData.zipCode,
-            country: formData.country,
-            cardholder_name: formData.cardholderName,
+          payment_intent_id: result.paymentIntent.id,
+          street_address: formData.streetAddress,
+          city: formData.city,
+          state: formData.state,
+          zip_code: formData.zipCode,
+          country: formData.country,
+          cardholder_name: formData.cardholderName,
         });
 
         setLoading(false);
         navigate('/orders');
       } else {
-        throw new Error('Payment status: ' + result.paymentIntent.status);
+        throw new Error(`Payment was not completed (${result.paymentIntent.status}).`);
       }
-    } catch (error: unknown) {
+    } catch (err: unknown) {
       setLoading(false);
-      console.error(error);
-      alert(error instanceof Error ? error.message : 'Payment failed');
+      setError(err instanceof Error ? err.message : 'Payment failed. Please try again.');
     }
   };
 
+  const total = kit ? kit.price * quantity : 0;
+
   return (
-    <div className="payment-root">
-      <div className="payment-modal">
-        <header className="payment-header">
-          <div className="payment-drag-handle"></div>
-          <h2>Complete your Purchase</h2>
-          <button className="payment-close-btn" onClick={() => navigate(-1)}>
-            <X size={24} />
+    <div className="checkout">
+      <div className="checkout__sheet fade-in">
+        <header className="checkout__header">
+          <span className="checkout__grabber" aria-hidden="true" />
+          <h1 className="checkout__title">Checkout</h1>
+          <button type="button" className="icon-btn" onClick={() => navigate(-1)} aria-label="Close checkout">
+            <X size={20} />
           </button>
         </header>
 
-        <form className="payment-content" onSubmit={handlePay}>
-
-          <div className="order-summary-card">
-            <div className="order-summary-info">
-              <h3>{kit.title}</h3>
-              <div className="order-summary-sub">{kit.badge || 'Test Kit'}</div>
+        <form id="checkout-form" className="checkout__body" onSubmit={handlePay}>
+          {!kit && (
+            <div className="error-banner" role="alert">
+              No kit selected. Go back and choose a kit to continue.
             </div>
-            <div className="order-price">{kit.price}</div>
-          </div>
+          )}
 
-          <div className="form-section">
-            <label className="form-label">
-              <h3>Quantity</h3>
-              <div className="input-group">
-                <input 
-                  type="number" 
-                  min="1" 
-                  max="999" 
-                  value={quantity} 
-                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="text-input"
+          {kit && (
+            <section className="checkout__summary">
+              <div className="checkout__summary-main">
+                <h2 className="checkout__kit-name">{kit.name}</h2>
+                {kit.blurb && <p className="checkout__kit-blurb">{kit.blurb}</p>}
+              </div>
+              <div className="checkout__summary-price">
+                <span className="stat__value">{isFree ? 'Free' : formatUSD(kit.price)}</span>
+                <span className="text-label text-tertiary">{isFree ? 'one per account' : 'per kit'}</span>
+              </div>
+            </section>
+          )}
+
+          {!isFree && (
+            <section className="checkout__section">
+              <div className="field">
+                <label className="field__label" htmlFor="checkout-quantity">
+                  Quantity
+                </label>
+                <input
+                  id="checkout-quantity"
+                  className="input"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={999}
+                  value={quantity}
+                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
                 />
               </div>
-              <div className="quantity-note">Volume discounts may apply for larger orders</div>
-            </label>
-          </div>
+            </section>
+          )}
 
-          {!isFreeOrder && (
-            <div className="form-section">
-              <label className="form-label">
-                <h3>Card Information</h3>
-                
-                {hasSavedCard && (
-                  <div className="saved-card-checkout-toggle" style={{
-                    background: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '12px',
-                    padding: '12px 16px',
-                    marginBottom: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    cursor: 'pointer'
-                  }} onClick={() => setUseSavedCard(!useSavedCard)}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <span style={{ fontSize: 22 }}>💳</span>
-                      <div style={{ textAlign: 'left' }}>
-                        <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#2d3748' }}>Use Saved Card on File</div>
-                        <div style={{ fontSize: '0.8rem', color: '#6b9b8a', fontWeight: 600 }}>{savedCardText}</div>
-                      </div>
-                    </div>
-                    <input type="checkbox" checked={useSavedCard} onChange={(e) => setUseSavedCard(e.target.checked)} style={{ width: 18, height: 18, accentColor: '#6b9b8a' }} onClick={(e) => e.stopPropagation()} />
-                  </div>
-                )}
-
-                <div className="input-group">
-                  <input type="text" name="cardholderName" className="text-input" placeholder="Cardholder Name" value={formData.cardholderName} onChange={handleInputChange} required />
+          {!isFree && (
+            <section className="checkout__section">
+              <h2 className="section-title">Payment</h2>
+              <div className="stack">
+                <div className="field">
+                  <label className="field__label" htmlFor="checkout-cardholder">
+                    Cardholder name
+                  </label>
+                  <input
+                    id="checkout-cardholder"
+                    name="cardholderName"
+                    className="input"
+                    type="text"
+                    autoComplete="cc-name"
+                    placeholder="Name as it appears on the card"
+                    value={formData.cardholderName}
+                    onChange={handleInputChange}
+                    required
+                  />
                 </div>
 
-                {!useSavedCard && (
-                  <div className="input-group card-input-container" style={{ padding: '12px', border: '1px solid #ccc', borderRadius: '4px', background: 'white' }}>
-                    <CardElement options={{
-                      style: {
-                        base: {
-                          fontSize: '16px',
-                          color: '#424770',
-                          '::placeholder': {
-                            color: '#aab7c4',
-                          },
-                        },
-                        invalid: {
-                          color: '#9e2146',
-                        },
-                      },
-                    }} />
+                <div className="field">
+                  <span className="field__label" id="checkout-card-label">
+                    Card details
+                  </span>
+                  {/* Card data is entered inside Stripe's iframe and never touches
+                      this application, which keeps us out of PCI-DSS scope. */}
+                  <div className="checkout__card-element" aria-labelledby="checkout-card-label">
+                    <CardElement options={{ style: STRIPE_ELEMENT_STYLE }} />
                   </div>
-                )}
+                </div>
+              </div>
+            </section>
+          )}
 
-                {useSavedCard && (
-                  <div style={{ background: '#f0fff4', border: '1px solid #c6f6d5', color: '#22543d', padding: '12px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span>✨</span> One-Click Checkout enabled with your saved card ({savedCardText})
-                  </div>
-                )}
-              </label>
+          <section className="checkout__section">
+            <h2 className="section-title">Shipping address</h2>
+            <div className="stack">
+              <div className="field">
+                <label className="field__label" htmlFor="checkout-street">
+                  Street address
+                </label>
+                <input
+                  id="checkout-street"
+                  name="streetAddress"
+                  className="input"
+                  type="text"
+                  autoComplete="shipping street-address"
+                  value={formData.streetAddress}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="field">
+                <label className="field__label" htmlFor="checkout-city">
+                  City
+                </label>
+                <input
+                  id="checkout-city"
+                  name="city"
+                  className="input"
+                  type="text"
+                  autoComplete="shipping address-level2"
+                  value={formData.city}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="checkout__grid">
+                <div className="field">
+                  <label className="field__label" htmlFor="checkout-state">
+                    State
+                  </label>
+                  <input
+                    id="checkout-state"
+                    name="state"
+                    className="input"
+                    type="text"
+                    autoComplete="shipping address-level1"
+                    value={formData.state}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="field">
+                  <label className="field__label" htmlFor="checkout-zip">
+                    ZIP code
+                  </label>
+                  <input
+                    id="checkout-zip"
+                    name="zipCode"
+                    className="input"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="shipping postal-code"
+                    value={formData.zipCode}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="field">
+                <label className="field__label" htmlFor="checkout-country">
+                  Country
+                </label>
+                <input
+                  id="checkout-country"
+                  name="country"
+                  className="input"
+                  type="text"
+                  autoComplete="shipping country-name"
+                  value={formData.country}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+            </div>
+          </section>
+
+          {error && (
+            <div className="error-banner" role="alert">
+              {error}
             </div>
           )}
 
-          <div className="form-section">
-            <label className="form-label">
-              <h3>Shipping Address</h3>
-
-              <div className="input-group">
-                <input type="text" name="streetAddress" className="text-input" placeholder="Street Address" value={formData.streetAddress} onChange={handleInputChange} required />
-              </div>
-              <div className="input-group">
-                <input type="text" name="city" className="text-input" placeholder="City" value={formData.city} onChange={handleInputChange} required />
-              </div>
-
-              <div className="form-row">
-                <div className="input-group">
-                  <input type="text" name="state" className="text-input" placeholder="State" value={formData.state} onChange={handleInputChange} required />
-                </div>
-                <div className="input-group">
-                  <input type="text" name="zipCode" className="text-input" placeholder="Zip Code" value={formData.zipCode} onChange={handleInputChange} required />
-                </div>
-              </div>
-
-              <div className="input-group">
-                <input type="text" name="country" className="text-input" placeholder="Country" value={formData.country} onChange={handleInputChange} required />
-              </div>
-            </label>
-          </div>
-
-          {!isFreeOrder && (
-            <div className="security-note">
-              <Lock size={12} />
-              <span>Your payment information is encrypted and secure</span>
-            </div>
-          )}
-
-          <div className="payment-footer">
-            <button type="submit" className="pay-btn" disabled={loading}>
-              {loading ? 'Processing...' : (isFreeOrder ? 'Complete Free Order' : `Pay ${kit.price}`)}
-              {!loading && <ChevronRight size={20} />}
-            </button>
-          </div>
+          <p className="checkout__secure">
+            <Lock size={13} aria-hidden="true" />
+            {isFree
+              ? 'No payment is taken for this kit.'
+              : <>Card details are encrypted by Stripe and never reach Omiver&apos;s servers.</>}
+          </p>
         </form>
+
+        <footer className="checkout__footer">
+          <div className="checkout__total">
+            <span className="text-label text-secondary">
+              Total{!isFree && quantity > 1 ? ` · ${quantity} kits` : ''}
+            </span>
+            <span className="stat__value">{isFree ? 'Free' : formatUSD(total)}</span>
+          </div>
+          <button
+            type="submit"
+            form="checkout-form"
+            className="btn btn--primary btn--block"
+            // The free path does not use Stripe, so it must not wait for it.
+            disabled={loading || !kit || (!isFree && !stripe)}
+            aria-busy={loading}
+          >
+            {loading ? (
+              <>
+                <span className="spinner" aria-hidden="true" />
+                Processing
+              </>
+            ) : (
+              <>
+                <ShieldCheck size={18} aria-hidden="true" />
+                {isFree ? 'Place free order' : `Pay ${formatUSD(total)}`}
+              </>
+            )}
+          </button>
+        </footer>
       </div>
     </div>
   );

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { updateClient } from '../api/user';
-import './AccountTypeScreen.css'; // Reuse form styles
 
 const ProfileEditScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -20,20 +19,19 @@ const ProfileEditScreen: React.FC = () => {
   const [healthConditions, setHealthConditions] = useState(reg.healthConditions ?? '');
   const [allergies, setAllergies] = useState(reg.allergies ?? '');
   const [dietaryPreferences, setDietaryPreferences] = useState(reg.dietary_preferences ?? '');
-
   const [nutritionalGoal, setNutritionalGoal] = useState(reg.nutritional_goal ?? '');
   const [fitnessGoal, setFitnessGoal] = useState(reg.fitness_goal ?? '');
 
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSave = async () => {
     if (!clientId) {
-      alert("Unable to identify user to save profile.");
+      setError("Unable to identify user to save profile.");
       return;
     }
-
     setSaving(true);
-
+    setError(null);
     const payload = {
       first_name: firstName,
       last_name: lastName,
@@ -46,87 +44,62 @@ const ProfileEditScreen: React.FC = () => {
       nutritional_goal: nutritionalGoal,
       fitness_goal: fitnessGoal,
     };
-
     try {
       await updateClient(clientId, payload);
-      dispatch({
-        type: 'UPDATE_REGISTRATION',
-        payload,
-      });
+      dispatch({ type: 'UPDATE_REGISTRATION', payload });
       navigate('/profile');
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      alert("Failed to update profile. Please try again later.");
+    } catch {
+      setError("Failed to update profile. Please try again later.");
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="registration-screen" style={{ minHeight: '100vh', paddingBottom: '20px' }}>
-      <header className="registration-header">
-        <button onClick={() => navigate('/profile')} className="back-button">
+    <div className="screen">
+      <header className="app-header">
+        <button onClick={() => navigate('/profile')} className="icon-btn" aria-label="Back to profile">
           <ChevronLeft size={24} />
         </button>
-        <h2>Edit Profile</h2>
+        <h1 className="app-header__title">Edit Profile</h1>
+        <div style={{ width: 44 }}></div>
       </header>
-
-      <div className="registration-content" style={{ padding: '1rem', flex: 'none' }}>
-        <p style={{ color: '#666', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+      
+      <main className="container stack-lg" style={{ paddingBlock: 'var(--sp-6)' }}>
+        {error && <div className="error-banner" role="alert">{error}</div>}
+        
+        <p className="text-secondary text-body">
           Update your profile information below. This helps us provide you with the most accurate recommendations.
         </p>
-        <div className="form-fields">
-          <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#67997D' }}>Personal Information</h3>
 
-          <div className="input-row" style={{ display: 'flex', gap: '5rem', width: '100%' }}>
-            <div className="input-group" style={{ flexDirection: 'column', gap: '8px', flex: 1 }}>
-              <label style={{ fontSize: '0.9rem', color: '#555' }}>First Name</label>
-              <input
-                type="text"
-                placeholder="First name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="form-input"
-              />
+        <section className="card stack">
+          <h2 className="section-title">Personal Information</h2>
+          
+          <div className="row">
+            <div className="field spacer">
+              <label htmlFor="firstName" className="field__label">First Name</label>
+              <input id="firstName" type="text" className="input" placeholder="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
             </div>
-
-            <div className="input-group" style={{ flexDirection: 'column', gap: '8px', flex: 1 }}>
-              <label style={{ fontSize: '0.9rem', color: '#555' }}>Last Name</label>
-              <input
-                type="text" 
-                placeholder="Last name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="form-input"
-              />
+            <div className="field spacer">
+              <label htmlFor="lastName" className="field__label">Last Name</label>
+              <input id="lastName" type="text" className="input" placeholder="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
             </div>
           </div>
-
-          <div className="input-group" style={{ flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.9rem', color: '#555' }}>Date of Birth</label>
-            <input
-              type="date"
-              placeholder="Birthday"
-              value={dob}
-              onChange={(e) => setDob(e.target.value)}
-              className="form-input"
-            />
+          
+          <div className="field">
+            <label htmlFor="dob" className="field__label">Date of Birth</label>
+            <input id="dob" type="date" className="input" value={dob} onChange={(e) => setDob(e.target.value)} />
           </div>
 
-          <div className="input-row">
-            <div className="input-group input-with-suffix">
-              <div className="input-wrapper" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <span className="input-prefix" style={{ position: 'static', transform: 'none', marginRight: '4px' }}>Height:</span>
-                <select
-                  value={Math.floor(height / 12) || 5}
-                  onChange={(e) => {
-                    const ft = parseInt(e.target.value) || 5;
-                    const inch = height % 12;
-                    setHeight(ft * 12 + inch);
-                  }}
-                  className="form-input form-select"
-                  style={{ paddingLeft: '0.75rem', paddingRight: '2rem', flex: 1 }}
-                >
+          <div className="row">
+            <div className="field spacer">
+              <label htmlFor="heightFt" className="field__label">Height</label>
+              <div className="row-between">
+                <select id="heightFt" className="select" aria-label="Height feet" value={Math.floor(height / 12) || 5} onChange={(e) => {
+                  const ft = parseInt(e.target.value) || 5;
+                  const inch = height % 12;
+                  setHeight(ft * 12 + inch);
+                }}>
                   <option value={3}>3'</option>
                   <option value={4}>4'</option>
                   <option value={5}>5'</option>
@@ -134,71 +107,41 @@ const ProfileEditScreen: React.FC = () => {
                   <option value={7}>7'</option>
                   <option value={8}>8'</option>
                 </select>
-                <select
-                  value={height % 12}
-                  onChange={(e) => {
-                    const ft = Math.floor(height / 12) || 5;
-                    const inch = parseInt(e.target.value) || 0;
-                    setHeight(ft * 12 + inch);
-                  }}
-                  className="form-input form-select"
-                  style={{ paddingLeft: '0.75rem', paddingRight: '2rem', flex: 1 }}
-                >
+                <select id="heightIn" className="select" aria-label="Height inches" value={height % 12} onChange={(e) => {
+                  const ft = Math.floor(height / 12) || 5;
+                  const inch = parseInt(e.target.value) || 0;
+                  setHeight(ft * 12 + inch);
+                }}>
                   {Array.from({ length: 12 }, (_, i) => (
-                    <option key={i} value={i}>
-                      {i}''
-                    </option>
+                    <option key={i} value={i}>{i}''</option>
                   ))}
                 </select>
               </div>
             </div>
-
-            <div className="input-group input-with-suffix">
-              <div className="input-wrapper">
-                <span className="input-prefix">Weight:</span>
-                <input
-                  type="number"
-                  placeholder=""
-                  value={weight || ''}
-                  onChange={(e) => setWeight(parseFloat(e.target.value))}
-                  className="form-input"
-                />
-                <span className="input-suffix">lbs</span>
-              </div>
+            
+            <div className="field spacer">
+              <label htmlFor="weight" className="field__label">Weight (lbs)</label>
+              <input id="weight" type="number" className="input" value={weight || ''} onChange={(e) => setWeight(parseFloat(e.target.value))} />
             </div>
           </div>
-
-          <h3 style={{ marginTop: '1rem', marginBottom: '0.5rem', color: '#67997D' }}>Health & Diet</h3>
-
-          <div className="input-group" style={{ flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.9rem', color: '#555' }}>Health Conditions</label>
-            <textarea
-              placeholder="List any health conditions..."
-              value={healthConditions}
-              onChange={(e) => setHealthConditions(e.target.value)}
-              className="form-textarea"
-              rows={3}
-            />
+        </section>
+        
+        <section className="card stack">
+          <h2 className="section-title">Health & Diet</h2>
+          
+          <div className="field">
+            <label htmlFor="healthConditions" className="field__label">Health Conditions</label>
+            <textarea id="healthConditions" className="textarea" placeholder="List any health conditions..." value={healthConditions} onChange={(e) => setHealthConditions(e.target.value)} rows={3} />
           </div>
-
-          <div className="input-group" style={{ flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.9rem', color: '#555' }}>Food Allergies & Sensitivities</label>
-            <textarea
-              placeholder="List any allergies..."
-              value={allergies}
-              onChange={(e) => setAllergies(e.target.value)}
-              className="form-textarea"
-              rows={2}
-            />
+          
+          <div className="field">
+            <label htmlFor="allergies" className="field__label">Food Allergies & Sensitivities</label>
+            <textarea id="allergies" className="textarea" placeholder="List any allergies..." value={allergies} onChange={(e) => setAllergies(e.target.value)} rows={2} />
           </div>
-
-          <div className="input-group" style={{ flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.9rem', color: '#555' }}>Dietary Preferences</label>
-            <select
-              value={dietaryPreferences}
-              onChange={(e) => setDietaryPreferences(e.target.value)}
-              className="form-input form-select"
-            >
+          
+          <div className="field">
+            <label htmlFor="dietaryPreferences" className="field__label">Dietary Preferences</label>
+            <select id="dietaryPreferences" className="select" value={dietaryPreferences} onChange={(e) => setDietaryPreferences(e.target.value)}>
               <option value="">No specific preference</option>
               <option value="Vegetarian">Vegetarian</option>
               <option value="Vegan">Vegan</option>
@@ -208,16 +151,14 @@ const ProfileEditScreen: React.FC = () => {
               <option value="Mediterranean">Mediterranean</option>
             </select>
           </div>
-
-          <h3 style={{ marginTop: '1rem', marginBottom: '0.5rem', color: '#67997D' }}>Your Goals</h3>
-
-          <div className="input-group" style={{ flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.9rem', color: '#555' }}>Nutrition Goals</label>
-            <select
-              value={nutritionalGoal}
-              onChange={(e) => setNutritionalGoal(e.target.value)}
-              className="form-input form-select"
-            >
+        </section>
+        
+        <section className="card stack">
+          <h2 className="section-title">Your Goals</h2>
+          
+          <div className="field">
+            <label htmlFor="nutritionalGoal" className="field__label">Nutrition Goals</label>
+            <select id="nutritionalGoal" className="select" value={nutritionalGoal} onChange={(e) => setNutritionalGoal(e.target.value)}>
               <option value="">Select a goal</option>
               <option value="Weight loss">Weight loss</option>
               <option value="Weight gain">Weight gain</option>
@@ -226,14 +167,10 @@ const ProfileEditScreen: React.FC = () => {
               <option value="Manage medical condition">Manage medical condition</option>
             </select>
           </div>
-
-          <div className="input-group" style={{ flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.9rem', color: '#555' }}>Fitness Goals</label>
-            <select
-              value={fitnessGoal}
-              onChange={(e) => setFitnessGoal(e.target.value)}
-              className="form-input form-select"
-            >
+          
+          <div className="field">
+            <label htmlFor="fitnessGoal" className="field__label">Fitness Goals</label>
+            <select id="fitnessGoal" className="select" value={fitnessGoal} onChange={(e) => setFitnessGoal(e.target.value)}>
               <option value="">Select a goal</option>
               <option value="Build muscle">Build muscle</option>
               <option value="Improve endurance">Improve endurance</option>
@@ -242,15 +179,12 @@ const ProfileEditScreen: React.FC = () => {
               <option value="Train for event">Train for event</option>
             </select>
           </div>
-
-        </div>
-
-        <div className="button-group" style={{ marginTop: '1rem' }}>
-          <button onClick={handleSave} disabled={saving} className="primary-button" style={{ background: '#67997D', color: '#fff', border: 'none', padding: '1rem', borderRadius: '12px', fontSize: '1.1rem', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
-            {saving ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
-      </div>
+        </section>
+        
+        <button className="btn btn--primary btn--block" onClick={handleSave} disabled={saving}>
+          {saving ? 'Saving...' : 'Save Changes'}
+        </button>
+      </main>
     </div>
   );
 };

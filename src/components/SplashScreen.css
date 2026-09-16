@@ -1,37 +1,77 @@
-.welcome-screen {
+/* ============================================================
+   Splash / landing
+   ============================================================ */
+
+.splash {
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
+  gap: var(--sp-8);
+  padding:
+    calc(var(--safe-top) + var(--sp-8))
+    var(--sp-5)
+    calc(var(--safe-bottom) + var(--sp-6));
+  background:
+    radial-gradient(90% 60% at 50% 0%, var(--accent-softer) 0%, transparent 70%),
+    var(--bg);
+}
+
+.splash__inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--sp-8);
+  max-width: 30rem;
+  width: 100%;
+  margin-inline: auto;
+}
+
+.splash__logo {
+  width: 120px;
+  align-self: flex-start;
+}
+
+.splash__copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.splash__title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 9vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: var(--tracking-display);
+  color: var(--text);
+  text-wrap: balance;
+}
+
+.splash__sub {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
+  max-width: 34ch;
+}
+
+.splash__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  max-width: 30rem;
+  width: 100%;
+  margin-inline: auto;
+}
+
+/* Reserves the same vertical space the two buttons occupy, so the layout
+   does not jump when the session check finishes. */
+.splash__checking {
+  display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh;
-  width: 100vw;
-  text-align: center;
-}
-
-.omiver-logo {
-  height: auto;
-  margin-bottom: 20px;
-}
-
-.welcome-screen.splash {
-  background-color: #67997D;
-  background-image: url('../assets/logo-transparent.svg');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-.welcome-content {
-  margin-bottom: 20px;
-}
-
-.welcome-screen>button {
-  border-radius: 25px;
-  color: #67997D;
-  padding: 10px 20px;
-  font-size: 16px;
-  cursor: pointer;
-  align-items: center;
-  justify-content: space-between;
-  display: flex;
+  gap: var(--sp-3);
+  min-height: 100px;
+  font-size: var(--fs-body);
 }

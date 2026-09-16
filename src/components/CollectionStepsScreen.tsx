@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera, Check, X, CheckCircle2, Save, Info, BookOpen, ShieldCheck, Package } from 'lucide-react';
+import { 
+  ArrowLeft, Camera, CheckCircle2, Save, Info, Package, Link2Off 
+} from 'lucide-react';
 import './CollectionStepsScreen.css';
 import { 
   unlinkBarcodeAssignment, 
@@ -16,831 +18,573 @@ import {
 } from '../api/user';
 import { useAppContext } from '../context/AppContext';
 
+type StepNumber = 1 | 2 | 3 | 4 | 5;
+
 const CollectionStepsScreen: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { state } = useAppContext();
 
-  // State to track collection progress
-  const [isSampleCollected, setIsSampleCollected] = useState(false);
-  const [kitCode, setKitCode] = useState((location.state as { kitCode?: string } | null)?.kitCode || '');
-  const [kitLinked, setKitLinked] = useState(Boolean((location.state as { kitCode?: string } | null)?.kitCode));
-  const [kitLoading, setKitLoading] = useState(false);
-  const [kitError, setKitError] = useState('');
-  const [assignmentMessage, setAssignmentMessage] = useState('');
-  const [linkedOrderId, setLinkedOrderId] = useState<number | null>(null);
-  const [collectionConfirmed, setCollectionConfirmed] = useState(false);
-  const [finalizeError, setFinalizeError] = useState('');
-  const [shippedLoading, setShippedLoading] = useState(false);
-  const [shippedError, setShippedError] = useState('');
-  const [preparedForShipment, setPreparedForShipment] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [currentStep, setCurrentStep] = useState<StepNumber>(1);
+
+  // States
+  const [kitCode, setKitCode] = useState((location.state as { kitCode?: string } | null)?.kitCode || '');
+  const [linkedOrderId, setLinkedOrderId] = useState<number | null>(null);
+  /** Arms the destructive unlink action; a second press carries it out. */
+  const [confirmUnlink, setConfirmUnlink] = useState(false);
+
+  // Step loading/error states
+  const [apiLoading, setApiLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
   
-  // Step-by-step saving states and feedback
-  const [savingStep1, setSavingStep1] = useState(false);
-  const [savingStep2, setSavingStep2] = useState(false);
-  const [savingStep3, setSavingStep3] = useState(false);
-  const [step1SavedTime, setStep1SavedTime] = useState<string | null>(null);
-  const [step2SavedTime, setStep2SavedTime] = useState<string | null>(null);
-  const [step3SavedTime, setStep3SavedTime] = useState<string | null>(null);
   const [feedbackBanner, setFeedbackBanner] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const feedbackTimeoutRef = useRef<number | null>(null);
 
   const showFeedback = (message: string, type: 'success' | 'error' = 'success') => {
     setFeedbackBanner({ message, type });
-    setTimeout(() => {
+    if (feedbackTimeoutRef.current) {
+      window.clearTimeout(feedbackTimeoutRef.current);
+    }
+    feedbackTimeoutRef.current = window.setTimeout(() => {
       setFeedbackBanner(null);
+      feedbackTimeoutRef.current = null;
     }, 5000);
   };
 
-  // Instructional modal state
-  const [instructionsOpen, setInstructionsOpen] = useState(false);
-  const [instructionStep, setInstructionStep] = useState<number>(1);
-
   useEffect(() => {
-    window.scrollTo(0, 0);
+    return () => {
+      if (feedbackTimeoutRef.current) {
+        window.clearTimeout(feedbackTimeoutRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentStep]);
+
+  // `kitCode` is read by the recovery effect below but must NOT be one of its
+  // dependencies: the effect also *sets* it, and the barcode field writes to it
+  // on every keystroke — which re-ran the whole three-request recovery on each
+  // character typed, and stomped the user's input mid-edit. A ref gives the
+  // effect the current value without subscribing it to changes.
+  const kitCodeRef = useRef(kitCode);
+  useEffect(() => { kitCodeRef.current = kitCode; }, [kitCode]);
+
+  useEffect(() => {
+    let isMounted = true;
     const recoverProgress = async () => {
       if (!state.auth.clientId) {
-        setLoading(false);
+        if (isMounted) setLoading(false);
         return;
       }
       try {
-        // 1. Recover collection progress from backend progress endpoint
+        let maxStep: StepNumber = 1;
+        let kCode = kitCodeRef.current;
+        let lOrderId = (location.state as { orderId?: number } | null)?.orderId ?? null;
+
         const progress = await fetchCollectionProgress(state.auth.clientId).catch(() => null);
         if (progress?.step_progress) {
           const sp = progress.step_progress;
           if (sp.step1?.completed && sp.step1.barcode) {
-            setKitCode(sp.step1.barcode);
-            setKitLinked(true);
-            setStep1SavedTime(sp.step1.saved_at ? new Date(sp.step1.saved_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Saved');
+            kCode = sp.step1.barcode;
+            maxStep = Math.max(maxStep, 2) as StepNumber;
           }
-          if (sp.step2?.completed) {
-            setIsSampleCollected(true);
-            setStep2SavedTime(sp.step2.saved_at ? new Date(sp.step2.saved_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Saved');
-          }
-          if (sp.step2_pouch?.completed) {
-            setCollectionConfirmed(true);
-          }
-          if (sp.step3?.completed) {
-            setPreparedForShipment(true);
-            setStep3SavedTime(sp.step3.saved_at ? new Date(sp.step3.saved_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Saved');
-          }
-          if (sp.step4?.completed) {
-            // Shipped
-          }
+          if (sp.step2?.completed) maxStep = Math.max(maxStep, 3) as StepNumber;
+          if (sp.step2_pouch?.completed) maxStep = Math.max(maxStep, 4) as StepNumber;
+          if (sp.step3?.completed) maxStep = Math.max(maxStep, 5) as StepNumber;
         }
 
-        // 2. Recover collection progress from client profile
         const clientData = await fetchClient(state.auth.clientId);
         if (clientData.collection_finished_at) {
-          setIsSampleCollected(true);
-          setCollectionConfirmed(true);
-          setPreparedForShipment(true);
-          setStep2SavedTime(new Date(clientData.collection_finished_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+          maxStep = Math.max(maxStep, 5) as StepNumber;
         }
 
-        // 3. Recover barcode linkage from order history
         const orders = await fetchOrders(state.auth.clientId).catch(() => []);
-        const activeOrder = orders.find(o => o.status !== 'FINISHED' && o.status !== 'CANCELLED');
+        // An order is "done" once the lab has the sample; until then it is the
+        // one the collection flow should attach to.
+        const activeOrder = orders.find(
+          (o: any) => o.status !== 'SAMPLE_DELIVERED' && o.status !== 'CANCELLED',
+        );
         if (activeOrder) {
-          setLinkedOrderId(activeOrder.id);
-          const barcode = (activeOrder as { barcode_number?: string; kit_barcode?: string; order_number?: string }).barcode_number || (activeOrder as { barcode_number?: string; kit_barcode?: string; order_number?: string }).kit_barcode;
-          if (barcode && !barcode.startsWith('KIT-') && barcode !== activeOrder.order_number) {
-            setKitCode(barcode);
-            setKitLinked(true);
-            setStep1SavedTime('Linked');
+          lOrderId = activeOrder.id;
+          const barcode = (activeOrder as any).barcode_number || (activeOrder as any).kit_barcode;
+          if (barcode && !barcode.startsWith('KIT-') && barcode !== (activeOrder as any).order_number) {
+            kCode = barcode;
+            maxStep = Math.max(maxStep, 2) as StepNumber;
           }
 
           try {
             const data = await getKitCollection(activeOrder.id);
             if (data.kit_barcode && !data.kit_barcode.startsWith('KIT-') && data.kit_barcode !== activeOrder.order_number) {
-              setKitCode(data.kit_barcode);
-              setKitLinked(true);
-              setStep1SavedTime('Linked');
+              kCode = data.kit_barcode;
+              maxStep = Math.max(maxStep, 2) as StepNumber;
             }
             if (data.collected_at) {
-              setIsSampleCollected(true);
-              setStep2SavedTime(new Date(data.collected_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+              maxStep = Math.max(maxStep, 3) as StepNumber;
             }
             if (data.status === 'COLLECTED') {
-              setIsSampleCollected(true);
-              setCollectionConfirmed(true);
-              setPreparedForShipment(false);
+              maxStep = Math.max(maxStep, 4) as StepNumber;
             } else if (data.status === 'SHIPPING' || data.status === 'TESTING' || data.status === 'FINISHED') {
-              setIsSampleCollected(true);
-              setCollectionConfirmed(true);
-              setPreparedForShipment(true);
+              maxStep = Math.max(maxStep, 5) as StepNumber;
             }
           } catch {
-            // No collection session started yet
+            // ignore
           }
         }
-      } catch (err: unknown) {
-        console.error('Failed to recover collection progress:', err);
+
+        if (isMounted) {
+          setKitCode(kCode);
+          setLinkedOrderId(lOrderId);
+          setCurrentStep(maxStep);
+        }
+      } catch {
+        // Recovery is best-effort: the wizard still works from step 1, so
+        // surface it without blocking. (The raw error is deliberately not
+        // logged — these responses carry PHI.)
+        if (isMounted) {
+          setApiError('We could not restore your previous progress. You can continue from step 1.');
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     void recoverProgress();
-  }, [state.auth.clientId]);
+    
+    return () => {
+      isMounted = false;
+    };
+    // `kitCode` is intentionally absent — see kitCodeRef above.
+  }, [state.auth.clientId, location.state]);
 
-  useEffect(() => {
-    const initOrderId = (location.state as { orderId?: number } | null)?.orderId;
-    if (initOrderId) {
-      setLinkedOrderId(initOrderId);
-      getKitCollection(initOrderId).then(data => {
-        if (data.kit_barcode) {
-          setKitCode(data.kit_barcode);
-          setKitLinked(true);
-          setStep1SavedTime('Linked');
-        }
-        if (data.collected_at) {
-          setIsSampleCollected(true);
-          setStep2SavedTime(new Date(data.collected_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-        }
-        if (data.status === 'COLLECTED') {
-          setIsSampleCollected(true);
-          setCollectionConfirmed(true);
-        } else if (data.status === 'SHIPPING' || data.status === 'TESTING' || data.status === 'FINISHED') {
-          setIsSampleCollected(true);
-          setCollectionConfirmed(true);
-          setPreparedForShipment(true);
-        }
-      }).catch(console.error);
-    }
-  }, [location.state]);
-
-  // Step 1: Save & Link Barcode
-  const handleLinkKit = async (): Promise<boolean> => {
+  const handleLinkKit = async () => {
     const code = kitCode.trim();
     if (!code) {
-      setKitError('Please enter or scan your barcode.');
-      return false;
+      setApiError('Please enter or scan your barcode.');
+      return;
     }
-
     if (!state.auth.clientId) {
-      setKitError('Client account not found. Please log in again.');
-      return false;
+      setApiError('Client account not found. Please log in again.');
+      return;
     }
 
-    setKitLoading(true);
-    setSavingStep1(true);
-    setKitError('');
-    setAssignmentMessage('');
+    setApiLoading(true);
+    setApiError('');
 
     try {
-      const orderIdToScan = linkedOrderId || (location.state as { orderId?: number } | null)?.orderId;
-      const res = await saveCollectionStep1(state.auth.clientId, code, orderIdToScan);
-
+      const res = await saveCollectionStep1(state.auth.clientId, code, linkedOrderId || undefined);
       if (res.success) {
-        setKitLinked(true);
         if (res.order_id) setLinkedOrderId(res.order_id);
-        const nowTime = new Date(res.saved_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        setStep1SavedTime(nowTime);
-        setAssignmentMessage(res.message);
         showFeedback('✓ Step 1 saved: Barcode registered and linked to account!', 'success');
-        return true;
+        setCurrentStep(2);
       } else {
-        setKitError('Barcode could not be verified. Please check the code and try again.');
-        return false;
+        setApiError('Barcode could not be verified. Please check the code and try again.');
       }
     } catch (error: unknown) {
-      console.error(error);
-      const errObj = error as { message?: string };
-      const msg = errObj.message || 'Failed to save and link barcode. Please try again.';
-      setKitError(msg);
+      const msg = (error as { message?: string })?.message
+        || 'Failed to save and link barcode. Please try again.';
+      setApiError(msg);
       showFeedback(msg, 'error');
-      return false;
     } finally {
-      setKitLoading(false);
-      setSavingStep1(false);
+      setApiLoading(false);
     }
   };
 
-  const [unlinkLoading, setUnlinkLoading] = useState(false);
-
+  /**
+   * Detach the barcode from the account and reset collection progress.
+   *
+   * Without this a mis-scanned or mistyped barcode is unrecoverable from
+   * inside the app — the wizard jumps straight to step 2 on the next visit and
+   * there is no way back. Destructive, so it is gated behind a second press
+   * (`confirmUnlink`) rather than a browser `confirm()` dialog.
+   */
   const handleUnlinkKit = async () => {
     if (!state.auth.clientId) return;
-    if (!window.confirm("Are you sure you want to unlink this kit? This will reset your collection progress for this kit.")) {
+
+    if (!confirmUnlink) {
+      setConfirmUnlink(true);
       return;
     }
-    
-    setUnlinkLoading(true);
+
+    setConfirmUnlink(false);
+    setApiLoading(true);
+    setApiError('');
     try {
       await unlinkBarcodeAssignment({
         barcode_number: kitCode,
         client_id: state.auth.clientId,
       });
       setKitCode('');
-      setKitLinked(false);
-      setAssignmentMessage('');
-      setKitError('');
-      setIsSampleCollected(false);
-      setCollectionConfirmed(false);
-      setPreparedForShipment(false);
-      setStep1SavedTime(null);
-      setStep2SavedTime(null);
-      setStep3SavedTime(null);
-    } catch (err: unknown) {
-      const errObj = err as { message?: string };
-      console.error("Error unlinking kit:", errObj);
-      alert(errObj.message || "Failed to unlink kit.");
-    } finally {
-      setUnlinkLoading(false);
-    }
-  };
-
-  // Step 2: Confirm & Save Sample Collection Data
-  const handleConfirmSampleCollected = async () => {
-    if (!state.auth.clientId || !kitLinked || !kitCode.trim()) {
-      setFinalizeError('Please link your kit barcode first.');
-      return false;
-    }
-
-    setSavingStep2(true);
-    setFinalizeError('');
-
-    try {
-      const orderIdToConfirm = linkedOrderId || (location.state as { orderId?: number } | null)?.orderId;
-      const res = await saveCollectionStep2(state.auth.clientId, kitCode.trim(), orderIdToConfirm);
-
-      if (res.success) {
-        setIsSampleCollected(true);
-        setCollectionConfirmed(true);
-        const nowTime = new Date(res.saved_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        setStep2SavedTime(nowTime);
-        showFeedback('✓ Step 2 saved: Sample collection recorded and timestamped!', 'success');
-        return true;
-      }
-      return false;
+      setLinkedOrderId(null);
+      setCurrentStep(1);
+      showFeedback('Kit unlinked. You can register a different barcode.', 'success');
     } catch (error: unknown) {
-      console.error('Failed to save collection step:', error);
-      const errObj = error as { message?: string };
-      const msg = errObj.message || 'Unable to save collection data right now. Please try again.';
-      setFinalizeError(msg);
+      const msg = (error as { message?: string })?.message || 'Failed to unlink kit.';
+      setApiError(msg);
       showFeedback(msg, 'error');
-      return false;
     } finally {
-      setSavingStep2(false);
+      setApiLoading(false);
     }
   };
 
-  // Step 2 sub-step: Confirm barcode placement in box
+  const handleConfirmSampleCollected = async () => {
+    if (!state.auth.clientId || !kitCode.trim()) {
+      setApiError('Please link your kit barcode first.');
+      return;
+    }
+    setApiLoading(true);
+    setApiError('');
+
+    try {
+      const res = await saveCollectionStep2(state.auth.clientId, kitCode.trim(), linkedOrderId || undefined);
+      if (res.success) {
+        showFeedback('✓ Step 2 saved: Sample collection recorded!', 'success');
+        setCurrentStep(3);
+      }
+    } catch (error: any) {
+      const msg = error.message || 'Unable to save collection data right now. Please try again.';
+      setApiError(msg);
+      showFeedback(msg, 'error');
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
   const handleBarcodeInBox = async () => {
-    setFinalizeError('');
-    setSavingStep2(true);
-    const orderIdToConfirm = linkedOrderId || (location.state as { orderId?: number } | null)?.orderId;
+    setApiError('');
+    setApiLoading(true);
     try {
-      const res = await saveCollectionStep2Pouch(state.auth.clientId!, orderIdToConfirm);
+      const res = await saveCollectionStep2Pouch(state.auth.clientId!, linkedOrderId || undefined);
       if (res.success) {
-        setCollectionConfirmed(true);
-        const nowTime = new Date(res.saved_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        setStep2SavedTime(nowTime);
         showFeedback('✓ Specimen pouch confirmed inside kit box!', 'success');
+        setCurrentStep(4);
       }
-    } catch (err: unknown) {
-      const errObj = err as { message?: string };
-      console.error('Failed to confirm collection:', errObj);
-      setFinalizeError(errObj.message || 'Failed to confirm placement in database. Please try again.');
+    } catch (err: any) {
+      setApiError(err.message || 'Failed to confirm placement in database. Please try again.');
     } finally {
-      setSavingStep2(false);
+      setApiLoading(false);
     }
   };
 
-  // Step 3: Save Packaging & Drop-off Status
   const handleSavePreparation = async () => {
-    setSavingStep3(true);
+    setApiLoading(true);
+    setApiError('');
     try {
-      const orderIdToConfirm = linkedOrderId || (location.state as { orderId?: number } | null)?.orderId;
-      const res = await saveCollectionStep3(state.auth.clientId!, orderIdToConfirm);
+      const res = await saveCollectionStep3(state.auth.clientId!, linkedOrderId || undefined);
       if (res.success) {
-        setPreparedForShipment(true);
-        const nowTime = new Date(res.saved_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        setStep3SavedTime(nowTime);
-        showFeedback('✓ Step 3 saved: Drop-off preparation recorded in cloud!', 'success');
+        showFeedback('✓ Step 3 saved: Drop-off preparation recorded!', 'success');
+        setCurrentStep(5);
       }
-    } catch (err: unknown) {
-      const errObj = err as { message?: string };
-      console.error(errObj);
-      showFeedback(errObj.message || 'Failed to save Step 3 preparation.', 'error');
+    } catch (err: any) {
+      const msg = err.message || 'Failed to save Step 3 preparation.';
+      setApiError(msg);
+      showFeedback(msg, 'error');
     } finally {
-      setSavingStep3(false);
+      setApiLoading(false);
     }
   };
 
-  // Step 4: Save & Mark Shipped
   const handleMarkShipped = async () => {
-    const orderIdToShip = linkedOrderId || (location.state as { orderId?: number } | null)?.orderId;
-    if (!orderIdToShip) {
-      setShippedError('Please link your barcode first so we know which order to ship.');
+    if (!linkedOrderId) {
+      setApiError('Please link your barcode first so we know which order to ship.');
       return;
     }
 
-    setShippedError('');
-    setShippedLoading(true);
+    setApiError('');
+    setApiLoading(true);
     try {
-      const res = await saveCollectionStep4(state.auth.clientId!, orderIdToShip);
+      const res = await saveCollectionStep4(state.auth.clientId!, linkedOrderId);
       if (res.success) {
-        showFeedback('✓ Step 4 saved: Sample marked as shipped & tracking activated!', 'success');
-        setTimeout(() => {
+        showFeedback('✓ Sample marked as shipped & tracking activated!', 'success');
+        const to = window.setTimeout(() => {
           navigate('/kits?tab=orders');
         }, 1200);
+        feedbackTimeoutRef.current = to;
       }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to update order status';
-      console.error('Failed to update order status', err);
-      setShippedError(message);
-      showFeedback(message, 'error');
+    } catch (err: any) {
+      const msg = err.message || 'Failed to update order status';
+      setApiError(msg);
+      showFeedback(msg, 'error');
     } finally {
-      setShippedLoading(false);
+      setApiLoading(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="steps-root" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: 24, background: '#fff' }}>
-        <div style={{ textAlign: 'center', color: '#417690' }}>
-          <div style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: 8 }}>Loading your progress...</div>
-          <div style={{ opacity: 0.6, fontSize: '0.9rem' }}>Please wait while Omiver restores your collection draft...</div>
+      <div className="screen wizard__loading">
+        <div className="wizard__loading-inner" role="status" aria-busy="true">
+          <span className="spinner" aria-hidden="true" />
+          <p className="text-secondary">Loading your progress…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="steps-root">
-      <header className="steps-header">
-        <button className="steps-back-btn" onClick={() => navigate(-1)}>
+    <div className="wizard">
+      <header className="wizard__header">
+        <button className="icon-btn" onClick={() => navigate(-1)} aria-label="Go back">
           <ArrowLeft size={24} />
         </button>
-        <h1>Sample Collection Guide</h1>
-        <button className="steps-settings-btn"></button>
+        <h1 className="wizard__title">Sample Collection</h1>
+        <div className="wizard__header-spacer" aria-hidden="true" />
       </header>
+      
+      <div className="wizard__progress">
+        <div className="progress">
+          <div className="progress__fill" style={{ width: `${(currentStep / 5) * 100}%` }}></div>
+        </div>
+      </div>
 
-      <div className="steps-content">
+      <main className="wizard__body" aria-live="polite">
         {feedbackBanner && (
-          <div style={{
-            position: 'fixed',
-            top: '70px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: feedbackBanner.type === 'success' ? '#dcfce7' : '#fee2e2',
-            color: feedbackBanner.type === 'success' ? '#166534' : '#991b1b',
-            padding: '12px 20px',
-            borderRadius: '8px',
-            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontWeight: 600,
-            fontSize: '0.9rem',
-            width: '90%',
-            maxWidth: '400px'
-          }}>
-            {feedbackBanner.type === 'success' ? <CheckCircle2 size={18} /> : <X size={18} />}
+          <div className={`error-banner ${feedbackBanner.type === 'success' ? 'error-banner--success' : ''}`} role="alert">
+            {feedbackBanner.type === 'success' ? <CheckCircle2 size={18} /> : <Info size={18} />}
             {feedbackBanner.message}
           </div>
         )}
 
-        <div className="steps-intro-row">
-          <div>
-            <div className="steps-intro" style={{ margin: 0 }}>Follow the step-by-step instructions below</div>
-            <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '2px' }}>Data is automatically saved at each step</div>
-          </div>
-          <button className="instructions-btn" type="button" onClick={() => setInstructionsOpen(true)}>
-            <BookOpen size={15} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-            Quick Guide
-          </button>
-        </div>
-
-        {/* ─────────────────────────────────────────────────────────────
-            STEP 1: Open Your Box and Scan Barcode
-           ───────────────────────────────────────────────────────────── */}
-        <div className="step-item">
-          <div className="step-indicator">
-            <div className={`step-circle ${kitLinked ? 'completed' : 'active'}`}>
-              <Check size={18} />
-            </div>
-            <div className="step-line"></div>
-          </div>
-          <div className="step-details">
-            <div className="step-title">Step 1: Open your box and scan barcode</div>
-            <div className="step-desc">
-              Unbox your green Omiver test kit and register the unique barcode to associate the physical sample with your health profile.
-            </div>
-
-            <div className="step-manual-guide">
-              <h4>
-                <Info size={16} color="#1b4332" />
-                Step 1 Instructions:
-              </h4>
-              <ol className="manual-steps-list">
-                <li><strong>Unpack the Kit:</strong> Open the green Omiver test box and verify all contents (collection device, alcohol wipe, bandage, silver foil bag, return mailer).</li>
-                <li><strong>Locate the Barcode:</strong> Find the unique alphanumeric barcode printed on the bottom-right corner of the box or inside the sleeve label.</li>
-                <li><strong>Scan or Enter:</strong> Use the camera scanner below or manually type the code, then tap <strong>Save & Link Barcode</strong>.</li>
-              </ol>
-            </div>
-
-            <div className="step-card">
-              {kitLinked ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <div className="kit-linked-box" style={{ margin: 0 }}>
-                    <CheckCircle2 size={20} color="#0f5132" />
-                    <div>
-                      <div style={{ fontSize: '0.8rem', opacity: 0.85, fontWeight: 700 }}>Step 1 Completed & Saved</div>
-                      <div>Linked Barcode: <strong>{kitCode}</strong></div>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-                    <span className="save-status-badge">
-                      <Check size={14} /> Data Saved in Database {step1SavedTime ? `(${step1SavedTime})` : ''}
-                    </span>
-                    <button 
-                      onClick={handleUnlinkKit} 
-                      disabled={unlinkLoading}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#dc2626',
-                        fontSize: '0.82rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        textDecoration: 'underline',
-                      }}
-                    >
-                      {unlinkLoading ? 'Unlinking...' : 'Change / Unlink Kit'}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="url-row" style={{ marginTop: 0 }}>
-                    <input
-                      className="url-input"
-                      placeholder="Enter kit barcode (e.g. TASSO-001)"
-                      value={kitCode}
-                      onChange={(e) => {
-                        setKitCode(e.target.value);
-                        setKitError('');
-                      }}
-                      disabled={kitLoading || savingStep1}
-                    />
-                    <button 
-                      className="link-btn" 
-                      onClick={handleLinkKit} 
-                      disabled={kitLoading || savingStep1}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                    >
-                      {savingStep1 ? (
-                        <>
-                          <span className="save-spinner"></span>
-                          <span>Saving...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Save size={15} />
-                          <span>Save & Link</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  <button
-                    className="scan-cta"
-                    style={{ marginTop: 12 }}
-                    onClick={() => navigate('/collection/scan')}
-                  >
-                    <Camera size={18} />
-                    <span>Scan Barcode with Camera</span>
-                  </button>
-
-                  {assignmentMessage && <div style={{ color: '#0f5132', fontSize: 13, marginTop: 8, fontWeight: 600 }}>{assignmentMessage}</div>}
-                  {kitError && <div style={{ color: '#dc2626', fontSize: 13, marginTop: 8, fontWeight: 600 }}>{kitError}</div>}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* ─────────────────────────────────────────────────────────────
-            STEP 2: Place Collection Device on Arm & Collect Sample
-           ───────────────────────────────────────────────────────────── */}
-        <div className="step-item">
-          <div className="step-indicator">
-            <div className={`step-circle ${collectionConfirmed ? 'completed' : (kitLinked ? 'active' : '')}`}>
-              {collectionConfirmed ? <Check size={18} /> : <Check size={18} style={{ opacity: kitLinked ? 1 : 0.3 }} />}
-            </div>
-            <div className="step-line"></div>
-          </div>
-          <div className="step-details">
-            <div className="step-title">Step 2: Place the collection device on your arm (based on instruction manual)</div>
-            <div className="step-desc">
-              Follow the instruction manual to attach the micro-collection pod to your upper outer arm and draw your sample comfortably.
-            </div>
-
-            <div className="step-manual-guide">
-              <h4>
-                <ShieldCheck size={16} color="#1b4332" />
-                Step 2 Instructions (Instruction Manual):
-              </h4>
-              <ol className="manual-steps-list">
-                <li><strong>Clean the Site:</strong> Select an area on your upper outer arm (deltoid) with warm skin. Disinfect thoroughly with the included alcohol prep pad and allow to air dry for 10 seconds.</li>
-                <li><strong>Peel Adhesive Liner:</strong> Grasp the red pull-tab and peel away the protective backing to expose the medical-grade skin adhesive.</li>
-                <li><strong>Apply to Upper Arm:</strong> Place the device vertically on your sanitized upper arm and press firmly along the outer edges to ensure a tight seal.</li>
-                <li><strong>Activate Collection:</strong> Firmly press the large top actuator button until you feel/hear a distinct click. Blood will begin drawing automatically.</li>
-                <li><strong>Wait 2–5 Minutes:</strong> Keep your arm relaxed and resting downward by your side until the collection tube fills to the indicator line.</li>
-                <li><strong>Remove & Invert:</strong> Gently peel the device from your arm, apply the bandage, invert the collection tube gently 5 times, and seal inside the silver preservation pouch.</li>
-              </ol>
-            </div>
-
-            {!isSampleCollected && (
-              <div className="step-card">
-                <div style={{ marginBottom: 10, fontWeight: 600, color: '#334155' }}>Video Walkthrough:</div>
-                <div style={{ width: '100%', aspectRatio: '16/9', borderRadius: 10, overflow: 'hidden', marginBottom: 14 }}>
-                  <iframe
-                    title="vimeo-player"
-                    src="https://player.vimeo.com/video/1051338117?h=8f460a47f8"
-                    width="100%"
-                    height="100%"
-                    frameBorder="0"
-                    allow="autoplay; fullscreen; encrypted-media"
-                    allowFullScreen
-                  />
-                </div>
-
-                {!kitLinked && (
-                  <div style={{ color: '#b45309', marginBottom: 10, fontSize: '0.88rem', fontWeight: 600 }}>
-                    ⚠️ Please complete Step 1 (Link your kit barcode) before saving collection data.
-                  </div>
-                )}
-
-                {finalizeError && <div style={{ color: '#dc2626', marginBottom: 10, fontSize: '0.88rem', fontWeight: 600 }}>{finalizeError}</div>}
-
-                <button 
-                  className="save-action-btn" 
-                  onClick={handleConfirmSampleCollected} 
-                  disabled={!kitLinked || savingStep2}
-                  title={!kitLinked ? 'Link your kit first' : ''}
-                >
-                  {savingStep2 ? (
-                    <>
-                      <span className="save-spinner"></span>
-                      <span>Saving Collection Data...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save size={17} />
-                      <span>Save & Confirm Sample Collection</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-
-            {isSampleCollected && (
-              <div className="step-card">
-                <div className="kit-linked-box" style={{ background: '#fce8f8', color: '#8a4b7d', borderColor: '#e0c0d8' }}>
-                  <CheckCircle2 size={20} color="#8a4b7d" />
-                  <div>
-                    <div style={{ fontWeight: 700 }}>Step 2 Completed: Sample Collected</div>
-                    <div style={{ fontSize: '0.8rem', opacity: 0.9 }}>Blood sample successfully drawn and sealed in preservation pouch.</div>
-                  </div>
-                </div>
-
-                {step2SavedTime && (
-                  <div className="save-status-badge" style={{ marginTop: 10 }}>
-                    <Check size={14} /> Collection Recorded & Saved ({step2SavedTime})
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Placement in box confirmation */}
-            {isSampleCollected && !collectionConfirmed && (
-              <div className="step-card" style={{ marginTop: 10 }}>
-                <div style={{ marginBottom: 6, fontWeight: 700, color: '#1e293b' }}>Confirm Specimen Pouch Placement:</div>
-                <div className="barcode-instruction" style={{ marginBottom: 10 }}>
-                  Place the sealed silver specimen pouch inside the green Omiver box.
-                </div>
-                {finalizeError && <div style={{ color: '#dc2626', marginBottom: 8 }}>{finalizeError}</div>}
-                <button
-                  className="save-action-btn secondary-save"
-                  onClick={handleBarcodeInBox}
-                  disabled={!kitLinked || savingStep2}
-                >
-                  {savingStep2 ? (
-                    <>
-                      <span className="save-spinner"></span>
-                      <span>Saving Confirmation...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save size={16} />
-                      <span>Save & Confirm Pouch in Box</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ─────────────────────────────────────────────────────────────
-            STEP 3: Prepare Your Sample for Shipment
-           ───────────────────────────────────────────────────────────── */}
-        <div className="step-item">
-          <div className="step-indicator">
-            <div className={`step-circle ${preparedForShipment ? 'completed' : (collectionConfirmed ? 'active' : '')}`}>
-              {preparedForShipment ? <Check size={18} /> : <Check size={18} style={{ opacity: collectionConfirmed ? 1 : 0.3 }} />}
-            </div>
-            <div className="step-line"></div>
-          </div>
-          <div className="step-details">
-            <div className="step-title">Step 3: Prepare your sample for shipment</div>
-            <div className="step-desc">Pack the kit securely inside the return shipping mailer</div>
-
-            <div className="step-manual-guide">
-              <h4>
-                <Package size={16} color="#1b4332" />
-                Packaging Checklist:
-              </h4>
-              <ol className="manual-steps-list">
-                <li>Place your sealed silver collection pouch with the desiccant into your green Omiver box.</li>
-                <li>Slide the closed box inside the prepaid return poly mailer envelope.</li>
-                <li>Peel the adhesive tape on the envelope flap and seal securely.</li>
-                <li>Affix the included prepaid return shipping label to the outside.</li>
-              </ol>
-            </div>
-
-            <div className="step-card">
-              {!preparedForShipment ? (
-                <button
-                  className="save-action-btn"
-                  onClick={handleSavePreparation}
-                  disabled={!collectionConfirmed || !kitLinked || savingStep3}
-                >
-                  {savingStep3 ? (
-                    <>
-                      <span className="save-spinner"></span>
-                      <span>Saving Drop-off Status...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save size={16} />
-                      <span>Save & Confirm Drop-off Preparation</span>
-                    </>
-                  )}
-                </button>
-              ) : (
-                <div>
-                  <div className="kit-linked-box" style={{ margin: 0 }}>
-                    <CheckCircle2 size={18} />
-                    <span>Package sealed and prepared for return transit.</span>
-                  </div>
-                  {step3SavedTime && (
-                    <div className="save-status-badge" style={{ marginTop: 8 }}>
-                      <Check size={14} /> Drop-off Prepared & Saved ({step3SavedTime})
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* ─────────────────────────────────────────────────────────────
-            STEP 4: Ship Your Sample & Track
-           ───────────────────────────────────────────────────────────── */}
-        <div className="step-item">
-          <div className="step-indicator">
-            <div className={`step-circle ${preparedForShipment ? 'active' : ''}`} style={{ backgroundColor: preparedForShipment ? '#6b9b8a' : '#e0e0e0' }}>
-              <Check size={18} style={{ opacity: preparedForShipment ? 1 : 0.3 }} />
-            </div>
-            <div className="step-line"></div>
-          </div>
-          <div className="step-details">
-            <div className="step-title" style={{ opacity: preparedForShipment ? 1 : 0.6 }}>Step 4: Ship your sample & track</div>
-            <div className="step-desc" style={{ opacity: preparedForShipment ? 1 : 0.6 }}>
-              Drop off your prepaid package at any FedEx drop box or location.
-            </div>
-
-            <div className="step-card" style={{ opacity: preparedForShipment ? 1 : 0.7 }}>
-              <div className="status-badge" style={{ background: preparedForShipment ? '#eaf5ec' : '#eee', color: preparedForShipment ? '#6b9b8a' : '#999' }}>
-                <Check size={12} /> {preparedForShipment ? 'Ready to Ship' : 'Pending Step 3'}
-              </div>
-              <div className="tracking-info">Transit Status: {preparedForShipment ? 'PREPARED / DROP-OFF READY' : 'PENDING'}</div>
-            </div>
-
-            {preparedForShipment && (
-              <div style={{ marginTop: 10 }}>
-                {shippedError && <div style={{ color: '#dc2626', marginBottom: 8, fontSize: '0.88rem' }}>{shippedError}</div>}
-                <button
-                  className="save-action-btn secondary-save"
-                  disabled={shippedLoading || !preparedForShipment || !kitLinked}
-                  onClick={handleMarkShipped}
-                >
-                  {shippedLoading ? (
-                    <>
-                      <span className="save-spinner"></span>
-                      <span>Updating Transit Status...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save size={16} />
-                      <span>Save & Mark Sample as Shipped</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Info Card */}
-        <div className="info-card">
-          <h3>What Happens Next?</h3>
-          <p>
-            Once received, our certified metabolomics laboratory processes your sample. Your personal biomarker report and precision diet/exercise recommendations will be generated automatically.
-          </p>
-          <button className="dashboard-btn" onClick={() => navigate('/home')}>
-            Return to Dashboard ➜
-          </button>
-        </div>
-
-        {/* ─────────────────────────────────────────────────────────────
-            INSTRUCTIONAL MODAL
-           ───────────────────────────────────────────────────────────── */}
-        {instructionsOpen && (
-          <div className="instructions-overlay" role="presentation" onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setInstructionsOpen(false);
-          }}>
-            <section className="instructions-modal" role="dialog" aria-modal="true" aria-labelledby="instructions-title">
-              <div className="instructions-modal-header">
-                <div>
-                  <div className="instructions-eyebrow">Sample Collection Guide</div>
-                  <h2 id="instructions-title">Collection Instructions</h2>
-                </div>
-                <button className="instructions-close" type="button" onClick={() => setInstructionsOpen(false)} aria-label="Close collection instructions">
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div className="instruction-step-list">
-                <div className={`instruction-step ${instructionStep === 1 ? 'current' : 'complete'}`}>
-                  <span className="instruction-number">{instructionStep === 1 ? '1' : <Check size={16} />}</span>
-                  <div>
-                    <h3>Step 1: Open your box and scan barcode</h3>
-                    <p>
-                      Open your green Omiver kit box. Find the unique alphanumeric barcode on the bottom-right corner of the box and register it using the scanner on the main page.
-                    </p>
-                  </div>
-                </div>
-
-                <div className={`instruction-step ${instructionStep === 2 ? 'current' : ''}`}>
-                  <span className="instruction-number">2</span>
-                  <div>
-                    <h3>Step 2: Place the collection device on your arm</h3>
-                    <p style={{ marginBottom: 8 }}>
-                      Follow the official manual protocol:
-                    </p>
-                    <ol style={{ margin: 0, paddingLeft: 18, fontSize: '0.84rem', color: '#475569', lineHeight: 1.45 }}>
-                      <li>Clean your upper outer arm with the alcohol wipe and allow to dry.</li>
-                      <li>Peel off the red adhesive liner to expose the sticky surface.</li>
-                      <li>Stick device firmly onto the upper arm.</li>
-                      <li>Press the large red top button firmly until it clicks.</li>
-                      <li>Relax arm downward for 2–5 minutes until the pod fills.</li>
-                      <li>Peel off device, bandage arm, invert tube 5 times, and seal in silver bag.</li>
-                    </ol>
-                  </div>
-                </div>
-              </div>
-
-              {instructionStep === 1 ? (
-                <button 
-                  className="instruction-save-btn" 
-                  type="button" 
-                  onClick={() => setInstructionStep(2)}
-                >
-                  Next Step →
-                </button>
-              ) : (
-                <button 
-                  className="instruction-save-btn" 
-                  type="button" 
-                  onClick={() => setInstructionsOpen(false)}
-                >
-                  Got It ✓
-                </button>
-              )}
-            </section>
+        {apiError && (
+          <div className="error-banner" role="alert">
+            <Info size={18} />
+            {apiError}
           </div>
         )}
-      </div>
+
+        {currentStep > 1 && kitCode && (
+          <div className="wizard__linked">
+            <div className="wizard__linked-info">
+              <span className="wizard__linked-label">Linked kit</span>
+              <span className="wizard__linked-code">{kitCode}</span>
+            </div>
+            <div className="wizard__linked-actions">
+              {confirmUnlink && (
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  onClick={() => setConfirmUnlink(false)}
+                  disabled={apiLoading}
+                >
+                  Cancel
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn btn--sm wizard__unlink"
+                onClick={handleUnlinkKit}
+                disabled={apiLoading}
+                aria-busy={apiLoading}
+              >
+                <Link2Off size={16} aria-hidden="true" />
+                {confirmUnlink ? 'Confirm unlink — resets progress' : 'Unlink kit'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="wizard__step-container">
+          {currentStep === 1 && (
+          <div className="fade-in">
+            <div className="wizard__step-header">
+              <span className="section-label">Step 1 of 5</span>
+              <h2 className="section-title">Link your kit</h2>
+              <p className="text-secondary">
+                Unbox your green Omiver test kit and register the unique barcode to associate the physical sample with your profile.
+              </p>
+            </div>
+            <div className="wizard__step-content stack">
+              <div className="field">
+                <label className="field__label" htmlFor="kit-barcode">
+                  Kit Barcode
+                </label>
+                <div className="wizard__barcode-row">
+                  <input
+                    id="kit-barcode"
+                    className="input"
+                    placeholder="e.g. TASSO-001"
+                    value={kitCode}
+                    onChange={(e) => {
+                      setKitCode(e.target.value);
+                      setApiError('');
+                    }}
+                    disabled={apiLoading}
+                  />
+                  <button 
+                    className="icon-btn icon-btn--plain" 
+                    onClick={() => navigate('/collection/scan')}
+                    aria-label="Scan barcode with camera"
+                    title="Scan with Camera"
+                    disabled={apiLoading}
+                  >
+                    <Camera size={24} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+          {currentStep === 2 && (
+          <div className="fade-in">
+            <div className="wizard__step-header">
+              <span className="section-label">Step 2 of 5</span>
+              <h2 className="section-title">Collect your sample</h2>
+              <p className="text-secondary">
+                Follow the instruction manual to attach the micro-collection pod to your upper outer arm and draw your sample comfortably.
+              </p>
+            </div>
+            <div className="wizard__step-content stack">
+              <div className="wizard__video">
+                <iframe
+                  title="Collection Instructions Video"
+                  src="https://player.vimeo.com/video/1051338117?h=8f460a47f8"
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  allow="autoplay; fullscreen; encrypted-media"
+                  allowFullScreen
+                />
+              </div>
+              <div className="card">
+                <h3 className="card__title">Checklist</h3>
+                <ol className="wizard__checklist">
+                  <li>Clean site with alcohol prep pad.</li>
+                  <li>Peel adhesive liner.</li>
+                  <li>Apply to upper arm firmly.</li>
+                  <li>Press actuator button until click.</li>
+                  <li>Wait 2–5 minutes until filled.</li>
+                  <li>Remove, invert gently 5 times.</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        )}
+
+          {currentStep === 3 && (
+          <div className="fade-in">
+            <div className="wizard__step-header">
+              <span className="section-label">Step 3 of 5</span>
+              <h2 className="section-title">Seal the pouch</h2>
+              <p className="text-secondary">
+                Protect your sample during transit.
+              </p>
+            </div>
+            <div className="wizard__step-content stack">
+              <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                <Package size={48} style={{ color: 'var(--accent)', marginBottom: 'var(--sp-4)' }} />
+                <p className="text-body">
+                  Seal your collection tube inside the silver preservation pouch, then place the pouch back inside the green Omiver box.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+          {currentStep === 4 && (
+          <div className="fade-in">
+            <div className="wizard__step-header">
+              <span className="section-label">Step 4 of 5</span>
+              <h2 className="section-title">Prepare for shipment</h2>
+              <p className="text-secondary">
+                Pack the kit securely inside the return shipping mailer.
+              </p>
+            </div>
+            <div className="wizard__step-content stack">
+              <div className="card">
+                <ol className="wizard__checklist">
+                  <li>Place closed green box inside poly mailer.</li>
+                  <li>Seal envelope securely.</li>
+                  <li>Affix prepaid return shipping label.</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        )}
+
+          {currentStep === 5 && (
+          <div className="fade-in">
+            <div className="wizard__step-header">
+              <span className="section-label">Step 5 of 5</span>
+              <h2 className="section-title">Ship your sample</h2>
+              <p className="text-secondary">
+                Drop off your prepaid package at any FedEx drop box or location.
+              </p>
+            </div>
+            <div className="wizard__step-content stack">
+               <div className="card">
+                <h3 className="card__title">What happens next?</h3>
+                <p className="text-secondary" style={{ marginTop: 'var(--sp-2)' }}>
+                  Once received, our certified metabolomics laboratory processes your sample. Your personal biomarker report and precision diet/exercise recommendations will be generated automatically.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        </div>
+      </main>
+
+      <footer className="wizard__footer">
+        <div className="wizard__footer-content">
+          {currentStep === 1 && (
+          <button 
+            className="btn btn--primary btn--block" 
+            onClick={handleLinkKit} 
+            disabled={apiLoading}
+            aria-busy={apiLoading}
+          >
+            {apiLoading ? <span className="spinner" aria-hidden="true" /> : <Save size={18} />}
+            {apiLoading ? 'Saving...' : 'Save & Continue'}
+          </button>
+        )}
+        {currentStep === 2 && (
+          <button 
+            className="btn btn--primary btn--block" 
+            onClick={handleConfirmSampleCollected} 
+            disabled={apiLoading}
+            aria-busy={apiLoading}
+          >
+            {apiLoading ? <span className="spinner" aria-hidden="true" /> : <CheckCircle2 size={18} />}
+            {apiLoading ? 'Saving...' : 'I have collected my sample'}
+          </button>
+        )}
+        {currentStep === 3 && (
+          <button 
+            className="btn btn--primary btn--block" 
+            onClick={handleBarcodeInBox} 
+            disabled={apiLoading}
+            aria-busy={apiLoading}
+          >
+            {apiLoading ? <span className="spinner" aria-hidden="true" /> : <CheckCircle2 size={18} />}
+            {apiLoading ? 'Saving...' : 'I have sealed the pouch'}
+          </button>
+        )}
+        {currentStep === 4 && (
+          <button 
+            className="btn btn--primary btn--block" 
+            onClick={handleSavePreparation} 
+            disabled={apiLoading}
+            aria-busy={apiLoading}
+          >
+            {apiLoading ? <span className="spinner" aria-hidden="true" /> : <CheckCircle2 size={18} />}
+            {apiLoading ? 'Saving...' : 'Box is packed'}
+          </button>
+        )}
+        {currentStep === 5 && (
+          <button 
+            className="btn btn--primary btn--block" 
+            onClick={handleMarkShipped} 
+            disabled={apiLoading}
+            aria-busy={apiLoading}
+          >
+            {apiLoading ? <span className="spinner" aria-hidden="true" /> : <CheckCircle2 size={18} />}
+            {apiLoading ? 'Saving...' : 'I have dropped it off'}
+          </button>
+        )}
+        </div>
+      </footer>
     </div>
   );
 };

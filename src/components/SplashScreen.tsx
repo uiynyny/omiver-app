@@ -1,17 +1,21 @@
-
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { ArrowRight } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { getAuthToken, getPersistentLogin, verifyToken, clearAuthToken, clearPersistentLogin } from '../api/user';
 import './SplashScreen.css';
-import omiverLogo from '../assets/omiver.svg';
 
 const SplashScreen = () => {
   const navigate = useNavigate();
   const { state, dispatch } = useAppContext();
   const [isChecking, setIsChecking] = useState(true);
+  // `verifyToken` is a network round trip; guards against setting state or
+  // navigating after the user has already left the screen.
+  const aliveRef = useRef(true);
 
   useEffect(() => {
+    aliveRef.current = true;
+
     const checkAndRestoreSession = async () => {
       try {
         // First check if user is already authenticated in current session
@@ -31,7 +35,8 @@ const SplashScreen = () => {
         if (persistentLogin && token) {
           // Verify the token is still valid with the API
           const isTokenValid = await verifyToken();
-          
+          if (!aliveRef.current) return;
+
           if (isTokenValid) {
             // Token is valid, restore the session
             dispatch({
@@ -43,7 +48,7 @@ const SplashScreen = () => {
                 userType: persistentLogin.userType,
               },
             });
-            
+
             // Redirect to appropriate screen
             if (persistentLogin.userType === 'PROVIDER') {
               navigate('/provider/dashboard');
@@ -57,27 +62,68 @@ const SplashScreen = () => {
             clearPersistentLogin();
           }
         }
-      } catch (error) {
-        console.error('Error checking session:', error);
+      } catch {
+        // A failed session check is not fatal and must not be logged — the
+        // response can carry identity data. Fall through to the signed-out
+        // state and let the user sign in manually.
+        if (aliveRef.current) {
+          clearAuthToken();
+          clearPersistentLogin();
+        }
       } finally {
-        setIsChecking(false);
+        if (aliveRef.current) setIsChecking(false);
       }
     };
 
     checkAndRestoreSession();
+
+    return () => {
+      aliveRef.current = false;
+    };
   }, [navigate, state.auth.isAuthenticated, state.auth.userType, dispatch]);
 
-  const handleNext = () => {
-    if (!isChecking) {
-      navigate('/login');
-    }
-  };
-
   return (
-    <div className={`welcome-screen splash`} onClick={handleNext} style={{ cursor: isChecking ? 'default' : 'pointer' }}>
-      <img src={omiverLogo} alt="Omiver Logo" className="omiver-logo" />
-      {isChecking && <p style={{ marginTop: '20px', textAlign: 'center', color: '#666' }}>Loading...</p>}
-    </div> 
+    <div className="splash">
+      <div className="splash__inner">
+        <div className="brand-logo splash__logo" role="img" aria-label="Omiver" />
+
+        <div className="splash__copy">
+          <h1 className="splash__title">Know what your blood is telling you.</h1>
+          <p className="splash__sub">
+            At-home biomarker testing, read by clinicians, turned into a plan you can actually follow.
+          </p>
+        </div>
+      </div>
+
+      <div className="splash__actions">
+        {isChecking ? (
+          <div className="splash__checking" role="status" aria-live="polite" aria-busy="true">
+            <span className="spinner" aria-hidden="true" />
+            <span className="text-secondary">Restoring your session…</span>
+          </div>
+        ) : (
+          <>
+            <button
+              type="button"
+              id="splash-get-started"
+              className="btn btn--primary btn--block"
+              onClick={() => navigate('/register')}
+            >
+              Get started
+              <ArrowRight size={18} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              id="splash-sign-in"
+              className="btn btn--ghost btn--block"
+              onClick={() => navigate('/login')}
+            >
+              I already have an account
+            </button>
+          </>
+        )}
+      </div>
+    </div>
   );
 };
 

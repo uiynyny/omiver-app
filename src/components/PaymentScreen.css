@@ -1,209 +1,166 @@
-.payment-root {
+/* ============================================================
+   Checkout — presented as a bottom sheet over the previous screen
+   ============================================================ */
+
+.checkout {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
   display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5); /* Dimmed background overlay effect if treated as modal, but here we are a full page */
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  position: relative;
+  align-items: flex-end;
+  justify-content: center;
+  background: var(--scrim);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
-/* Simulate a bottom sheet / modal look on top of the dark overlay */
-.payment-modal {
-  flex: 1;
-  background-color: #ffffff;
-  margin-top: 60px; /* Space from top to show "behind" content */
-  border-top-left-radius: 24px;
-  border-top-right-radius: 24px;
+.checkout__sheet {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: var(--content-max);
+  max-height: 94dvh;
+  background: var(--bg-elevated);
+  border-top-left-radius: var(--r-2xl);
+  border-top-right-radius: var(--r-2xl);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
-  animation: slideUp 0.3s ease-out;
 }
 
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
+/* ---- Header ---- */
 
-.payment-header {
-  padding: 24px;
-  text-align: center;
+.checkout__header {
   position: relative;
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-5) var(--sp-4) var(--sp-3);
+  border-bottom: 1px solid var(--divider);
 }
 
-.payment-drag-handle {
-  width: 40px;
-  height: 4px;
-  background-color: #e0e0e0;
-  border-radius: 2px;
-  margin: 0 auto 16px auto;
-}
-
-.payment-header h2 {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #333;
-}
-
-.payment-close-btn {
+/* Grab handle hints that the sheet is dismissible. */
+.checkout__grabber {
   position: absolute;
-  right: 20px;
-  top: 24px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #999;
-  padding: 4px;
+  top: var(--sp-2);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 4px;
+  border-radius: var(--r-full);
+  background: var(--surface-3);
 }
 
-.payment-content {
+.checkout__title {
+  grid-column: 2;
+  font-family: var(--font-display);
+  font-size: var(--fs-heading);
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: var(--tracking-title);
+}
+
+.checkout__header .icon-btn { grid-column: 3; }
+
+/* ---- Scrollable body ---- */
+
+.checkout__body {
   flex: 1;
   overflow-y: auto;
-  padding: 0 24px 100px 24px; /* Bottom padding for fixed footer */
+  -webkit-overflow-scrolling: touch;
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
 }
 
-/* Order Summary */
-.order-summary-card {
-  background-color: #f8f9fa;
-  border: 1px solid #eee;
-  border-radius: 12px;
-  padding: 16px;
+.checkout__section { display: flex; flex-direction: column; gap: var(--sp-3); }
+
+.checkout__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+}
+
+/* ---- Order summary ---- */
+
+.checkout__summary {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
 }
 
-.order-summary-info h3 {
-  margin: 0 0 4px 0;
-  font-size: 1rem;
-  color: #333;
-}
+.checkout__summary-main { min-width: 0; }
 
-.order-summary-sub {
-  font-size: 0.85rem;
-  color: #666;
-}
-
-.order-price {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #333;
-}
-
-/* Form Styles */
-.form-section {
-  margin-bottom: 24px;
-}
-
-.form-label {
-  display: block;
-  font-size: 0.9rem;
+.checkout__kit-name {
+  font-family: var(--font-display);
+  font-size: var(--fs-heading);
   font-weight: 600;
-  margin-bottom: 12px;
-  color: #333;
+  letter-spacing: var(--tracking-title);
 }
 
-.input-group {
-  margin-bottom: 12px;
+.checkout__kit-blurb {
+  margin-top: 2px;
+  font-size: var(--fs-label);
+  color: var(--text-secondary);
 }
 
-.text-input {
-  width: 100%;
-  padding: 14px 16px;
-  background-color: #f8f9fa;
+.checkout__summary-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+/* ---- Stripe Elements host ----
+   Styled to match .input so the iframe doesn't look bolted on. */
+
+.checkout__card-element {
+  padding: var(--sp-4);
+  background: var(--surface-2);
   border: 1px solid transparent;
-  border-radius: 12px;
-  font-size: 1rem;
-  outline: none;
-  transition: all 0.2s;
-  box-sizing: border-box; /* Create React App / Vite resets might needed */
-  color: #333;
-  min-width: 0;
+  border-radius: var(--r-md);
+  transition: border-color var(--dur) var(--ease);
 }
 
-.text-input:focus {
-  background-color: #fff;
-  border-color: #6b9b8a;
-  box-shadow: 0 0 0 3px rgba(107, 155, 138, 0.1);
+.checkout__card-element:focus-within {
+  border-color: var(--accent);
+  background: var(--surface);
 }
 
-.card-input-container {
-  position: relative;
-}
+/* ---- Trust note ---- */
 
-.card-icon {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #999;
-  pointer-events: none;
-}
-
-/* Row for Expiry/CVV and City/State */
-.form-row {
-  display: flex;
-  gap: 12px;
-}
-
-.form-row .input-group {
-  flex: 1;
-  min-width: 0;
-}
-
-/* Security Note */
-.security-note {
+.checkout__secure {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  font-size: 0.75rem;
-  color: #999;
-  margin-top: 24px;
-  margin-bottom: 12px;
+  gap: var(--sp-2);
+  font-size: var(--fs-label);
+  color: var(--text-tertiary);
+  text-align: center;
 }
 
-/* Footer */
-.payment-footer {
-  bottom: 0;
-  left: 0;
-  background: white;
-  padding: 8px 16px;
-  z-index: 10;
-}
+/* ---- Sticky footer ---- */
 
-.pay-btn {
-  width: 100%;
-  padding: 16px;
-  background-color: #6b9b8a; /* Primary Sage Green */
-  color: white;
-  border: none;
-  border-radius: 25px;
-  font-weight: 600;
-  font-size: 1.1rem;
-  cursor: pointer;
+.checkout__footer {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: opacity 0.2s;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  padding-bottom: calc(var(--sp-4) + var(--safe-bottom));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
 }
 
-.pay-btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.pay-btn:active {
-  transform: scale(0.98);
-}
-
-.quantity-note {
-  font-size: 0.8rem;
-  color: #999;
-  margin-top: 8px;
-  font-style: italic;
+.checkout__total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
 }

@@ -12,6 +12,14 @@ dist
 dist-ssr
 *.local
 
+# Environment.
+# `.env` and `.env.production` are intentionally tracked: they contain only
+# non-secret, build-time Vite config (VITE_* values are inlined into the
+# bundle and are therefore public by definition). Anything genuinely secret
+# belongs in one of the *.local overrides below, which are never committed.
+.env.local
+.env.*.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

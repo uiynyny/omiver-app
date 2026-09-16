@@ -1,9 +1,18 @@
+/* ============================================================
+   ScanKitScreen - Camera barcode scanner
+   ============================================================ */
+
+/* The scanner is a full-bleed camera surface, not an app surface. It
+   deliberately opts out of the light theme: the stage stays dark so the
+   video feed and its overlay chrome remain legible, and inherited ink is
+   inverted. Elements that float above the feed must never use --text. */
 .scan-root {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  background-color: #000;
-  color: white;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--camera-stage);
+  color: var(--text-inverse);
   position: relative;
   overflow: hidden;
 }
@@ -11,31 +20,30 @@
 .scan-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 16px;
+  justify-content: space-between;
+  padding: var(--sp-2) var(--sp-4);
   position: absolute;
-  top: 0;
+  top: var(--safe-top);
   left: 0;
   right: 0;
   z-index: 10;
   background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
 }
 
-.scan-back-btn {
-  position: absolute;
-  left: 16px;
-  background: none;
-  border: none;
-  color: white;
-  padding: 8px;
-  cursor: pointer;
+/* Mirrors the width of the back button so `.scan-title` stays centred. */
+.scan-header__spacer {
+  flex: 0 0 40px;
+  width: 40px;
 }
 
 .scan-title {
   flex: 1;
   text-align: center;
-  font-size: 1.2rem;
+  font-family: var(--font-display);
+  font-size: var(--fs-heading);
   font-weight: 600;
+  letter-spacing: var(--tracking-title);
+  color: var(--text-inverse);
 }
 
 .camera-view {
@@ -45,7 +53,7 @@
   justify-content: center;
   align-items: center;
   position: relative;
-  background-color: #1a1a1a; 
+  background-color: var(--camera-stage);
 }
 
 .camera-feed {
@@ -65,8 +73,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle, #333 0%, #111 100%);
-  opacity: 0.7;
+  background: var(--camera-stage);
   z-index: 0;
 }
 
@@ -79,18 +86,19 @@
   justify-content: center;
   width: 100%;
   height: 100%;
+  pointer-events: none;
 }
 
 .scan-reticle {
-  width: 250px;
-  height: 250px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 20px;
+  width: 280px;
+  height: 180px;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5); /* Dimming outside */
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.7); /* Darken everything outside */
+  border-radius: var(--r-md);
+  margin-bottom: var(--sp-6);
 }
 
 /* Corner markers */
@@ -102,7 +110,7 @@
   position: absolute;
   width: 40px;
   height: 40px;
-  border-color: #D27644; /* Brand orange/brown */
+  border-color: var(--accent);
   border-style: solid;
   border-width: 4px;
 }
@@ -112,7 +120,7 @@
   left: -2px;
   border-right: none;
   border-bottom: none;
-  border-top-left-radius: 20px;
+  border-top-left-radius: var(--r-md);
 }
 
 .scan-reticle::after {
@@ -120,7 +128,7 @@
   right: -2px;
   border-left: none;
   border-bottom: none;
-  border-top-right-radius: 20px;
+  border-top-right-radius: var(--r-md);
 }
 
 .scan-reticle-inner {
@@ -136,7 +144,7 @@
   left: -2px;
   border-right: none;
   border-top: none;
-  border-bottom-left-radius: 20px;
+  border-bottom-left-radius: var(--r-md);
 }
 
 .scan-reticle-inner::after {
@@ -144,92 +152,63 @@
   right: -2px;
   border-left: none;
   border-top: none;
-  border-bottom-right-radius: 20px;
+  border-bottom-right-radius: var(--r-md);
 }
 
 .scan-line {
   width: 90%;
   height: 2px;
-  background-color: #D27644;
-  box-shadow: 0 0 4px #D27644;
+  background-color: var(--accent);
+  box-shadow: 0 0 4px var(--accent);
   animation: scan-move 2s infinite linear;
 }
 
 @keyframes scan-move {
-  0% { transform: translateY(-100px); opacity: 0; }
+  0% { transform: translateY(-70px); opacity: 0; }
   10% { opacity: 1; }
   90% { opacity: 1; }
-  100% { transform: translateY(100px); opacity: 0; }
-}
-
-.scan-controls {
-  position: absolute;
-  bottom: 40px;
-  display: flex;
-  gap: 24px;
-  z-index: 10;
-}
-
-.scan-control-btn {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  color: white;
-  cursor: pointer;
-  backdrop-filter: blur(4px);
-}
-
-.scan-control-btn.active {
-  background-color: rgba(210, 118, 68, 0.8);
-  color: white;
-}
-
-.scan-capture-btn {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  background-color: white;
-  border: 4px solid rgba(255, 255, 255, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.scan-capture-inner {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background-color: white;
-  border: 2px solid #000;
+  100% { transform: translateY(70px); opacity: 0; }
 }
 
 .scan-instruction-text {
-  position: absolute;
-  top: 15%; /* Above reticle */
-  color: white;
+  color: var(--text-inverse);
   text-align: center;
-  width: 100%;
-  font-size: 0.9rem;
-  opacity: 0.8;
-  z-index: 10;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  max-width: 280px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
 }
 
-.scan-error {
+/* A regular light card lifted above the dark stage — it steps back out of
+   the inverted ink inherited from `.scan-root`. */
+.scan-error-container {
   position: absolute;
-  top: 20%;
-  left: 16px;
-  right: 16px;
-  z-index: 11;
-  color: #fff;
-  background: rgba(210, 118, 68, 0.88);
-  border-radius: 12px;
-  padding: 10px 12px;
-  text-align: center;
-  font-size: 0.9rem;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  margin: var(--sp-4);
+  max-width: 400px;
 }
+
+.scan-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--sp-4);
+  padding-bottom: calc(var(--sp-4) + var(--safe-bottom));
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+}
+

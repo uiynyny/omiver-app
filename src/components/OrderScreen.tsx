@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Box, Truck, CheckCircle, Package, Inbox, HelpCircle, Printer, ArrowLeft } from 'lucide-react';
+import { Box, Truck, CheckCircle, Package, Inbox, HelpCircle, Printer, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { fetchOrders, fetchOrderDetail, type OrderDetail } from '../api/user';
-
+import { fetchOrders, fetchOrderDetail, type OrderDetail, type OrderStatus, type OrderProgressStage } from '../api/user';
+import { formatDateTime } from '../utils/format';
 import './OrderScreen.css';
 import BottomNav from './BottomNav';
-import omiver from '../assets/omiver.svg';
 
 const OrderScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -14,258 +13,256 @@ const OrderScreen: React.FC = () => {
   const { state } = useAppContext();
   const clientId = state.auth.clientId;
   const orderId = (location.state as { orderId?: number } | null)?.orderId;
+  
   const [order, setOrder] = useState<OrderDetail | null>(null);
-
   const [loading, setLoading] = useState(true);
-
-  const formatOrderDate = (dateString?: string) => {
-    if (!dateString) return '';
-    try {
-      const d = new Date(dateString);
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-    } catch {
-      return dateString;
-    }
-  };
+  const [error, setError] = useState('');
 
   useEffect(() => {
+    let cancelled = false;
     const loadOrder = async () => {
-      if (orderId) {
-        try {
-          const detail = await fetchOrderDetail(orderId);
-          setOrder(detail);
-        } catch (error) {
-          console.error(error);
-        } finally {
-          setLoading(false);
-        }
-        return;
-      }
-
-      if (!clientId) {
-        setLoading(false);
-        return;
-      }
-
+      setLoading(true);
+      setError('');
       try {
-        const orders = await fetchOrders(clientId);
-        if (orders.length > 0) {
-          const latestOrder = orders[0];
-          const detail = await fetchOrderDetail(latestOrder.id);
-          setOrder(detail);
+        if (orderId) {
+          const detail = await fetchOrderDetail(orderId);
+          if (!cancelled) setOrder(detail);
+        } else if (clientId) {
+          const orders = await fetchOrders(clientId);
+          if (orders.length > 0) {
+            const latestOrder = orders[0];
+            const detail = await fetchOrderDetail(latestOrder.id);
+            if (!cancelled) setOrder(detail);
+          }
         }
-      } catch (error) {
-        console.error(error);
+      } catch {
+        if (!cancelled) setError('Could not load order details.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     loadOrder();
+    return () => { cancelled = true; };
   }, [clientId, orderId]);
 
   const orderNumber = order?.order_number ?? order?.id;
   const orderName = order?.test_kit_name ?? order?.testName ?? 'Order';
-  const orderDate = formatOrderDate(order?.order_date || order?.created_at || order?.date);
+  const orderDate = formatDateTime(order?.order_date || order?.created_at || order?.date);
   const forwardTrackingNumber = order?.forward_tracking_number || order?.tracking_number || order?.tracking;
   const returnTrackingNumber = order?.return_tracking_number || '';
-  const isShipped = ['SHIPPING', 'TESTING', 'FINISHED'].includes(order?.collection_status || '');
-  const orderStatus = order?.status || 'PENDING';
+  // Whether the sample is already on its way back. Read from the order's own
+  // status so this can't disagree with the timeline above it; the parallel
+  // KitCollection status is a legacy second opinion.
+  const isShipped = ['SAMPLE_SHIPPED', 'SAMPLE_DELIVERED'].includes(order?.status || '')
+    || ['SHIPPING', 'TESTING', 'FINISHED'].includes(order?.collection_status || '');
+  const orderStatus: OrderStatus = order?.status ?? 'CREATED';
+
   const getStatusMessage = () => {
     switch (orderStatus) {
-      case 'CONFIRMED':
-        return 'We are processing your order';
-      case 'SHIPPED':
-        return forwardTrackingNumber ? `Your order has shipped. Tracking: ${forwardTrackingNumber}` : 'Your order has shipped';
-      case 'IN_TRANSIT':
-        return forwardTrackingNumber ? `Your order is in transit. Tracking: ${forwardTrackingNumber}` : 'Your order is in transit';
-      case 'OUT_FOR_DELIVERY':
-        return forwardTrackingNumber ? `Your order is out for delivery. Tracking: ${forwardTrackingNumber}` : 'Your order is out for delivery';
-      case 'DELIVERED':
-        return forwardTrackingNumber ? `Your order has been delivered. Tracking: ${forwardTrackingNumber}` : 'Your order has been delivered';
-      case 'CANCELLED':
-        return 'Your order has been cancelled';
-      default:
-        return 'Your order has been received';
+      case 'SHIPPED': return 'Your kit has shipped';
+      case 'IN_TRANSIT': return 'Your kit is in transit';
+      case 'OUT_FOR_DELIVERY': return 'Your kit is out for delivery';
+      case 'DELIVERED': return 'Your kit has been delivered';
+      case 'SAMPLE_SHIPPED': return 'Your sample is on its way to the lab';
+      case 'SAMPLE_DELIVERED': return 'The lab has received your sample';
+      case 'CANCELLED': return 'Your order has been cancelled';
+      default: return 'Your order has been received';
     }
   };
 
-  const getStatusLink = () => {
-    if (!forwardTrackingNumber || !['SHIPPED', 'IN_TRANSIT', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(orderStatus)) {
-      return null;
-    }
+  // The round trip is computed server-side from the delivery-event feed, so
+  // the app renders it rather than re-deriving it. `progress` is optional only
+  // to tolerate an older backend; the fallback shows the first stage done.
+  const stages: OrderProgressStage[] = order?.progress ?? [
+    { key: 'ORDER_PLACED', label: 'Ordered', leg: 'outbound', done: !!(order?.order_date || order?.created_at), timestamp: null },
+    { key: 'SHIPPED', label: 'Shipped to you', leg: 'outbound', done: false, timestamp: null },
+    { key: 'DELIVERED', label: 'Delivered', leg: 'outbound', done: false, timestamp: null },
+    { key: 'SAMPLE_SHIPPED', label: 'Sample shipped', leg: 'return', done: false, timestamp: null },
+    { key: 'SAMPLE_DELIVERED', label: 'Sample delivered', leg: 'return', done: false, timestamp: null },
+  ];
 
-    return (
-      <a
-        href={`https://tracking.com/?tracking=${encodeURIComponent(forwardTrackingNumber)}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ color: '#6b9b8a', textDecoration: 'none', fontWeight: 500 }}
-      >
-        {forwardTrackingNumber}
-      </a>
-    );
-  };
+  // The return leg only becomes meaningful once the kit is in the customer's
+  // hands, so label it to explain the jump from "delivered" to "shipped" again.
+  const firstReturnIndex = stages.findIndex((s) => s.leg === 'return');
 
   return (
-    <div className="order-root">
-      <header className="home-header">
-        <img src={omiver} alt="Omiver Logo" className="home-logo" width={150} />
+    <div className="screen screen--nav">
+      <header className="app-header">
+        <button type="button" className="icon-btn icon-btn--plain" onClick={() => navigate('/kits?tab=orders')} aria-label="Back to orders">
+          <ArrowLeft size={20} />
+        </button>
+        <h1 className="app-header__title">Order Details</h1>
+        <span />
       </header>
 
-      <main className="order-main">
-        <div className='order-top'>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12, position: 'relative', justifyContent: 'center' }}>
-            <button onClick={() => navigate('/kits')} style={{ background: 'none', border: 'none', padding: 8, cursor: 'pointer', position: 'absolute', left: 0 }} aria-label="Back to orders">
-              <ArrowLeft size={20} color="#fff" />
-            </button>
-            <h2 className='order-title' style={{ margin: 0 }}>My Order</h2>
+      <main className="container stack-lg order-detail">
+        {error && (
+          <div className="error-banner" role="alert">
+            <AlertCircle size={18} aria-hidden="true" />
+            {error}
           </div>
-          {loading ? (
-            <div className="order-card empty-order-card">
-              <div className='collection-card-group'>
-                <div className='collection-card-text-group'>
-                  <div style={{ opacity: 0.85, marginBottom: 6 }}>Loading your latest order</div>
-                  <h2>Checking your order status</h2>
-                </div>
-                <div className='order-card-icon'><Package size={48} color='#fff' /></div>
-              </div>
-            </div>
-          ) : order ? (
-            <div className="order-card">
-              <div className='collection-card-group'>
-                <div className='collection-card-text-group'>
-                  <div style={{ opacity: 0.85, marginBottom: 6 }}>Home collection kit</div>
-                  <h2>{orderName}</h2>
-                </div>
-                <div className='order-card-icon'><Package size={48} color='#fff' /></div>
-              </div>
-              <div className="order-meta">
-                <div>ID: {orderNumber}</div>
-                <div>Order Date: {orderDate}</div>
-              </div>
-            </div>
-          ) : (
-            <div className="order-card empty-order-card">
-              <div className='collection-card-group'>
-                <div className='collection-card-text-group'>
-                  <div style={{ opacity: 0.85, marginBottom: 6 }}>No recent orders</div>
-                  <h2>Order a kit to get started</h2>
-                </div>
-                <div className='order-card-icon'><Inbox size={48} color='#fff' /></div>
-              </div>
-              <button className="next-cta" onClick={() => navigate('/kits')}>Browse Kits</button>
-            </div>
-          )}
-        </div>
+        )}
 
-        {order && (
-          <div className='bottom-card'>
-            <section className="tracking-panel">
-              <div className="tracking-label">Tracking Numbers</div>
-              <div style={{ color: '#777', marginBottom: 10 }}>Track your order</div>
-              <div className="tracking-number">
-                <div className="tracking-list">
+        {loading ? (
+          <div className="stack" aria-busy="true">
+            <span className="sr-only">Loading order details...</span>
+            <div className="skeleton" style={{ height: 100 }} />
+            <div className="skeleton" style={{ height: 200 }} />
+          </div>
+        ) : order ? (
+          <>
+            <section className="card card--inset fade-in">
+               <div className="row-between">
                   <div>
-                    <div style={{ fontSize: 12, color: '#777', marginBottom: 4 }}>Forward</div>
-                    <div style={{ fontWeight: 700 }}>{forwardTrackingNumber || 'Pending'}</div>
+                     <p className="text-label text-tertiary">Home collection kit</p>
+                     <h2 className="card__title">{orderName}</h2>
                   </div>
+                  <div className="icon-btn" style={{ width: 48, height: 48, background: 'var(--surface-3)', pointerEvents: 'none' }} aria-hidden="true">
+                     <Package size={24} className="text-accent" />
+                  </div>
+               </div>
+               <div className="row-between" style={{ marginTop: 'var(--sp-4)' }}>
                   <div>
-                    <div style={{ fontSize: 12, color: '#777', marginBottom: 4 }}>Return</div>
-                    <div style={{ fontWeight: 700 }}>{returnTrackingNumber || 'Pending'}</div>
+                     <p className="text-label text-tertiary">Order ID</p>
+                     <p className="text-body tabular">{orderNumber}</p>
                   </div>
-                </div>
-                {forwardTrackingNumber && <button className="copy-btn" onClick={() => navigator.clipboard?.writeText(forwardTrackingNumber)}>Copy forward</button>}
-              </div>
+                  <div style={{ textAlign: 'right' }}>
+                     <p className="text-label text-tertiary">Date</p>
+                     <p className="text-body tabular">{orderDate}</p>
+                  </div>
+               </div>
             </section>
 
-            <section className="progress-card">
-              <h3 style={{ marginTop: 0 }}>Progress</h3>
-              {order && (() => {
-                const deliveryEvents = order.delivery_events || [];
-                const isDelivered = orderStatus === 'DELIVERED' || deliveryEvents.some(e => e.event_type === 'DELIVERED');
-                const stages = [
-                  { id: 'ordered', label: 'Ordered', done: !!(order.order_date || order.created_at) },
-                  { id: 'shipped', label: 'Shipped (forward)', done: !!forwardTrackingNumber },
-                  { id: 'return_label', label: 'Return label included', done: !!returnTrackingNumber },
-                  { id: 'returned', label: 'Sample returned', done: isDelivered },
-                ];
-
-                return (
-                  <div className="progress-steps">
-                    {stages.map(s => (
-                      <div key={s.id} className={`step ${s.done ? 'done' : ''}`}>
-                        <div className="step-dot">{s.done ? <CheckCircle size={16} color="#6b9b8a" /> : <div className="step-empty" />}</div>
-                        <div className="step-label">{s.label}</div>
-                      </div>
-                    ))}
+            <section className="card fade-in">
+              <h2 className="card__title">Tracking</h2>
+              <div className="list">
+                <div className="list__row" style={{ paddingInline: 0 }}>
+                  <div className="list__body">
+                    <span className="list__title">Forward</span>
+                    <span className="list__meta">{forwardTrackingNumber || 'Pending'}</span>
                   </div>
-                );
-              })()}
-              <div className="progress-row">
-                <div className="progress-icon">
-                  {orderStatus === 'SHIPPED' || orderStatus === 'IN_TRANSIT' || orderStatus === 'OUT_FOR_DELIVERY' ? (
-                    <Truck color="#6b9b8a" />
-                  ) : orderStatus === 'DELIVERED' ? (
-                    <Box color="#6b9b8a" />
-                  ) : (
-                    <CheckCircle color="#6b9b8a" />
+                  {forwardTrackingNumber && (
+                    <button type="button" className="btn btn--sm btn--secondary" onClick={() => navigator.clipboard?.writeText(forwardTrackingNumber)}>
+                      Copy
+                    </button>
                   )}
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div className="progress-title">
-                    {orderStatus}
-                    <span style={{ background: '#eaf5ec', color: '#6b9b8a', marginLeft: 8, padding: '4px 8px', borderRadius: 12, fontSize: 12 }}>
-                      Current Status
-                    </span>
+                <div className="list__row" style={{ paddingInline: 0, borderBottom: 'none' }}>
+                  <div className="list__body">
+                    <span className="list__title">Return</span>
+                    <span className="list__meta">{returnTrackingNumber || 'Pending'}</span>
                   </div>
-                  <div style={{ color: '#777' }}>
-                    {getStatusMessage()} {getStatusLink() && <span style={{ marginLeft: 4 }}>- {getStatusLink()}</span>}
-                  </div>
+                  {returnTrackingNumber && (
+                    <button type="button" className="btn btn--sm btn--secondary" onClick={() => navigator.clipboard?.writeText(returnTrackingNumber)}>
+                      Copy
+                    </button>
+                  )}
                 </div>
               </div>
             </section>
 
-            <section className="actions-card">
-              <h3>Order Actions</h3>
-              <div className="actions-grid">
-                <button className="action-btn" onClick={() => window.print()}>
-                  <Printer size={20} />
-                  <span>Print Receipt</span>
-                </button>
-                <button
-                  className="action-btn"
-                  onClick={() => {
+            <section className="card fade-in">
+              <h2 className="card__title">Status</h2>
+              <div className="order__status">
+                <span className="order__status-icon" aria-hidden="true">
+                  {orderStatus === 'CANCELLED' ? (
+                    <AlertCircle size={20} />
+                  ) : orderStatus === 'SHIPPED' || orderStatus === 'IN_TRANSIT'
+                    || orderStatus === 'OUT_FOR_DELIVERY' || orderStatus === 'SAMPLE_SHIPPED' ? (
+                    <Truck size={20} />
+                  ) : orderStatus === 'DELIVERED' || orderStatus === 'SAMPLE_DELIVERED' ? (
+                    <Box size={20} />
+                  ) : (
+                    <CheckCircle size={20} />
+                  )}
+                </span>
+                <div>
+                   <p className="order__status-label">{order?.status_display ?? orderStatus}</p>
+                   <p className="text-secondary text-body">{getStatusMessage()}</p>
+                </div>
+              </div>
+
+              {/* Fulfilment timeline. The kit makes a round trip — out to the
+                  customer, then back to the lab — so both legs are shown. */}
+              <ol className="order__timeline">
+                {stages.map((s, i) => (
+                  <React.Fragment key={s.key}>
+                    {i === firstReturnIndex && (
+                      <li className="order__leg-heading" aria-hidden="true">Return to lab</li>
+                    )}
+                    <li className={`order__stage${s.done ? ' order__stage--done' : ''}`}>
+                      <span className="order__stage-dot" aria-hidden="true">
+                        {s.done && <CheckCircle size={14} />}
+                      </span>
+                      <span className="order__stage-label">{s.label}</span>
+                      {s.done && s.timestamp && (
+                        <span className="order__stage-time">{formatDateTime(s.timestamp)}</span>
+                      )}
+                      <span className="sr-only">{s.done ? ' — complete' : ' — pending'}</span>
+                    </li>
+                  </React.Fragment>
+                ))}
+              </ol>
+            </section>
+
+            <section className="card card--flush fade-in">
+              <ul className="list">
+                <li>
+                  <button type="button" className="list__row" onClick={() => window.print()}>
+                    <Printer size={18} className="text-secondary" aria-hidden="true" />
+                    <span className="list__body">
+                       <span className="list__title">Print Receipt</span>
+                    </span>
+                  </button>
+                </li>
+                <li>
+                  <button type="button" className="list__row" onClick={() => {
                     const to = 'info@omiver.me';
                     const subject = encodeURIComponent(`Order Support - ${orderNumber ?? ''}`);
                     const body = encodeURIComponent(`Order ID: ${orderNumber ?? ''}\n\nDescribe your issue here:`);
                     window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
-                  }}
-                >
-                  <HelpCircle size={20} />
-                  <span>Contact Support</span>
-                </button>
-              </div>
+                  }}>
+                    <HelpCircle size={18} className="text-secondary" aria-hidden="true" />
+                    <span className="list__body">
+                       <span className="list__title">Contact Support</span>
+                    </span>
+                  </button>
+                </li>
+              </ul>
             </section>
 
-            <section className="next-card">
-              <h3>Next Steps</h3>
+            <section className="card fade-in">
+              <h2 className="card__title">Next Steps</h2>
               {isShipped ? (
-                <div style={{ color: '#777' }}>Please wait patiently for an update from us.</div>
+                <p className="text-secondary text-body">Please wait patiently for an update from us.</p>
               ) : (
-                <>
-                  <div style={{ color: '#777' }}>Proceed to the sample collection section to link your kit and begin the testing process.</div>
-                  <button className="next-cta" onClick={() => navigate('/collection/steps', { state: { orderId: order.id } })}>Start Sample Collection</button>
-                </>
+                <div className="stack-sm">
+                  <p className="text-secondary text-body">Proceed to the sample collection section to link your kit and begin the testing process.</p>
+                  <button type="button" className="btn btn--primary btn--block" onClick={() => navigate('/collection/steps', { state: { orderId: order.id } })}>
+                    Start Sample Collection
+                  </button>
+                </div>
               )}
             </section>
+          </>
+        ) : (
+          <div className="card empty-state fade-in">
+            <span className="empty-state__icon" aria-hidden="true">
+              <Inbox size={24} />
+            </span>
+            <h2 className="empty-state__title">No order found</h2>
+            <p className="empty-state__body">We couldn't find the details for this order.</p>
+            <button type="button" className="btn btn--primary" onClick={() => navigate('/kits')} style={{ marginTop: 'var(--sp-4)' }}>
+              Browse Kits
+            </button>
           </div>
         )}
       </main>
 
       <BottomNav active="orders" />
     </div>
-  )
-}
+  );
+};
 
-export default OrderScreen
+export default OrderScreen;

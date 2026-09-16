@@ -1,0 +1,24 @@
+# Without this, `COPY . .` ships node_modules, the whole Capacitor iOS
+# project and Xcode's DerivedData into the build context — hundreds of MB
+# that are discarded anyway, plus any local secrets.
+node_modules
+dist
+dist-ssr
+coverage
+
+# Capacitor native projects are not part of the web build.
+ios
+android
+
+# Local-only environment overrides must never enter an image.
+.env.local
+.env.*.local
+
+.git
+.gitignore
+.github
+.vscode
+.idea
+.DS_Store
+*.log
+README.md

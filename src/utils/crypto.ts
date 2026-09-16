@@ -74,7 +74,7 @@ export async function decryptName(formattedString: string, keyStr: string): Prom
     );
     const decoder = new TextDecoder();
     return decoder.decode(decrypted);
-  } catch (e) {
+  } catch {
     return "[Locked]";
   }
 }

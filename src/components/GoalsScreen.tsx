@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
-import './AccountTypeScreen.css';
+import { ChevronLeft } from 'lucide-react';
+import './Onboarding.css';
 import { useAppContext } from '../context/AppContext';
 
 const GoalsScreen = () => {
@@ -40,10 +40,6 @@ const GoalsScreen = () => {
     navigate('/register/dietary');
   };
 
-  const handleBack = () => {
-    navigate(-1);
-  };
-
   const typicalityLevels = [
     { value: 1, label: 'Unusual' },
     { value: 2, label: 'Rarely' },
@@ -53,88 +49,104 @@ const GoalsScreen = () => {
   ];
 
   return (
-    <div className="registration-screen">
-      <header className="registration-header">
-        <button onClick={handleBack} className="back-button">
+    <div className="wizard">
+      <header className="wizard__header">
+        <button className="icon-btn" onClick={() => navigate(-1)} aria-label="Go back">
           <ChevronLeft size={24} />
         </button>
-        <h2>Your Goals</h2>
+        <div className="wizard__title">Registration</div>
+        <div className="wizard__header-spacer" aria-hidden="true" />
       </header>
 
-      <div className="progress-bar">
-        <div className="progress-fill" style={{ width: '70%' }}></div>
-      </div>
-
-      <div className="registration-content">
-        <h1 className="registration-title">
-          Tell us about your <span className="highlight">exercise routine</span>
-        </h1>
-
-        <div className="form-fields">
-          <div className="input-group" style={{ flexDirection: 'column' }}>
-            <textarea
-              placeholder="Describe your weekly exercise routine... *"
-              value={weeklyRoutine}
-              onChange={(e) => {
-                setWeeklyRoutine(e.target.value);
-                if (errors.weeklyRoutine) setErrors(prev => ({ ...prev, weeklyRoutine: undefined }));
-              }}
-              className={`form-textarea ${errors.weeklyRoutine ? 'error' : ''}`}
-              rows={6}
-            />
-            {errors.weeklyRoutine && <span className="error-text">{errors.weeklyRoutine}</span>}
-          </div>
-
-          <div className="input-group">
-            <label className="field-label">How many days per week do you usually exercise?</label>
-            <select
-              className="form-input form-select"
-              value={exerciseDays}
-              onChange={(e) => setExerciseDays(e.target.value)}
-            >
-              {typicalityLevels.map((level) => (
-                <option key={level.value} value={String(level.value)}>
-                  {level.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="input-group" style={{ flexDirection: 'column' }}>
-            <textarea
-              placeholder="Exercise types (e.g. cardio, lifting, yoga, walking) *"
-              value={exerciseTypes}
-              onChange={(e) => {
-                setExerciseTypes(e.target.value);
-                if (errors.exerciseTypes) setErrors(prev => ({ ...prev, exerciseTypes: undefined }));
-              }}
-              className={`form-textarea ${errors.exerciseTypes ? 'error' : ''}`}
-              rows={4}
-            />
-            {errors.exerciseTypes && <span className="error-text">{errors.exerciseTypes}</span>}
-          </div>
-
-          <div className="input-group">
-            <textarea
-              placeholder="Provider notes or special considerations"
-              value={providerNotes}
-              onChange={(e) => setProviderNotes(e.target.value)}
-              className="form-textarea"
-              rows={4}
-            />
-          </div>
-          {/* Dietary questions moved to a separate screen */}
-        </div>
-
-        <div className="button-group">
-          <button onClick={handleContinue} className="primary-button">
-            Continue <ChevronRight size={20} />
-          </button>
-          <button onClick={handleBack} className="secondary-button">
-            <ChevronLeft size={20} /> Go Back
-          </button>
+      <div className="wizard__progress">
+        <div className="progress">
+          <div className="progress__fill" style={{ width: '75%' }}></div>
         </div>
       </div>
+
+      <main className="wizard__body" aria-live="polite">
+        <div className="wizard__step-container">
+          <div className="fade-in">
+            <div className="wizard__step-header">
+              <span className="section-label">Step 3 of 4</span>
+              <h1 className="section-title">Your Goals</h1>
+              <p className="text-secondary">Tell us about your exercise routine.</p>
+            </div>
+            
+            <div className="wizard__step-content stack">
+              <div className="field">
+                <label className="field__label" htmlFor="weeklyRoutine">Weekly exercise routine</label>
+                <textarea
+                  id="weeklyRoutine"
+                  placeholder="Describe your weekly exercise routine..."
+                  value={weeklyRoutine}
+                  onChange={(e) => {
+                    setWeeklyRoutine(e.target.value);
+                    if (errors.weeklyRoutine) setErrors(prev => ({ ...prev, weeklyRoutine: undefined }));
+                  }}
+                  className="textarea"
+                  aria-invalid={!!errors.weeklyRoutine}
+                />
+                {errors.weeklyRoutine && <span className="field__error" role="alert">{errors.weeklyRoutine}</span>}
+              </div>
+
+              <div className="field">
+                <label className="field__label" htmlFor="exerciseDays">How many days per week do you usually exercise?</label>
+                <select
+                  id="exerciseDays"
+                  className="select"
+                  value={exerciseDays}
+                  onChange={(e) => setExerciseDays(e.target.value)}
+                >
+                  {typicalityLevels.map((level) => (
+                    <option key={level.value} value={String(level.value)}>
+                      {level.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="field">
+                <label className="field__label" htmlFor="exerciseTypes">Exercise types</label>
+                <textarea
+                  id="exerciseTypes"
+                  placeholder="e.g. cardio, lifting, yoga, walking"
+                  value={exerciseTypes}
+                  onChange={(e) => {
+                    setExerciseTypes(e.target.value);
+                    if (errors.exerciseTypes) setErrors(prev => ({ ...prev, exerciseTypes: undefined }));
+                  }}
+                  className="textarea"
+                  aria-invalid={!!errors.exerciseTypes}
+                />
+                {errors.exerciseTypes && <span className="field__error" role="alert">{errors.exerciseTypes}</span>}
+              </div>
+
+              <div className="field">
+                <label className="field__label" htmlFor="providerNotes">Provider notes or special considerations</label>
+                <textarea
+                  id="providerNotes"
+                  placeholder="Optional"
+                  value={providerNotes}
+                  onChange={(e) => setProviderNotes(e.target.value)}
+                  className="textarea"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer className="wizard__footer">
+        <div className="wizard__footer-content">
+          <button onClick={() => navigate(-1)} className="btn btn--secondary">
+            Back
+          </button>
+          <button onClick={handleContinue} className="btn btn--primary" style={{ flex: 1 }}>
+            Continue
+          </button>
+        </div>
+      </footer>
     </div>
   );
 };

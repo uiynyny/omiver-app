@@ -17,7 +17,6 @@
     "@capacitor/ios": "8.0.0",
     "@capacitor/keyboard": "^8.0.0",
     "@capacitor/status-bar": "^8.0.0",
-    "@react-navigation/bottom-tabs": "^7.8.8",
     "@stripe/react-stripe-js": "^6.2.0",
     "@stripe/stripe-js": "^9.2.0",
     "barcode-detector": "^3.1.3",

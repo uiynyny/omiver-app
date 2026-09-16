@@ -1,0 +1,152 @@
+/* ============================================================
+   Onboarding wizard — screen-specific extras
+   The `.wizard*` chrome (header, progress, body, sticky footer) is shared
+   with the sample-collection flow and lives in index.css. Only the form
+   pieces unique to registration are here.
+   ============================================================ */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  cursor: pointer;
+  font-size: var(--fs-body);
+}
+
+.checkbox-input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-strong);
+}
+
+/* Height is entered as separate feet/inches selects. */
+.height-row {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: center;
+}
+
+.height-row .select {
+  flex: 1;
+}
+
+.weight-row {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: center;
+}
+
+.weight-row .input {
+  flex: 1;
+}
+
+/* ---- Account type selection ---- */
+
+.choice-grid {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+/* A large radio-style card. The real <input type="radio"> is visually hidden
+   but still focusable, so keyboard and screen-reader behaviour is native. */
+.choice {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease),
+              background var(--dur-fast) var(--ease);
+}
+
+.choice:hover {
+  background: var(--surface-2);
+}
+
+.choice__input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+}
+
+.choice__input:focus-visible + .choice__dot {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.choice__dot {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.choice__dot::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: transparent;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.choice--selected {
+  border-color: var(--accent);
+  background: var(--accent-softer);
+}
+
+.choice--selected .choice__dot {
+  border-color: var(--accent);
+}
+
+.choice--selected .choice__dot::after {
+  background: var(--accent);
+}
+
+.choice__art {
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.choice__art img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.choice__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.choice__label {
+  font-size: var(--fs-heading);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.choice__meta {
+  font-size: var(--fs-label);
+  color: var(--text-secondary);
+}

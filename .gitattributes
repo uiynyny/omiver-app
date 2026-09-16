@@ -1,0 +1,29 @@
+# Normalise line endings. The working tree currently mixes CRLF and LF
+# (21 of 53 source files are CRLF), which makes diffs noisy and makes
+# whole-file rewrites look like whole-file changes.
+#
+# `text=auto` stores everything as LF in the repository and checks out the
+# platform-native ending. Run `git add --renormalize .` once to apply.
+* text=auto eol=lf
+
+# Shell scripts and anything read by a Linux container must stay LF even on
+# Windows checkouts, or the shebang breaks.
+*.sh        text eol=lf
+Dockerfile  text eol=lf
+*.conf      text eol=lf
+
+# Binary assets must never be munged.
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.webp   binary
+*.ico    binary
+*.pdf    binary
+*.woff   binary
+*.woff2  binary
+*.ttf    binary
+*.otf    binary
+
+# Lockfiles are generated; collapse them in diffs and reviews.
+package-lock.json linguist-generated=true -diff

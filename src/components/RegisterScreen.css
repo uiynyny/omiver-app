@@ -1,179 +1,149 @@
-.auth-screen {
+/* ============================================================
+   Auth screens — login, register, forgot password
+   ============================================================ */
+
+.auth {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6) var(--sp-4);
+  padding-top: calc(var(--safe-top) + var(--sp-8));
+  padding-bottom: calc(var(--safe-bottom) + var(--sp-8));
+  background: var(--bg);
+}
+
+.auth__inner {
+  width: 100%;
+  max-width: 400px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 2rem;
-  background: #fff;
+  gap: var(--sp-5);
 }
 
-.logo-container {
-  margin-bottom: 2rem;
+.auth__mark {
+  width: 52px;
+  height: 52px;
+  margin-inline: auto;
 }
 
-.logo-icon {
-  width: 80px;
-  height: 80px;
-  border-radius: 20px;
+.auth__head {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.auth__title {
+  font-family: var(--font-display);
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: var(--tracking-display);
+}
+
+.auth__subtitle {
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.auth__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* ---- Options row ---- */
+
+.auth__options {
   display: flex;
   align-items: center;
-  justify-content: center;
-}
-
-.auth-title {
-  font-size: 2rem;
-  font-weight: 600;
-  margin-bottom: 2rem;
-  color: #000;
-}
-
-.form-container {
-  width: 100%;
-  max-width: 600px;
-}
-
-.input-group {
-  margin-bottom: 1rem;
-  display: flex;
-}
-
-.auth-input {
-  width: 100%;
-  padding: 1.2rem 1.5rem;
-  font-size: 1rem;
-  border: none;
-  border-radius: 12px;
-  background: #f5f5f5;
-  color: #000;
-}
-
-.auth-input::placeholder {
-  color: #000;
-}
-
-.auth-input:focus {
-  outline: none;
-  background: #ebebeb;
-}
-
-.primary-button {
-  width: 100%;
-  padding: 1.2rem 2rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: white;
-  background: #6B9B8A;
-  border: none;
-  border-radius: 50px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  transition: background 0.3s;
-}
-
-.primary-button:hover {
-  background: #5a8878;
-}
-
-.login-options {
-  display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  font-size: 0.9rem;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
 }
 
-.checkbox-label {
+.auth__check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-label);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.auth__check input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--accent-strong);
+  cursor: pointer;
+}
+
+.auth__link {
+  font-size: var(--fs-label);
+  font-weight: 600;
+  color: var(--accent-strong);
+  padding: var(--sp-1);
+  border-radius: var(--r-sm);
+  transition: color var(--dur) var(--ease);
+}
+
+.auth__link:hover { color: var(--accent-hover); }
+
+/* ---- "or" separator ---- */
+
+.auth__sep {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
+  gap: var(--sp-3);
+  color: var(--text-tertiary);
+  font-size: var(--fs-label);
 }
 
-.checkbox-label input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-}
-
-.link-button {
-  background: none;
-  border: none;
-  color: #000;
-  text-decoration: underline;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  margin: 1.5rem 0;
-  color: #999;
-}
-
-.divider::before,
-.divider::after {
+.auth__sep::before,
+.auth__sep::after {
   content: '';
   flex: 1;
   height: 1px;
-  background: #ddd;
+  background: var(--divider);
 }
 
-.divider span {
-  padding: 0 1rem;
+/* ---- Legal ---- */
+
+.auth__terms {
+  font-size: var(--fs-label);
+  color: var(--text-tertiary);
+  text-align: center;
+  line-height: var(--lh-body);
 }
 
-.secondary-button {
-  width: 100%;
-  padding: 1.2rem 2rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #D2691E;
-  background: white;
-  border: 2px solid #D2691E;
-  border-radius: 50px;
-  cursor: pointer;
+.auth__terms a {
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.auth__terms a:hover { color: var(--text); }
+
+/* ---- Password requirement list (register) ---- */
+
+/* Deliberately NOT --surface-2: that is now the fill for inputs, and a grey
+   rounded block directly under a password field reads as an empty field.
+   A faint brand tint marks this as a note rather than a control. */
+.auth__requirements {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  background: var(--accent-soft);
+  border-radius: var(--r-md);
+}
+
+.auth__requirement {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.3s;
+  gap: var(--sp-2);
+  font-size: var(--fs-label);
+  color: var(--text-tertiary);
 }
 
-.secondary-button:hover {
-  background: #fff5f0;
-}
-
-.terms-text {
-  margin-top: 2rem;
-  text-align: center;
-  color: #666;
-  font-size: 0.9rem;
-}
-
-.terms-text a {
-  color: #000;
-  text-decoration: underline;
-}
-
-.auth-section-title {
-  font-size: 1.15rem;
-  font-weight: 600;
-  margin-top: 1.8rem;
-  margin-bottom: 0.8rem;
-  color: #333;
-  width: 100%;
-  text-align: left;
-}
-
-.auth-select-outline {
-  border: 2px solid #6B9B8A !important;
-  background: white !important;
-  outline: none;
-}
-
+.auth__requirement--met { color: var(--optimal); }

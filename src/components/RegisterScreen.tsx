@@ -1,10 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
 import './RegisterScreen.css';
 import omiverIcon from '../assets/omiver-icon.svg';
 import { useAppContext } from '../context/AppContext';
+import { setCredentials } from '../context/credentialStore';
 import { emailExist } from '../api/user';
+
+/** The five security questions the backend accepts. */
+const SECURITY_QUESTIONS = [
+  { value: 'PET', label: 'What was the name of your first pet?' },
+  { value: 'MOTHER', label: "What is your mother's maiden name?" },
+  { value: 'CITY', label: 'In what city were you born?' },
+  { value: 'SCHOOL', label: 'What was the name of your first school?' },
+  { value: 'CAR', label: 'What was the make of your first car?' },
+];
 
 const RegisterScreen = () => {
   const navigate = useNavigate();
@@ -17,6 +26,8 @@ const RegisterScreen = () => {
   const [matchError, setMatchError] = useState('');
   const [securityQuestion, setSecurityQuestion] = useState('');
   const [securityAnswer, setSecurityAnswer] = useState('');
+  const [formError, setFormError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Read referral code from URL (?ref=CODE) and persist in context
   useEffect(() => {
@@ -62,52 +73,60 @@ const RegisterScreen = () => {
   }, [password, confirmPassword]);
 
   const handleRegister = async () => {
+    setFormError('');
+
     if (!email.trim() || !password || !confirmPassword || !securityQuestion || !securityAnswer.trim()) {
-      alert('Please fill out all fields.');
+      setFormError('Please fill out all fields.');
       return;
     }
     if (passwordError || matchError) {
-      alert('Please fix password errors before registering.');
+      setFormError('Please fix the password problems above before continuing.');
       return;
     }
 
-    const res = await emailExist(email)
-    if (res) {
-      alert('Email already exists');
-      return;
-    }
-    
-    const params = new URLSearchParams(location.search);
-    const refCode = params.get('ref');
+    setSubmitting(true);
+    try {
+      const res = await emailExist(email);
+      if (res) {
+        setFormError('An account with that email already exists. Try signing in instead.');
+        return;
+      }
 
-    if (refCode) {
-      // Skip account type selection and default to individual user with referral
-      dispatch({ 
-        type: 'UPDATE_REGISTRATION', 
-        payload: { 
-          email, 
-          password, 
-          username: email, 
-          accountType: 'individual', 
-          referredByCode: refCode,
-          security_question: securityQuestion,
-          security_answer: securityAnswer
-        } 
-      });
-      navigate('/register/personal-info');
-    } else {
-      // Save email/password to registration context then ask for account type
-      dispatch({ 
-        type: 'UPDATE_REGISTRATION', 
-        payload: { 
-          email, 
-          password, 
-          username: email,
-          security_question: securityQuestion,
-          security_answer: securityAnswer
-        } 
-      });
-      navigate('/register/account-type');
+      const params = new URLSearchParams(location.search);
+      const refCode = params.get('ref');
+
+      // Secrets are held in memory only, never in the persisted reducer.
+      setCredentials({ password, securityAnswer });
+
+      if (refCode) {
+        // Skip account type selection and default to individual user with referral
+        dispatch({
+          type: 'UPDATE_REGISTRATION',
+          payload: {
+            email,
+            username: email,
+            accountType: 'individual',
+            referredByCode: refCode,
+            security_question: securityQuestion,
+          }
+        });
+        navigate('/register/personal-info');
+      } else {
+        // Save email to registration context then ask for account type
+        dispatch({
+          type: 'UPDATE_REGISTRATION',
+          payload: {
+            email,
+            username: email,
+            security_question: securityQuestion,
+          }
+        });
+        navigate('/register/account-type');
+      }
+    } catch {
+      setFormError('We could not reach the server. Please check your connection and try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -116,120 +135,153 @@ const RegisterScreen = () => {
   };
 
   return (
-    <div className="auth-screen">
-      <div className="logo-container">
-        <div className="logo-icon">
-          <img src={omiverIcon} alt="Omiver Icon" />
-        </div>
-      </div>
+    <div className="auth">
+      <div className="auth__inner fade-in">
+        <img className="auth__mark" src={omiverIcon} alt="Omiver" width={52} height={52} />
 
-      <h1 className="auth-title">Create Account</h1>
+        <header className="auth__head">
+          <h1 className="auth__title">Create your account</h1>
+          <p className="auth__subtitle">A few details and your first kit is on its way.</p>
+        </header>
 
-      <div className="form-container">
-        {(passwordError || matchError) && (
-          <div className="form-error-panel" style={{
-            background: '#fff5f5',
-            border: '1px solid #fed7d7',
-            borderRadius: '10px',
-            padding: '12px 16px',
-            marginBottom: '16px',
-            color: '#c53030',
-            fontSize: '0.85rem',
-            lineHeight: '1.4'
-          }}>
-            <ul style={{ margin: 0, paddingLeft: '20px' }}>
-              {passwordError && <li>{passwordError}</li>}
-              {matchError && <li>{matchError}</li>}
-            </ul>
+        <form
+          className="auth__form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleRegister();
+          }}
+        >
+          {formError && (
+            <div className="error-banner" role="alert">
+              {formError}
+            </div>
+          )}
+
+          <div className="field">
+            <label className="field__label" htmlFor="register-email">
+              Email
+            </label>
+            <input
+              id="register-email"
+              className="input"
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
-        )}
 
-        <div className="input-group">
-          <input
-            type="email"
-            placeholder="Email:"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="auth-input"
-          />
-        </div>
+          <div className="field">
+            <label className="field__label" htmlFor="register-password">
+              Password
+            </label>
+            <input
+              id="register-password"
+              className="input"
+              type="password"
+              autoComplete="new-password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              aria-invalid={!!passwordError}
+              aria-describedby="register-password-help"
+              required
+            />
+            <p className="auth__requirements" id="register-password-help">
+              At least 8 characters. Not numeric-only, and not similar to your email.
+            </p>
+            {passwordError && (
+              <p className="field__error" role="alert">{passwordError}</p>
+            )}
+          </div>
 
-        <div className="input-group">
-          <input
-            type="password"
-            placeholder="Password:"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="auth-input"
-          />
-        </div>
+          <div className="field">
+            <label className="field__label" htmlFor="register-confirm">
+              Confirm password
+            </label>
+            <input
+              id="register-confirm"
+              className="input"
+              type="password"
+              autoComplete="new-password"
+              placeholder="••••••••"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              aria-invalid={!!matchError}
+              required
+            />
+            {matchError && (
+              <p className="field__error" role="alert">{matchError}</p>
+            )}
+          </div>
 
-        <div className="input-group">
-          <input
-            type="password"
-            placeholder="Confirm Password:"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="auth-input"
-          />
-        </div>
+          <div className="field">
+            <label className="field__label" htmlFor="register-security-question">
+              Security question
+            </label>
+            <select
+              id="register-security-question"
+              className="select"
+              value={securityQuestion}
+              onChange={(e) => setSecurityQuestion(e.target.value)}
+              required
+            >
+              <option value="">Choose a question…</option>
+              {SECURITY_QUESTIONS.map((q) => (
+                <option key={q.value} value={q.value}>{q.label}</option>
+              ))}
+            </select>
+          </div>
 
-        <p className="terms-text" style={{ textAlign: 'left', marginTop: '0.2rem', marginBottom: '1.2rem' }}>
-          Passwords must be at least 8 characters and should not be common, numeric-only, or similar to your email or username.
-        </p>
+          <div className="field">
+            <label className="field__label" htmlFor="register-security-answer">
+              Your answer
+            </label>
+            <input
+              id="register-security-answer"
+              className="input"
+              type="text"
+              autoComplete="off"
+              value={securityAnswer}
+              onChange={(e) => setSecurityAnswer(e.target.value)}
+              required
+            />
+          </div>
 
-        <h3 className="auth-section-title">Security Question</h3>
-
-        <div className="input-group">
-          <select
-            value={securityQuestion}
-            onChange={(e) => setSecurityQuestion(e.target.value)}
-            className="auth-input auth-select-outline"
-            style={{ 
-              appearance: 'none', 
-              cursor: 'pointer',
-              color: securityQuestion ? '#000' : '#757575'
-            }}
+          <button
+            type="submit"
+            className="btn btn--primary btn--block"
+            disabled={submitting}
+            aria-busy={submitting}
           >
-            <option value="" style={{ color: '#757575' }}>Select Security Question...</option>
-            <option value="PET" style={{ color: '#000' }}>What was the name of your first pet?</option>
-            <option value="MOTHER" style={{ color: '#000' }}>What is your mother's maiden name?</option>
-            <option value="CITY" style={{ color: '#000' }}>In what city were you born?</option>
-            <option value="SCHOOL" style={{ color: '#000' }}>What was the name of your first school?</option>
-            <option value="CAR" style={{ color: '#000' }}>What was the make of your first car?</option>
-          </select>
+            {submitting ? (
+              <>
+                <span className="spinner" aria-hidden="true" />
+                Creating account
+              </>
+            ) : (
+              'Continue'
+            )}
+          </button>
+        </form>
+
+        <div className="auth__sep">
+          <span>or</span>
         </div>
 
-        <div className="input-group">
-          <input
-            type="text"
-            placeholder="Security Answer:"
-            value={securityAnswer}
-            onChange={(e) => setSecurityAnswer(e.target.value)}
-            className="auth-input"
-          />
-        </div>
-
-        <button onClick={handleRegister} className="primary-button">
-          Register <ChevronRight size={20} />
+        <button type="button" className="btn btn--secondary btn--block" onClick={handleLoginRedirect}>
+          I already have an account
         </button>
 
-        <div className="divider">
-          <span>OR</span>
-        </div>
-
-        <button onClick={handleLoginRedirect} className="secondary-button">
-          Login here <ChevronRight size={20} />
-        </button>
+        <p className="auth__terms">
+          By creating an account, you agree to our{' '}
+          <a href="/terms?mode=readonly">Terms of Service and Privacy Policy</a>
+        </p>
       </div>
-
-      <p className="terms-text">
-        By creating an account, you agree to our{' '}
-        <a href="/terms?mode=readonly">Terms of Service and Privacy Policy</a>
-      </p>
     </div>
   );
 };
 
 export default RegisterScreen;
-

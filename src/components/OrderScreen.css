@@ -1,286 +1,130 @@
-.order-root {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: #f6f6f6;
-  color: #303030
+/* ============================================================
+   Order detail
+   Layout-only. Colour, type and spacing come from tokens.css.
+   ============================================================ */
+
+.order-detail {
+  padding-top: var(--sp-4);
 }
 
-.order-header {
-  background: #67997D;
-  color: white;
-  padding: 18px 16px 20px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between
-}
+/* ---- Current status ---- */
 
-.order-logo {
-  font-weight: 700;
-  letter-spacing: 8px
-}
-
-.order-icons {
-  display: flex;
-  gap: 10px;
-  align-items: center
-}
-
-.order-title {
-  font-weight: 700;
-  font-size: 1.1rem;
-  text-align: center;
-}
-
-.order-main {
-  padding-bottom: 96px
-}
-
-.order-top {
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
-  padding: 16px;
-  color: #fff;
-  background-color: #67997D
-}
-
-.order-card {
-  background: #67997D;
-  border: 0.5px solid #fff5f0;
-  border-radius: 16px;
-  padding: 18px;
-  margin-bottom: 14px;
-  justify-content: space-between;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
-}
-
-.order-card h2 {
-  margin: 6px 0 12px 0;
-  font-size: 1.5rem
-}
-
-.order-meta {
-  display: flex;
-  justify-content: space-between;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.9rem
-}
-
-.tracking-panel {
-  background: white;
-  border-radius: 14px;
-  padding: 18px;
-  margin-bottom: 18px
-}
-
-.tracking-label {
-  font-weight: 700;
-  margin-bottom: 6px
-}
-
-.tracking-number {
-  background: #f6f6f6;
-  padding: 12px 16px;
-  border-radius: 14px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-}
-
-.tracking-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.copy-btn {
-  background: #D27644;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 999px
-}
-
-.progress-card {
-  background: white;
-  border-radius: 14px;
-  padding: 18px;
-  margin-bottom: 18px
-}
-
-.progress-row {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  margin-bottom: 14px
-}
-
-.progress-steps {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  margin: 8px 0 12px 0;
-  flex-wrap: wrap;
-}
-
-.progress-steps .step {
+.order__status {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #555;
-  font-size: 0.95rem;
+  gap: var(--sp-3);
 }
 
-.progress-steps .step .step-dot {
-  width: 20px;
-  height: 20px;
-  display: flex;
+.order__status-icon {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-
-.progress-steps .step .step-empty {
-  width: 10px;
-  height: 10px;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
   border-radius: 50%;
-  background: #e0e0e0;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
 }
 
-.progress-steps .step.done {
-  color: #234f3a;
-}
-
-.progress-steps .step.done .step-empty {
-  background: #6b9b8a;
-}
-
-.progress-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: #e9f2ed;
-  display: flex;
-  align-items: center;
-  justify-content: center
-}
-
-.progress-title {
-  font-weight: 700
-}
-
-.next-card {
-  background: #fff7f4;
-  border-radius: 14px;
-  padding: 18px;
-  border: 1px solid #f1d7cc;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 12px;
-}
-
-.actions-card {
-  background: white;
-  border-radius: 14px;
-  padding: 18px;
-  margin-bottom: 18px
-}
-
-.actions-card h3 {
-  margin: 0 0 12px 0;
-  font-weight: 700;
-  font-size: 1rem
-}
-
-.actions-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px
-}
-
-.action-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 12px;
-  background: #f6f6f6;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  cursor: pointer;
+.order__status-label {
   font-weight: 600;
-  color: #333;
-  font-size: 0.85rem;
-  transition: all 0.2s ease
+  font-size: var(--fs-body);
 }
 
-.action-btn:active {
-  background: #e9f2ed;
-  border-color: #6b9b8a;
+/* ---- Fulfilment timeline ----
+   A vertical stepper. The connecting rail is drawn with a pseudo-element on
+   each row rather than a separate element, so the markup stays a plain <ol>
+   and screen readers announce it as an ordered list of stages. */
+
+.order__timeline {
+  list-style: none;
+  margin: var(--sp-5) 0 0;
+  padding: var(--sp-4) 0 0;
+  border-top: 1px solid var(--divider);
 }
 
-.next-cta {
-  margin-top: 12px;
-  background: #D27644;
-  color: white;
-  border: none;
-  padding: 16px 32px;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 1rem;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(210, 118, 68, 0.3);
-  transition: all 0.2s ease;
-}
-
-.next-cta:hover {
-  background: #c1663b;
-  box-shadow: 0 6px 16px rgba(210, 118, 68, 0.4);
-  transform: translateY(-2px);
-}
-
-.next-cta:active {
-  transform: translateY(0);
-}
-
-.bottom-nav {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 62px;
+.order__stage {
+  position: relative;
   display: flex;
-  gap: 4px;
-  padding: 8px 12px;
-  background: white;
-  border-top-left-radius: 18px;
-  border-top-right-radius: 18px;
-  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.06);
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
 }
 
-.nav-item {
-  flex: 1;
-  background: transparent;
-  border: none;
-  border-radius: 12px;
-  padding: 8px;
-  font-weight: 600;
-  color: #666
+/* Rail segment joining this dot to the next one. */
+.order__stage:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: calc(50% + 10px);
+  width: 2px;
+  height: calc(100% - 20px);
+  background: var(--border);
 }
 
-.nav-item.active {
-  background: #ffffff;
-  color: #111;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+.order__stage--done:not(:last-child)::before {
+  background: var(--accent);
 }
-.order-card-icon {
-  display: flex;
+
+.order__stage-dot {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  background-color: #fff5;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
   border-radius: 50%;
-  padding: 10px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: transparent;
+}
+
+.order__stage--done .order__stage-dot {
+  /* Carries a check glyph, so it needs the deeper accent. `--bg` was
+     correct on a black canvas but is now near-white — the glyph would
+     have disappeared into the fill. */
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+  color: var(--text-inverse);
+}
+
+.order__stage-label {
+  font-size: var(--fs-body);
+  color: var(--text-tertiary);
+}
+
+.order__stage--done .order__stage-label {
+  color: var(--text);
+}
+
+/* When a stage completed, show when. Pushed to the trailing edge so the
+   labels stay left-aligned against the rail. */
+.order__stage-time {
+  margin-left: auto;
+  font-size: var(--fs-caption, 0.75rem);
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Divider introducing the return leg (customer → lab). The two legs are
+   separate journeys, so the rail is deliberately broken here rather than
+   running straight through. */
+.order__leg-heading {
+  list-style: none;
+  margin: var(--sp-3) 0 var(--sp-2);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--divider);
+  font-size: var(--fs-caption, 0.75rem);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.order__stage:has(+ .order__leg-heading)::before {
+  display: none;
 }

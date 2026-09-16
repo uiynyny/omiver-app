@@ -3,13 +3,10 @@ import React, { createContext, useContext, useReducer, useEffect, type ReactNode
 
 const STORAGE_KEY = 'omiver_app_state';
 
-type RegistrationData = {
-  token?: string;
-  access_token?: string;
+export type RegistrationData = {
   user_id?: number;
   username?: string;
   email?: string;
-  password?: string;
   accountType?: 'individual' | 'healthcare' | null;
   type?: 'PROVIDER' | 'INDIVIDUAL' | null;
   first_name?: string;
@@ -36,7 +33,8 @@ type RegistrationData = {
   fitness_goal?: string;
   nutritional_goal?: string;
   acceptedTerms?: boolean;
-  // Payment and Billing fields
+  // Card metadata returned by the server for display only. The raw PAN is
+  // never collected or stored by this app — see PaymentScreen (Stripe Elements).
   cardholder_name?: string;
   card_brand?: string;
   card_last_four?: string;
@@ -57,8 +55,16 @@ type RegistrationData = {
   referralCode?: string;      // provider's code (populated after registration)
   referredByCode?: string;    // code from URL ?ref= param (passed by patient)
   security_question?: string;
-  security_answer?: string;
 };
+
+/**
+ * Credentials and answers that must never leave component-local state.
+ *
+ * These are deliberately absent from `RegistrationData` so that TypeScript
+ * prevents them being dispatched into the reducer at all. Registration and
+ * password-recovery screens hold them in `useState` and pass them straight
+ * to the API.
+ */
 
 type AuthState = {
   isAuthenticated: boolean;
@@ -77,25 +83,94 @@ const initialState: AppState = {
   registration: {},
 };
 
-// Load state from localStorage
+/**
+ * Allow-list of registration fields that may be written to localStorage.
+ *
+ * Everything omitted here — names, date of birth, health conditions,
+ * allergies, biometrics, addresses and card metadata — is PHI/PII and is
+ * held in memory only, then re-hydrated from the API on load (see
+ * `SessionHydrator`). This keeps the browser's persistent storage free of
+ * protected health information, so an XSS or a shared device cannot yield
+ * a patient record.
+ */
+const PERSISTED_REGISTRATION_FIELDS = [
+  'accountType',
+  'type',
+  'acceptedTerms',
+  'referralCode',
+  'referredByCode',
+] as const satisfies readonly (keyof RegistrationData)[];
+
+const pickPersistable = (registration: RegistrationData): Partial<RegistrationData> => {
+  const out: Partial<RegistrationData> = {};
+  for (const key of PERSISTED_REGISTRATION_FIELDS) {
+    const value = registration[key];
+    if (value !== undefined) {
+      (out as Record<string, unknown>)[key] = value;
+    }
+  }
+  return out;
+};
+
+/**
+ * Shape-check whatever we read back out of localStorage.
+ *
+ * The stored blob is attacker-writable, so it is treated as untrusted input:
+ * anything unexpected is discarded rather than spread into app state. Note
+ * that `clientId` and `userType` are still only hints for rendering — the
+ * server re-derives identity and role on every request.
+ */
+const parseStoredState = (raw: string): AppState => {
+  const parsed: unknown = JSON.parse(raw);
+  if (typeof parsed !== 'object' || parsed === null) return initialState;
+
+  const candidate = parsed as Partial<AppState>;
+  const auth = candidate.auth;
+  if (typeof auth !== 'object' || auth === null) return initialState;
+
+  const userType = auth.userType === 'PROVIDER' || auth.userType === 'INDIVIDUAL' ? auth.userType : null;
+
+  return {
+    auth: {
+      isAuthenticated: auth.isAuthenticated === true,
+      userId: typeof auth.userId === 'string' || typeof auth.userId === 'number' ? auth.userId : null,
+      clientId: typeof auth.clientId === 'string' || typeof auth.clientId === 'number' ? auth.clientId : null,
+      userType,
+    },
+    registration: pickPersistable((candidate.registration ?? {}) as RegistrationData),
+  };
+};
+
 const loadStateFromStorage = (): AppState => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (error) {
-    console.error('Failed to load state from localStorage:', error);
+    if (stored) return parseStoredState(stored);
+  } catch {
+    // Corrupt or tampered payload — fall back to a clean session.
+    localStorage.removeItem(STORAGE_KEY);
   }
   return initialState;
 };
 
-// Save state to localStorage
 const saveStateToStorage = (state: AppState) => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch (error) {
-    console.error('Failed to save state to localStorage:', error);
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        auth: state.auth,
+        registration: pickPersistable(state.registration),
+      }),
+    );
+  } catch {
+    // Storage full or blocked (private mode) — the app still works in memory.
+  }
+};
+
+export const clearPersistedState = (): void => {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    /* no-op */
   }
 };
 
@@ -130,12 +205,11 @@ const AppContext = createContext<{
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(reducer, initialState, loadStateFromStorage);
-  
-  // Save state to localStorage whenever it changes
+
   useEffect(() => {
     saveStateToStorage(state);
   }, [state]);
-  
+
   const value = React.useMemo(() => ({ state, dispatch }), [state]);
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

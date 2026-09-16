@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronRight, ChevronLeft, ChevronDown, Check } from 'lucide-react';
+import { ChevronLeft, ChevronDown, AlertTriangle } from 'lucide-react';
 import './TermsScreen.css';
 import { useAppContext } from '../context/AppContext';
+import { getCredentials, clearCredentials } from '../context/credentialStore';
 import { login, register } from '../api/user';
 
 interface AccordionSection {
@@ -22,28 +23,34 @@ const TermsScreen = () => {
   // Stateful Accordion & Checkbox Consent
   const [expandedSection, setExpandedSection] = useState<number | null>(null);
   const [isAgreed, setIsAgreed] = useState<boolean>(false);
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const toggleSection = (index: number) => {
     setExpandedSection(expandedSection === index ? null : index);
   };
 
   const handleContinue = async () => {
-    if (!isAgreed) return;
+    if (!isAgreed || submitting) return;
+
+    setError('');
+    setSubmitting(true);
 
     dispatch({ type: 'UPDATE_REGISTRATION', payload: { acceptedTerms: true } });
 
     // Build the payload mapping frontend field names to backend field names
     const reg = state.registration;
+    const { password, securityAnswer } = getCredentials();
     const payload: Record<string, unknown> = {
       username: reg.username,
-      password: reg.password,
+      password,
       email: reg.email,
       first_name: reg.first_name,
       last_name: reg.last_name,
       use_custom_key: reg.use_custom_key,
       type: reg.accountType === 'healthcare' ? 'PROVIDER' : 'INDIVIDUAL',
       security_question: reg.security_question,
-      security_answer: reg.security_answer,
+      security_answer: securityAnswer,
     };
 
     // Individual-only fields
@@ -76,39 +83,48 @@ const TermsScreen = () => {
 
     try {
       await register(payload);
-    } catch (error) {
-      console.error('Registration error', error);
-      alert('Registration failed: ' + error);
+    } catch {
+      // The error body echoes the submitted payload, which contains the
+      // password and PHI — so it is neither logged nor shown.
+      setError('We could not create your account. Please review your details and try again.');
+      setSubmitting(false);
       return;
     }
 
-    if (!reg.email || !reg.password) {
-      console.error('Missing email or password for login');
-    } else {
-      login(reg.email, reg.password).then((data) => {
-        console.log('Login successful', data);
-        const userType: 'PROVIDER' | 'INDIVIDUAL' = data.type || 'INDIVIDUAL';
-        dispatch({
-          type: 'UPDATE_REGISTRATION',
-          payload: {
-            first_name: data.first_name ?? '',
-            last_name: data.last_name ?? '',
-            referralCode: data.referral_code ?? undefined,
-          }
-        });
-        dispatch({
-          type: 'SET_AUTH',
-          payload: { isAuthenticated: true, userId: reg.email || '', clientId: data.id || data.user_id, userType },
-        });
-        if (userType === 'PROVIDER') {
-          navigate('/provider/dashboard');
-        } else {
-          navigate('/home');
+    if (!reg.email || !password) {
+      clearCredentials();
+      setSubmitting(false);
+      setError('Your account was created, but we could not sign you in automatically. Please sign in.');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const data = await login(reg.email, password);
+      // Credentials are no longer needed once the session exists.
+      clearCredentials();
+      const userType: 'PROVIDER' | 'INDIVIDUAL' = data.type || 'INDIVIDUAL';
+      dispatch({
+        type: 'UPDATE_REGISTRATION',
+        payload: {
+          first_name: data.first_name ?? '',
+          last_name: data.last_name ?? '',
+          referralCode: data.referral_code ?? undefined,
         }
-      }).catch((error) => {
-        console.error('Login error', error);
-        alert('Login failed. Please check your credentials and try again.');
       });
+      dispatch({
+        type: 'SET_AUTH',
+        payload: { isAuthenticated: true, userId: reg.email || '', clientId: data.id || data.user_id, userType },
+      });
+      if (userType === 'PROVIDER') {
+        navigate('/provider/dashboard');
+      } else {
+        navigate('/home');
+      }
+    } catch {
+      clearCredentials();
+      setSubmitting(false);
+      setError('Your account was created, but sign-in failed. Please sign in manually.');
     }
   };
 
@@ -152,8 +168,11 @@ const TermsScreen = () => {
       title: "3. Medical Advice Disclaimer",
       content: (
         <>
-          <div className="terms-warning-callout">
-            <h4>⚠️ IMPORTANT: NOT MEDICAL ADVICE</h4>
+          <div className="terms__callout">
+            <h4 className="terms__callout-title">
+              <AlertTriangle size={16} aria-hidden="true" />
+              Important: not medical advice
+            </h4>
             <p>Omiver is a wellness technology platform, not a medical provider. We do not offer clinical diagnostic services or medical treatment. All biological test analysis is performed by independent laboratory partners. Any metric, analysis, or recommendation provided is solely for general wellness purposes.</p>
           </div>
           <p>Always consult with your doctor or qualified clinical practitioner before beginning any new supplementation, diet, or intense physical training regimen.</p>
@@ -181,106 +200,118 @@ const TermsScreen = () => {
   ];
 
   return (
-    <div className="terms-container">
-      <header className="terms-header">
-        <button onClick={handleBack} className="back-button" aria-label="Go Back">
-          <ChevronLeft size={24} color="black" />
+    <div className="wizard">
+      <header className="wizard__header">
+        <button type="button" onClick={handleBack} className="icon-btn" aria-label="Go back">
+          <ChevronLeft size={24} />
         </button>
-        <h2>Review Terms</h2>
+        <div className="wizard__title">{isReadOnly ? 'Legal' : 'Review terms'}</div>
+        <div className="wizard__header-spacer" aria-hidden="true" />
       </header>
 
-      <div className="terms-content-scroll">
-        
-        {/* Welcome Banner */}
-        <div className="terms-welcome-card">
-          <h3>Nearly there!</h3>
-          <p>
-            {isProvider
-              ? "As an Omiver Healthcare Provider, you can generate patient referral codes and track biological health indicators."
-              : "Before analyzing your biomarkers and custom-crafting your adaptive nutrition plans, please read and accept our Terms of Service."}
-          </p>
-        </div>
+      <main className="wizard__body">
+        <div className="wizard__step-container">
+          <div className="wizard__step-header">
+            <h1 className="section-title">
+              {isReadOnly ? 'Terms & Privacy' : 'Nearly there'}
+            </h1>
+            <p className="text-secondary">
+              {isProvider
+                ? 'As an Omiver healthcare provider, you can generate patient referral codes and track biological health indicators.'
+                : 'Before we analyse your biomarkers and build your nutrition plan, please read and accept our Terms of Service.'}
+            </p>
+          </div>
 
-        {/* Expandable Accordion Lists */}
-        <div className="terms-accordion-list">
-          {accordionSections.map((section, index) => {
-            const isOpen = expandedSection === index;
-            return (
-              <div 
-                key={index} 
-                className={`terms-accordion-item ${isOpen ? 'active' : ''}`}
-              >
-                <button
-                  className={`terms-accordion-header ${isOpen ? 'active' : ''}`}
-                  onClick={() => toggleSection(index)}
-                  aria-expanded={isOpen}
+          {error && (
+            <div className="error-banner" role="alert">
+              {error}
+            </div>
+          )}
+
+          <div className="terms__accordion">
+            {accordionSections.map((section, index) => {
+              const isOpen = expandedSection === index;
+              return (
+                <div
+                  key={section.title}
+                  className={`terms__item${isOpen ? ' terms__item--open' : ''}`}
                 >
-                  <span className="terms-accordion-title">{section.title}</span>
-                  <ChevronDown 
-                    size={18} 
-                    className="terms-accordion-icon" 
-                  />
-                </button>
-                <div className={`terms-accordion-body ${isOpen ? 'open' : ''}`}>
-                  <div className="terms-accordion-inner">
-                    {section.content}
+                  <h2 className="terms__item-heading">
+                    <button
+                      type="button"
+                      id={`terms-section-${index}`}
+                      className="terms__trigger"
+                      onClick={() => toggleSection(index)}
+                      aria-expanded={isOpen}
+                      aria-controls={`terms-panel-${index}`}
+                    >
+                      <span className="terms__trigger-title">{section.title}</span>
+                      <ChevronDown size={18} className="terms__chevron" aria-hidden="true" />
+                    </button>
+                  </h2>
+                  <div
+                    id={`terms-panel-${index}`}
+                    role="region"
+                    aria-labelledby={`terms-section-${index}`}
+                    className="terms__panel"
+                    hidden={!isOpen}
+                  >
+                    <div className="terms__prose">{section.content}</div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
+      </main>
 
-      </div>
-
-      {/* Interactive Custom Sticky Consent Box */}
-      {isReadOnly ? (
-        <></>
-      ) : (
-        <div className="terms-consent-panel">
-          <div 
-            className="terms-consent-row" 
-            onClick={() => setIsAgreed(!isAgreed)}
-            aria-checked={isAgreed}
-            role="checkbox"
-          >
-            <div className={`terms-custom-checkbox ${isAgreed ? 'checked' : ''}`}>
-              {isAgreed && <Check size={14} className="terms-checkmark" />}
-            </div>
-            <span className="terms-consent-label">
-              I have read, understood, and agree to Omiver's{' '}
+      {!isReadOnly && (
+        <div className="wizard__footer">
+          <label className="terms__consent" htmlFor="terms-agree">
+            <input
+              id="terms-agree"
+              type="checkbox"
+              className="checkbox-input"
+              checked={isAgreed}
+              onChange={(e) => setIsAgreed(e.target.checked)}
+            />
+            <span className="terms__consent-label">
+              I have read, understood, and agree to Omiver&rsquo;s{' '}
               <a
-                className="bold-link"
                 href={termsReadOnlyUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={(event) => event.stopPropagation()}
               >
                 Terms of Service
               </a>{' '}
               and{' '}
               <a
-                className="bold-link"
                 href={privacyReadOnlyUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={(event) => event.stopPropagation()}
               >
                 Privacy Policy
               </a>
               .
             </span>
-          </div>
+          </label>
 
-          <div className="terms-button-group">
-            <button 
-              onClick={handleContinue} 
-              className="terms-primary-btn"
-              disabled={!isAgreed}
-            >
-              Agree & Register <ChevronRight size={20} />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleContinue}
+            className="btn btn--primary btn--block"
+            disabled={!isAgreed || submitting}
+            aria-busy={submitting}
+          >
+            {submitting ? (
+              <>
+                <span className="spinner" aria-hidden="true" />
+                Creating your account
+              </>
+            ) : (
+              'Agree & register'
+            )}
+          </button>
         </div>
       )}
     </div>

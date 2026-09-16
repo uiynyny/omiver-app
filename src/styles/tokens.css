@@ -1,0 +1,205 @@
+/* ============================================================
+   Omiver Design Tokens
+   Light, data-dense health interface built on the brand green.
+
+   The structure of the system (elevation ladder, type scale,
+   spacing, radii, motion) is unchanged from the dark theme —
+   only the colour values are re-pointed. Components reference
+   tokens exclusively, so this file is the single place the
+   theme is decided.
+   ============================================================ */
+
+:root {
+  /* ---- Surfaces -------------------------------------------
+     A light theme has two directions of elevation, not one.
+
+     Cards *lift* toward white (--bg -> --surface). Recessed
+     fills — inputs, icon buttons, secondary buttons, chips,
+     segmented tracks, skeletons — *sink* below the canvas
+     (--surface-2, --surface-3).
+
+     This is the opposite of the dark theme, where every layer
+     got lighter as it came forward. Keeping that direction here
+     is the classic port bug: --surface-2 ends up a hair lighter
+     than an already near-white canvas, and every subtle-fill
+     control silently loses its affordance.
+
+     The canvas carries a barely-perceptible green cast so large
+     areas of white feel related to the brand rather than
+     clinical grey.
+
+     Steps, as contrast ratios: card/canvas 1.09, canvas/sunken
+     1.08, sunken/deep 1.10 — each perceptible, none loud.     */
+  --bg: #f3f6f4;
+  --bg-elevated: #f8faf9;
+  --surface: #ffffff;
+  --surface-2: #eaeeeb;
+  --surface-3: #dfe4e1;
+  --surface-hover: #eef2f0;
+
+  /* Translucent roles. These cannot use the opaque surface tokens because
+     they sit over scrolling content behind a backdrop-filter.
+     --header-bg tracks the canvas; --scrim stays dark in both themes,
+     because a modal backdrop's job is to dim what is behind it. */
+  --header-bg: rgba(248, 250, 249, 0.78);
+  --scrim: rgba(15, 23, 32, 0.45);
+
+  /* The backdrop for a live camera viewport. Fixed dark in every theme:
+     a camera surface is not an app surface, and its overlay chrome is
+     drawn in --text-inverse on black gradients. */
+  --camera-stage: #0b1014;
+
+  /* Hairlines. Border is for structure, divider for list rows.
+     Tinted with the text colour rather than pure black so they
+     recede properly against the off-white canvas.             */
+  --border: rgba(15, 23, 32, 0.10);
+  --border-strong: rgba(15, 23, 32, 0.18);
+  --divider: rgba(15, 23, 32, 0.07);
+
+  /* ---- Text -----------------------------------------------
+     --text is the original ink colour. On a light canvas you
+     cannot have genuinely light grey secondary text and still
+     clear 4.5:1, so the hierarchy is carried by a wide gap
+     between these two rather than by lightness alone.
+
+     Every ink is solved against --surface-3, the *deepest*
+     recess, not against the canvas. That is the binding case —
+     a hint inside a sunken input — and anything that passes
+     there passes on every lighter layer automatically.
+     Measured on --surface / --bg / --surface-3:
+     18.1 / 16.6 / 13.7,  7.3 / 6.7 / 5.6,  5.9 / 5.4 / 4.6.  */
+  --text: #0f1720;
+  --text-secondary: #4e5862;
+  --text-tertiary: #5d666e;
+  --text-inverse: #ffffff;
+
+  /* ---- Accent ---------------------------------------------
+     The brand sage green. Used for active state, selection,
+     tints, icons and the leading edge of data visualisations. */
+  --accent: #67997d;
+  --accent-hover: #5a8a70;
+  --accent-press: #4e7a62;
+  --accent-soft: rgba(103, 153, 125, 0.13);
+  --accent-softer: rgba(103, 153, 125, 0.06);
+  --accent-ring: rgba(103, 153, 125, 0.38);
+
+  /* White text on --accent is only 3.27:1, which fails WCAG AA
+     for body-sized labels. --accent-strong is the same hue taken
+     deep enough to clear 4.5:1 *on the deepest recess*, and is
+     what any `color:` and any filled control bearing white text
+     must use. Keeping them separate means the brand green stays
+     exactly as it was everywhere it is safe. */
+  --accent-strong: #436e57;
+  --accent-strong-hover: #3a6049;
+  --accent-strong-press: #30503d;
+
+  /* ---- Biomarker status -----------------------------------
+     Semantic, not decorative. These map to the only three states
+     a result can be in, and must stay distinguishable for the
+     ~8% of men with red/green colour deficiency, so they differ
+     in lightness as well as hue.
+
+     The AA floor on --surface-3 caps how light any of them can
+     be, so the spread runs downward from that ceiling and the
+     confusable pair — optimal and risk — is given the widest
+     gap (L 0.130 / 0.098 / 0.078).
+
+     This is a backstop, not the mechanism: every status chip
+     also carries a text label, which is what actually satisfies
+     WCAG 1.4.1.
+
+     Note these are darker than their dark-theme counterparts:
+     the same hues that read well on black are far too light to
+     sit as text on white.                                     */
+  --optimal: #1c734d;
+  --optimal-soft: rgba(28, 115, 77, 0.11);
+  --watch: #7d4e06;
+  --watch-soft: rgba(125, 78, 6, 0.13);
+  --risk: #94261f;
+  --risk-soft: rgba(148, 38, 31, 0.10);
+  /* Graphical indicator, so the bar is 3:1 rather than 4.5:1 —
+     but it still has to clear it on --surface-3, not just white. */
+  --neutral-dot: #6f787f;
+
+  /* ---- Typography ----------------------------------------- */
+  --font-display: 'Archivo', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, monospace;
+
+  /* Type scale. Values are rem-based so user zoom is respected. */
+  --fs-display: 2.125rem;   /* 34px - hero stat        */
+  --fs-stat: 1.75rem;       /* 28px - card stat        */
+  --fs-title: 1.3125rem;    /* 21px - section heading  */
+  --fs-heading: 1.0625rem;  /* 17px - card heading     */
+  --fs-body: 0.9375rem;     /* 15px - body             */
+  --fs-label: 0.8125rem;    /* 13px - meta / label     */
+  --fs-micro: 0.6875rem;    /* 11px - tab / caption    */
+
+  --lh-tight: 1.1;
+  --lh-snug: 1.3;
+  --lh-body: 1.5;
+
+  /* Negative tracking on large type mimics optical sizing. */
+  --tracking-display: -0.035em;
+  --tracking-stat: -0.025em;
+  --tracking-title: -0.015em;
+  --tracking-wide: 0.055em;
+
+  /* ---- Spacing (4px base) --------------------------------- */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.25rem;
+  --sp-6: 1.5rem;
+  --sp-8: 2rem;
+  --sp-10: 2.5rem;
+  --sp-12: 3rem;
+
+  /* ---- Radii ---------------------------------------------- */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-2xl: 26px;
+  --r-full: 999px;
+
+  /* ---- Elevation ------------------------------------------
+     On a light canvas shadow does the work that surface
+     lightness did on black, so these are more present than the
+     dark-theme equivalents — but still soft, and tinted with the
+     ink colour rather than pure black to avoid a grey cast.   */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 32, 0.06);
+  --shadow-md: 0 4px 14px rgba(15, 23, 32, 0.08);
+  --shadow-lg: 0 14px 36px rgba(15, 23, 32, 0.12);
+  --shadow-accent: 0 6px 18px rgba(71, 117, 93, 0.28);
+
+  /* ---- Motion ---------------------------------------------
+     Short, eased transitions. Nothing should feel sluggish on
+     a touch device.                                           */
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --dur-slow: 320ms;
+
+  /* ---- Layout --------------------------------------------- */
+  --nav-height: 62px;
+  --header-height: 56px;
+  --content-max: 560px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* Tells the UA to render form controls, scrollbars and the
+     default canvas for a light interface. */
+  color-scheme: light;
+}
+
+/* Users who ask for reduced motion get none of it. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0.01ms;
+    --dur: 0.01ms;
+    --dur-slow: 0.01ms;
+  }
+}

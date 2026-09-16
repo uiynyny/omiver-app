@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ChevronLeft, Stethoscope } from 'lucide-react';
-import './AccountTypeScreen.css';
+import { ChevronLeft, Stethoscope } from 'lucide-react';
+import './Onboarding.css';
 import './ProviderInfoScreen.css';
 import { useAppContext } from '../context/AppContext';
 
@@ -10,12 +10,14 @@ const ProviderInfoScreen = () => {
   const { state, dispatch } = useAppContext();
   const [first_name, setFirstName] = useState(state.registration.first_name ?? '');
   const [last_name, setLastName] = useState(state.registration.last_name ?? '');
+  const [error, setError] = useState('');
 
   const handleContinue = () => {
     if (!first_name.trim() || !last_name.trim()) {
-      alert('Please enter your first and last name');
+      setError('Please enter your first and last name.');
       return;
     }
+    setError('');
     dispatch({
       type: 'UPDATE_REGISTRATION',
       payload: { first_name: first_name.trim(), last_name: last_name.trim() },
@@ -28,64 +30,94 @@ const ProviderInfoScreen = () => {
   };
 
   return (
-    <div className="registration-screen">
-      <header className="registration-header">
-        <button onClick={handleBack} className="back-button">
+    <div className="wizard">
+      <header className="wizard__header">
+        <button type="button" className="icon-btn" onClick={handleBack} aria-label="Go back">
           <ChevronLeft size={24} />
         </button>
-        <h2>Provider Profile</h2>
+        <div className="wizard__title">Provider profile</div>
+        <div className="wizard__header-spacer" aria-hidden="true" />
       </header>
 
-      <div className="progress-bar">
-        <div className="progress-fill" style={{ width: '50%' }}></div>
+      <div className="wizard__progress">
+        <div className="progress">
+          <div className="progress__fill provider-info__progress-fill" />
+        </div>
       </div>
 
-      <div className="registration-content">
-        <div className="provider-icon-wrapper">
-          <div className="provider-icon-circle">
-            <Stethoscope size={40} strokeWidth={1.5} />
-          </div>
+      <main className="wizard__body">
+        <div className="wizard__step-container">
+          <form
+            className="fade-in"
+            onSubmit={(e) => { e.preventDefault(); handleContinue(); }}
+          >
+            <div className="wizard__step-header">
+              <span className="provider-info__badge" aria-hidden="true">
+                <Stethoscope size={28} strokeWidth={1.5} />
+              </span>
+              <span className="section-label">Step 2</span>
+              <h1 className="section-title">What&rsquo;s your name?</h1>
+              <p className="text-secondary">
+                That&rsquo;s all we need to set up your provider account. We&rsquo;ll generate your
+                unique patient referral link right after.
+              </p>
+            </div>
+
+            {error && (
+              <div className="error-banner" role="alert">
+                {error}
+              </div>
+            )}
+
+            <div className="wizard__step-content">
+              <div className="field">
+                <label className="field__label" htmlFor="provider-first-name">First name</label>
+                <input
+                  id="provider-first-name"
+                  className="input"
+                  type="text"
+                  autoComplete="given-name"
+                  value={first_name}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  autoFocus
+                  required
+                />
+              </div>
+
+              <div className="field">
+                <label className="field__label" htmlFor="provider-last-name">Last name</label>
+                <input
+                  id="provider-last-name"
+                  className="input"
+                  type="text"
+                  autoComplete="family-name"
+                  value={last_name}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Submit lives in the sticky footer, so it is associated by id. */}
+            <button type="submit" className="sr-only" tabIndex={-1} aria-hidden="true">
+              Continue
+            </button>
+          </form>
         </div>
+      </main>
 
-        <h1 className="registration-title">
-          What's your <span className="highlight">name?</span>
-        </h1>
-        <p className="registration-subtitle">
-          That's all we need to get your provider account set up. We'll generate your unique patient referral link right after.
-        </p>
-
-        <div className="form-fields">
-          <div className="input-group">
-            <input
-              id="provider-first-name"
-              type="text"
-              placeholder="First name"
-              value={first_name}
-              onChange={(e) => setFirstName(e.target.value)}
-              className="form-input"
-              autoFocus
-            />
-          </div>
-
-          <div className="input-group">
-            <input
-              id="provider-last-name"
-              type="text"
-              placeholder="Last name"
-              value={last_name}
-              onChange={(e) => setLastName(e.target.value)}
-              className="form-input"
-              onKeyDown={(e) => e.key === 'Enter' && handleContinue()}
-            />
-          </div>
-        </div>
-
-        <div className="button-group">
-          <button id="provider-continue-btn" onClick={handleContinue} className="primary-button">
-            Continue <ChevronRight size={20} />
+      <div className="wizard__footer">
+        <div className="wizard__footer-content">
+          <button type="button" className="btn btn--secondary" onClick={handleBack}>
+            Back
           </button>
-          <button onClick={handleBack} className="secondary-button">
-            <ChevronLeft size={20} /> Go Back
+          <button
+            id="provider-continue-btn"
+            type="button"
+            className="btn btn--primary btn--block"
+            onClick={handleContinue}
+          >
+            Continue
           </button>
         </div>
       </div>

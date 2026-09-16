@@ -1,29 +1,21 @@
-/* ProviderInfoScreen — styles for the provider-specific icon and subtitle */
+/* ============================================================
+   Provider onboarding
+   Wizard chrome is in index.css; form pieces are in Onboarding.css.
+   ============================================================ */
 
-.provider-icon-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1.5rem;
-}
-
-.provider-icon-circle {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #4f8ef7 0%, #1a56db 100%);
-  display: flex;
+.provider-info__badge {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  box-shadow: 0 8px 24px rgba(79, 142, 247, 0.35);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  margin-bottom: var(--sp-2);
 }
 
-.registration-subtitle {
-  font-size: 0.95rem;
-  color: #6b7280;
-  text-align: center;
-  margin: -0.5rem 0 1.5rem;
-  line-height: 1.6;
-  max-width: 340px;
-  margin-inline: auto;
+/* Step 2 of the provider registration flow. */
+.provider-info__progress-fill {
+  width: 50%;
 }

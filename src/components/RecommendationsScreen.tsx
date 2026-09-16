@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lightbulb, Download, FileText, CheckCircle2, ChevronDown, ChevronUp, AlertCircle, Dumbbell, Utensils } from 'lucide-react';
+import { Lightbulb, Download, FileText, CheckCircle2, ChevronDown, ChevronUp, AlertCircle, Dumbbell, Utensils, FlaskConical } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { 
   fetchDashboard, 
@@ -12,10 +12,10 @@ import {
   type BiomarkerReportResponse,
   type RecommendationResponse 
 } from '../api/user';
+import { formatDate } from '../utils/format';
 
 import './RecommendationsScreen.css';
 import BottomNav from './BottomNav';
-import omiver from '../assets/omiver.svg';
 
 const RecommendationsScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -25,6 +25,7 @@ const RecommendationsScreen: React.FC = () => {
   const [recommendations, setRecommendations] = useState<RecommendationResponse[]>([]);
   const [reports, setReports] = useState<BiomarkerReportResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [expandedReports, setExpandedReports] = useState<Record<number, boolean>>({});
   const [downloadingRecId, setDownloadingRecId] = useState<number | null>(null);
   const [downloadingReportId, setDownloadingReportId] = useState<number | null>(null);
@@ -38,27 +39,38 @@ const RecommendationsScreen: React.FC = () => {
   };
 
   useEffect(() => {
-    if (clientId) {
-      Promise.all([
-        fetchDashboard(clientId),
-        fetchRecommendations(clientId).catch(() => [] as RecommendationResponse[]),
-        fetchBiomarkerReports(clientId).catch(() => [] as BiomarkerReportResponse[])
-      ])
-        .then(([dashData, recData, reportData]) => {
-          setDashboardData(dashData);
-          setRecommendations(recData || []);
-          // Sort reports in reverse chronological order (newest first)
-          const sorted = (reportData || []).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-          setReports(sorted);
-          setLoading(false);
-        })
-        .catch((error) => {
-          console.error('Error fetching data:', error);
-          setLoading(false);
-        });
-    } else {
+    if (!clientId) {
       setLoading(false);
+      return;
     }
+    
+    let cancelled = false;
+    setLoading(true);
+    setLoadError('');
+
+    Promise.allSettled([
+      fetchDashboard(clientId),
+      fetchRecommendations(clientId),
+      fetchBiomarkerReports(clientId)
+    ]).then(([dashData, recData, reportData]) => {
+      if (cancelled) return;
+
+      if (dashData.status === 'fulfilled') setDashboardData(dashData.value);
+      if (recData.status === 'fulfilled') setRecommendations(recData.value || []);
+      if (reportData.status === 'fulfilled') {
+        const sorted = (reportData.value || []).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        setReports(sorted);
+      }
+      
+      if (dashData.status === 'rejected' && recData.status === 'rejected') {
+        setLoadError('We could not load your recommendations. Please try again.');
+      }
+      setLoading(false);
+    });
+    
+    return () => {
+      cancelled = true;
+    };
   }, [clientId]);
 
   const handleDownloadRecommendation = async (recId: number) => {
@@ -66,8 +78,7 @@ const RecommendationsScreen: React.FC = () => {
       setDownloadingRecId(recId);
       setDownloadError(null);
       await downloadRecommendationPdf(recId);
-    } catch (err) {
-      console.error('Download recommendation PDF failed:', err);
+    } catch {
       setDownloadError('Failed to download PDF. Please try again.');
     } finally {
       setDownloadingRecId(null);
@@ -79,8 +90,7 @@ const RecommendationsScreen: React.FC = () => {
       setDownloadingReportId(reportId);
       setDownloadError(null);
       await downloadBiomarkerReportPdf(reportId);
-    } catch (err) {
-      console.error('Download biomarker report PDF failed:', err);
+    } catch {
       setDownloadError('Failed to download PDF. Please try again.');
     } finally {
       setDownloadingReportId(null);
@@ -99,150 +109,140 @@ const RecommendationsScreen: React.FC = () => {
   const hasContent = recommendations.length > 0 || reports.length > 0;
 
   return (
-    <div className="recommendations-root">
-      <header className="home-header">
-        <div className="centered-logo">
-          <img src={omiver} alt="Omiver Logo" className="home-logo" width={150} />
-        </div>
+    <div className="screen screen--nav">
+      <header className="app-header">
+        <span />
+        <span className="app-header__title">Recommendations</span>
+        <span />
       </header>
 
-      <main className="recommendations-main">
-        <div className="recommendations-title-section">
-          <Lightbulb size={32} color="#6b9b8a" />
-          <h1>Personalized Recommendations</h1>
-          <p className="recommendations-subtitle">Powered by Omiver AI & Reviewed by Healthcare Professionals</p>
-        </div>
+      <main className="container stack-lg" style={{ paddingTop: 'var(--sp-4)' }}>
+        <section className="fade-in stack-sm">
+          <div className="row">
+            <span className="icon-btn icon-btn--plain" style={{ background: 'var(--accent-soft)', color: 'var(--accent)', pointerEvents: 'none' }}>
+              <Lightbulb size={20} />
+            </span>
+            <h1 className="section-title" style={{ marginBottom: 0 }}>Personalized Protocol</h1>
+          </div>
+          <p className="text-secondary text-body">Powered by Omiver AI & Reviewed by Healthcare Professionals</p>
+        </section>
 
         {downloadError && (
-          <div style={{ margin: '16px 20px', padding: '12px 16px', background: '#fff5f5', border: '1px solid #fed7d7', borderRadius: '10px', color: '#c53030', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}>
-            <AlertCircle size={18} />
-            <span>{downloadError}</span>
+          <div className="error-banner" role="alert">
+            <AlertCircle size={18} aria-hidden="true" />
+            {downloadError}
+          </div>
+        )}
+        
+        {loadError && (
+          <div className="error-banner" role="alert">
+            <AlertCircle size={18} aria-hidden="true" />
+            {loadError}
           </div>
         )}
 
         {loading ? (
-          <div className="recommendations-loading">
-            <div className="loading-card">
-              <Lightbulb size={48} className="pulse-icon" color="#6b9b8a" />
-              <p>Crafting your metabolic blueprint...</p>
-            </div>
+          <div className="stack" aria-busy="true">
+            <span className="sr-only">Crafting your metabolic blueprint...</span>
+            <div className="skeleton" style={{ height: 200 }} />
+            <div className="skeleton" style={{ height: 120 }} />
           </div>
         ) : (
-          <div className="recommendations-content">
+          <div className="stack-lg">
             {/* 1. Model Recommendations */}
             {recommendations.length > 0 && recommendations.map((rec) => {
               const dietary = rec.dietary_final;
               const exercise = rec.exercise_final;
               const dateStr = rec.approved_at || rec.created_at;
               const formattedDate = dateStr 
-                ? new Date(dateStr).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+                ? formatDate(dateStr)
                 : 'Recent';
 
               return (
-                <section key={rec.id} className="recommendation-section" style={{ marginBottom: '24px' }}>
-                  {/* Card Header & PDF Download Action */}
-                  <div className="rec-card-top-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div className="section-icon" style={{ background: '#eaf5ec', color: '#166534' }}>
-                        <FileText size={24} />
-                      </div>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#1a202c' }}>Precision Health Plan</h2>
+                <section key={rec.id} className="card stack">
+                  <div className="row-between" style={{ alignItems: 'flex-start' }}>
+                    <div className="row">
+                      <span className="icon-btn icon-btn--plain" style={{ background: 'var(--optimal-soft)', color: 'var(--optimal)' }}>
+                        <FileText size={20} />
+                      </span>
+                      <div className="stack" style={{ gap: '2px' }}>
+                        <div className="row" style={{ gap: 'var(--sp-2)' }}>
+                          <h2 className="card__title" style={{ margin: 0 }}>Precision Health Plan</h2>
                           {rec.status === 'APPROVED' && (
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#dcfce7', color: '#15803d', fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '12px' }}>
+                            <span className="chip chip--optimal" style={{ minHeight: '24px', padding: '0 8px', fontSize: '11px' }}>
                               <CheckCircle2 size={12} /> Approved
                             </span>
                           )}
                         </div>
-                        <p className="section-goal" style={{ margin: '2px 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
-                          Plan #{rec.id} • {formattedDate}
-                        </p>
+                        <span className="text-label text-secondary">
+                          Plan #{rec.id} · {formattedDate}
+                        </span>
                       </div>
                     </div>
 
                     <button
-                      className="download-pdf-btn"
+                      type="button"
+                      className="btn btn--primary btn--sm"
                       onClick={() => handleDownloadRecommendation(rec.id)}
                       disabled={downloadingRecId === rec.id}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        background: '#166534',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        padding: '8px 16px',
-                        fontSize: '0.88rem',
-                        fontWeight: 600,
-                        cursor: downloadingRecId === rec.id ? 'wait' : 'pointer',
-                        transition: 'background 0.2s',
-                        boxShadow: '0 2px 4px rgba(22, 101, 52, 0.2)'
-                      }}
+                      aria-busy={downloadingRecId === rec.id}
                     >
-                      <Download size={16} />
-                      <span>{downloadingRecId === rec.id ? 'Generating PDF...' : 'Download PDF'}</span>
+                      <Download size={14} />
+                      <span>{downloadingRecId === rec.id ? 'Generating...' : 'PDF'}</span>
                     </button>
                   </div>
 
-                  {/* Doctor Notes Callout */}
                   {rec.doctor_notes && (
-                    <div className="doctor-notes-section" style={{ marginBottom: '18px' }}>
-                      <div className="dr-header">
-                        <CheckCircle2 size={18} color="#8a4b7d" />
-                        <h3>Physician Clinical Notes</h3>
+                    <div className="card card--inset stack-sm" style={{ borderLeft: '3px solid var(--watch)' }}>
+                      <div className="row" style={{ color: 'var(--watch)' }}>
+                        <CheckCircle2 size={16} />
+                        <h3 className="section-title" style={{ margin: 0, fontSize: 'var(--fs-body)' }}>Physician Clinical Notes</h3>
                       </div>
-                      <div className="dr-body-content">
-                        <p>"{rec.doctor_notes}"</p>
-                      </div>
+                      <p className="text-body text-secondary" style={{ fontStyle: 'italic' }}>"{rec.doctor_notes}"</p>
                     </div>
                   )}
 
-                  {/* Dietary Plan */}
                   {dietary && (
-                    <div className="protocol-block" style={{ marginTop: '12px', marginBottom: '20px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                        <Utensils size={20} color="#166534" />
-                        <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#1e293b' }}>Precision Dietary Protocol</h3>
+                    <div className="stack-sm" style={{ marginTop: 'var(--sp-2)' }}>
+                      <div className="row text-optimal">
+                        <Utensils size={18} />
+                        <h3 className="section-title" style={{ margin: 0, fontSize: 'var(--fs-heading)' }}>Dietary Protocol</h3>
                       </div>
                       {dietary.summary && (
-                        <p className="rec-summary-text" style={{ marginBottom: '14px' }}>{dietary.summary}</p>
+                        <p className="text-body text-secondary">{dietary.summary}</p>
                       )}
 
-                      <div className="dos-donts-grid" style={{ marginBottom: '16px' }}>
+                      <div className="grid-2col">
                         {dietary.dos && dietary.dos.length > 0 && (
-                          <div className="food-list-card include-card">
-                            <h5>Foods to Prioritize</h5>
-                            <ul>
-                              {dietary.dos.map((item, idx) => (
-                                <li key={idx}>{item}</li>
-                              ))}
+                          <div className="card card--inset stack-sm" style={{ borderColor: 'var(--optimal-soft)', borderWidth: '1px' }}>
+                            <h4 className="text-label text-optimal">Prioritize</h4>
+                            <ul className="rec-list-ul">
+                              {dietary.dos.map((item, idx) => <li key={idx}>{item}</li>)}
                             </ul>
                           </div>
                         )}
                         {dietary.donts && dietary.donts.length > 0 && (
-                          <div className="food-list-card limit-card">
-                            <h5>Foods to Avoid / Moderate</h5>
-                            <ul>
-                              {dietary.donts.map((item, idx) => (
-                                <li key={idx}>{item}</li>
-                              ))}
+                          <div className="card card--inset stack-sm" style={{ borderColor: 'var(--risk-soft)', borderWidth: '1px' }}>
+                            <h4 className="text-label text-risk">Limit / Avoid</h4>
+                            <ul className="rec-list-ul">
+                              {dietary.donts.map((item, idx) => <li key={idx}>{item}</li>)}
                             </ul>
                           </div>
                         )}
                       </div>
 
                       {dietary.sample_meal_plan && dietary.sample_meal_plan.length > 0 && (
-                        <div className="sample-meals-container">
-                          <h4>Sample Daily Meal Protocol</h4>
-                          <div className="meals-timeline">
+                        <div className="stack-sm" style={{ marginTop: 'var(--sp-2)' }}>
+                          <h4 className="text-label text-tertiary">Sample Daily Meals</h4>
+                          <div className="stack-sm">
                             {dietary.sample_meal_plan.map((mealItem, idx) => (
-                              <div key={idx} className="timeline-meal-item">
-                                <div className="meal-time-icon">{getMealIcon(mealItem.meal)}</div>
-                                <div className="meal-details-body">
-                                  <div className="meal-name">{mealItem.meal}</div>
-                                  <p className="meal-desc">{mealItem.suggestion}</p>
+                              <div key={idx} className="card card--inset row" style={{ alignItems: 'flex-start' }}>
+                                <span className="icon-btn icon-btn--plain" style={{ background: 'var(--surface-3)', fontSize: '1.2rem' }}>
+                                  {getMealIcon(mealItem.meal)}
+                                </span>
+                                <div className="stack" style={{ gap: '2px' }}>
+                                  <span className="text-body" style={{ fontWeight: 600 }}>{mealItem.meal}</span>
+                                  <span className="text-body text-secondary">{mealItem.suggestion}</span>
                                 </div>
                               </div>
                             ))}
@@ -252,43 +252,42 @@ const RecommendationsScreen: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Exercise Plan */}
                   {exercise && (
-                    <div className="protocol-block" style={{ marginTop: '16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                        <Dumbbell size={20} color="#0f766e" />
-                        <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#1e293b' }}>Exercise & Physical Activity Protocol</h3>
+                    <div className="stack-sm" style={{ marginTop: 'var(--sp-4)' }}>
+                      <div className="row text-accent">
+                        <Dumbbell size={18} />
+                        <h3 className="section-title" style={{ margin: 0, fontSize: 'var(--fs-heading)' }}>Exercise Protocol</h3>
                       </div>
                       {exercise.summary && (
-                        <p className="rec-summary-text" style={{ marginBottom: '12px' }}>{exercise.summary}</p>
+                        <p className="text-body text-secondary">{exercise.summary}</p>
                       )}
 
                       {exercise.frequency && (
-                        <div className="frequency-badge-container" style={{ marginBottom: '12px' }}>
-                          <span className="freq-badge">Prescribed Frequency: {exercise.frequency}</span>
+                        <div>
+                          <span className="chip chip--accent">{exercise.frequency}</span>
                         </div>
                       )}
 
                       {exercise.activities && exercise.activities.length > 0 && (
-                        <div className="activities-list-container" style={{ marginBottom: '14px' }}>
-                          <h4>Prescribed Activities</h4>
-                          <div className="activities-grid">
+                        <div className="stack-sm" style={{ marginTop: 'var(--sp-2)' }}>
+                          <h4 className="text-label text-tertiary">Activities</h4>
+                          <div className="row" style={{ flexWrap: 'wrap' }}>
                             {exercise.activities.map((act, idx) => (
-                              <span key={idx} className="activity-tag">{act}</span>
+                              <span key={idx} className="chip">{act}</span>
                             ))}
                           </div>
                         </div>
                       )}
 
                       {exercise.precautions && exercise.precautions.length > 0 && (
-                        <div className="precautions-container">
-                          <div className="precaution-header">
+                        <div className="card card--inset stack-sm" style={{ borderLeft: '3px solid var(--watch)' }}>
+                          <div className="row text-watch">
                             <AlertCircle size={16} />
-                            <span>Clinical Precautions & Safety</span>
+                            <h4 className="text-label" style={{ color: 'inherit' }}>Clinical Precautions</h4>
                           </div>
-                          <ul>
+                          <ul className="rec-list-ul">
                             {exercise.precautions.map((p, idx) => (
-                              <li key={idx}>{p}</li>
+                              <li key={idx} className="text-body text-secondary">{p}</li>
                             ))}
                           </ul>
                         </div>
@@ -297,9 +296,8 @@ const RecommendationsScreen: React.FC = () => {
                   )}
 
                   {!dietary && !exercise && rec.text && (
-                    <div className="recommendation-item" style={{ marginTop: '10px' }}>
-                      <div className="rec-bullet">→</div>
-                      <p>{rec.text}</p>
+                    <div className="card card--inset" style={{ marginTop: 'var(--sp-2)' }}>
+                      <p className="text-body">{rec.text}</p>
                     </div>
                   )}
                 </section>
@@ -308,74 +306,67 @@ const RecommendationsScreen: React.FC = () => {
 
             {/* 2. Biomarker Delta Reports */}
             {reports.length > 0 && reports.map((report) => (
-              <section key={report.primary_id} className="recommendation-section report-section" style={{ marginBottom: '20px' }}>
-                <div 
-                  className="section-header" 
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}
-                >
-                  <div 
+              <section key={report.primary_id} className="card stack-sm">
+                <div className="row-between">
+                  <button 
+                    type="button"
+                    className="row" 
                     onClick={() => toggleReport(report.primary_id)}
-                    style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', flex: 1 }}
+                    style={{ flex: 1, textAlign: 'left' }}
                   >
-                    <div className="section-icon report-icon" style={{ marginRight: '10px' }}>📋</div>
-                    <div>
-                      <h2 style={{ margin: 0, fontSize: '1.25rem' }}>Biomarker Delta Report</h2>
-                      <p className="section-goal" style={{ margin: 0 }}>
-                        Generated on {new Date(report.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
-                      </p>
+                    <span className="icon-btn icon-btn--plain" style={{ background: 'var(--surface-3)' }}>
+                      <FlaskConical size={20} />
+                    </span>
+                    <div className="stack" style={{ gap: '2px' }}>
+                      <h2 className="card__title" style={{ margin: 0 }}>Biomarker Delta Report</h2>
+                      <span className="text-label text-secondary">
+                        {formatDate(report.created_at)}
+                      </span>
                     </div>
-                  </div>
+                  </button>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div className="row" style={{ gap: 'var(--sp-2)' }}>
                     <button
-                      className="download-pdf-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDownloadReport(report.primary_id);
-                      }}
+                      type="button"
+                      className="btn btn--secondary btn--sm"
+                      onClick={() => handleDownloadReport(report.primary_id)}
                       disabled={downloadingReportId === report.primary_id}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        background: '#1e3a8a',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        padding: '6px 12px',
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
-                        cursor: downloadingReportId === report.primary_id ? 'wait' : 'pointer',
-                        transition: 'background 0.2s',
-                      }}
+                      aria-busy={downloadingReportId === report.primary_id}
                     >
                       <Download size={14} />
-                      <span>{downloadingReportId === report.primary_id ? 'Downloading...' : 'Download PDF'}</span>
+                      <span className="sr-only">Download PDF</span>
                     </button>
 
-                    <div 
+                    <button 
+                      type="button"
+                      className="icon-btn icon-btn--plain"
                       onClick={() => toggleReport(report.primary_id)}
-                      style={{ fontSize: '1.25rem', color: '#6b9b8a', paddingLeft: '6px', userSelect: 'none', cursor: 'pointer' }}
+                      aria-expanded={expandedReports[report.primary_id]}
+                      aria-label="Toggle report"
                     >
                       {expandedReports[report.primary_id] ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                    </div>
+                    </button>
                   </div>
                 </div>
                 
                 {expandedReports[report.primary_id] && (
-                  <div className="report-iframe-container" style={{ marginTop: '15px' }}>
+                  <div className="report-frame">
+                    {/*
+                      This renders HTML produced server-side. `sandbox=""` (an
+                      empty value, not a missing attribute) is the maximally
+                      restrictive setting: no scripts, no forms, no top-level
+                      navigation, and a unique opaque origin so the document
+                      cannot reach back into the app. Do NOT add
+                      `allow-scripts` alongside `allow-same-origin` — together
+                      they let the frame remove its own sandbox.
+                    */}
                     <iframe
                       srcDoc={report.report}
                       title={`Biomarker Report ${report.primary_id}`}
                       className="report-iframe"
-                      style={{
-                        width: '100%',
-                        height: '600px',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '8px',
-                        backgroundColor: '#ffffff',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-                      }}
+                      sandbox=""
+                      referrerPolicy="no-referrer"
+                      loading="lazy"
                     />
                   </div>
                 )}
@@ -383,42 +374,45 @@ const RecommendationsScreen: React.FC = () => {
             ))}
 
             {!hasContent && dashboardData?.recommendations && dashboardData.recommendations.length > 0 && (
-              <section className="recommendation-section" style={{ marginBottom: '20px' }}>
-                <div className="section-header" style={{ marginBottom: '12px' }}>
-                  <div className="section-icon" style={{ background: '#eaf5ec', color: '#166534' }}>
-                    <Lightbulb size={24} />
-                  </div>
-                  <div>
-                    <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Personalized Insights</h2>
-                    <p className="section-goal" style={{ margin: 0 }}>Based on your health profile</p>
+              <section className="card stack-sm">
+                <div className="row">
+                  <span className="icon-btn icon-btn--plain" style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
+                    <Lightbulb size={20} />
+                  </span>
+                  <div className="stack" style={{ gap: '2px' }}>
+                    <h2 className="card__title" style={{ margin: 0 }}>Personalized Insights</h2>
+                    <span className="text-label text-secondary">Based on your health profile</span>
                   </div>
                 </div>
-                <ul className="rec-list" style={{ paddingLeft: '20px', margin: 0 }}>
+                <ul className="rec-list-ul" style={{ marginTop: 'var(--sp-2)' }}>
                   {dashboardData.recommendations.map((rec, idx) => (
-                    <li key={idx} style={{ marginBottom: '8px', color: '#334155', fontSize: '0.95rem' }}>{rec}</li>
+                    <li key={idx} className="text-body text-secondary">{rec}</li>
                   ))}
                 </ul>
               </section>
             )}
 
             {!hasContent && (!dashboardData?.recommendations || dashboardData.recommendations.length === 0) && (
-              <div className="bottom-card">
-                <div className="recommendation-item placeholder" style={{ padding: '40px 20px', textAlign: 'center' }}>
-                  <div className="rec-bullet" style={{ fontSize: '2rem', marginBottom: '10px' }}>→</div>
-                  <p>Once your blood analysis is complete and your doctor approves your tailored protocol, your personalized biomarker delta reports and downloadable precision PDF plans will appear here.</p>
-                </div>
+              <div className="empty-state">
+                <span className="empty-state__icon" aria-hidden="true">
+                  <Lightbulb size={24} />
+                </span>
+                <h2 className="empty-state__title">No recommendations yet</h2>
+                <p className="empty-state__body">
+                  Once your blood analysis is complete and your doctor approves your protocol, your personalized plans will appear here.
+                </p>
               </div>
             )}
 
             {/* Action Buttons */}
-            <section className="recommendations-actions" style={{ marginTop: '20px' }}>
-              <button className="action-button primary" onClick={() => navigate('/collection/steps')}>
+            <div className="stack-sm" style={{ marginTop: 'var(--sp-4)' }}>
+              <button type="button" className="btn btn--primary btn--block" onClick={() => navigate('/collection/steps')}>
                 Complete Sample Collection
               </button>
-              <button className="action-button secondary" onClick={() => navigate('/home')}>
+              <button type="button" className="btn btn--secondary btn--block" onClick={() => navigate('/home')}>
                 Back to Dashboard
               </button>
-            </section>
+            </div>
           </div>
         )}
       </main>

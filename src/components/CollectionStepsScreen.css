@@ -1,690 +1,104 @@
-.steps-root {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: #f8f9fa;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
+/* ============================================================
+   Sample collection wizard — screen-specific extras
+   The shared `.wizard*` chrome lives in index.css (it is also used by
+   the registration flow). Only collection-specific pieces are here.
+   ============================================================ */
 
-.steps-header {
+/* Full-screen loading state while prior progress is recovered. */
+.wizard__loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px 20px;
-  background-color: #6b9b8a;
-  /* Sage green from designs */
-  color: white;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  width: 100%;
-  box-sizing: border-box;
 }
 
-.steps-header h1 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin: 0;
+.wizard__loading-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
   text-align: center;
 }
 
-.steps-back-btn {
-  position: absolute;
-  left: 20px;
-  background: none;
-  border: none;
-  color: white;
-  padding: 8px;
-  cursor: pointer;
+/* ---- Linked kit bar ----------------------------------------------------
+   Persistent across steps 2–5 so the registered barcode is always visible
+   and always correctable. */
+.wizard__linked {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
 }
 
-.steps-settings-btn {
-  position: absolute;
-  right: 20px;
-  background: none;
-  border: none;
-  color: white;
-  padding: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.steps-content {
-  flex: 1;
-  padding: 20px;
+.wizard__linked-info {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 2px;
+  min-width: 0;
 }
 
-.steps-intro {
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 12px;
-}
-
-.steps-intro-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.instructions-btn,
-.instruction-secondary-btn {
-  border: 1px solid #6b9b8a;
-  background: white;
-  color: #477465;
-  border-radius: 8px;
-  padding: 9px 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.instructions-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: rgba(28, 42, 38, 0.48);
-}
-
-.instructions-modal {
-  width: min(100%, 520px);
-  max-height: calc(100vh - 40px);
-  overflow-y: auto;
-  background: white;
-  border-radius: 14px;
-  padding: 22px;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
-}
-
-.instructions-modal-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.instructions-eyebrow {
-  color: #6b9b8a;
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+.wizard__linked-label {
+  font-size: var(--fs-micro);
   text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
 }
 
-.instructions-modal h2,
-.instruction-step h3 {
-  margin: 0;
-  color: #333;
+.wizard__linked-code {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-body);
+  color: var(--text);
+  overflow-wrap: anywhere;
 }
 
-.instructions-modal h2 { font-size: 1.35rem; margin-top: 4px; }
-
-.instructions-close {
-  align-self: flex-start;
-  border: 0;
-  background: transparent;
-  color: #555;
-  padding: 4px;
-  cursor: pointer;
-}
-
-.instruction-step-list { display: grid; gap: 12px; }
-.instruction-step {
+.wizard__linked-actions {
   display: flex;
-  gap: 12px;
-  padding: 14px;
-  border: 1px solid #e7ecea;
-  border-radius: 10px;
-  background: #f8faf9;
-}
-.instruction-step.current { border-color: #6b9b8a; background: #f0f7f4; }
-.instruction-step.complete { border-color: #d1e7dd; }
-.instruction-number {
-  flex: 0 0 28px;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  background: #6b9b8a;
-  color: white;
-  font-weight: 800;
+  gap: var(--sp-2);
 }
-.instruction-step h3 { font-size: 0.95rem; margin-bottom: 5px; }
-.instruction-step p { margin: 0; color: #5d6562; font-size: 0.86rem; line-height: 1.45; }
-.instruction-barcode-input { width: 100%; box-sizing: border-box; margin-top: 16px; padding: 12px; border: 1px solid #dfe6e3; border-radius: 8px; font: inherit; }
-.instruction-error { color: #b42318; font-size: 0.82rem; font-weight: 600; margin-top: 8px; }
-.instruction-save-btn { width: 100%; margin-top: 18px; padding: 13px; border: 0; border-radius: 8px; background: #d27644; color: white; font-weight: 800; cursor: pointer; }
-.instruction-save-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-.instruction-secondary-btn { width: 100%; margin-top: 10px; }
 
-.step-item {
+/* Destructive, so it reads as such — but stays quiet until armed. */
+.wizard__unlink {
+  background: transparent;
+  color: var(--risk, var(--text-secondary));
+  border: 1px solid var(--border);
+  gap: var(--sp-2);
+}
+
+.wizard__unlink:hover:not(:disabled) {
+  border-color: var(--risk, var(--border));
+  background: var(--surface-2);
+}
+
+.wizard__barcode-row {
   display: flex;
-  gap: 16px;
-  position: relative;
+  align-items: center;
+  gap: var(--sp-3);
 }
 
-.step-indicator {
+.wizard__video {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+.wizard__checklist {
+  list-style: decimal inside;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  min-width: 32px;
+  gap: var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
 }
 
-.step-circle {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: #e0e0e0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  z-index: 2;
-}
-
-.step-circle.completed {
-  background-color: #6b9b8a;
-}
-
-.step-circle.active {
-  background-color: #6b9b8a;
-  box-shadow: 0 0 0 4px rgba(107, 155, 138, 0.2);
-}
-
-.step-line {
-  width: 2px;
-  flex: 1;
-  background-color: #e0e0e0;
-  margin-top: 4px;
-  margin-bottom: 4px;
-}
-
-.step-item:last-child .step-line {
-  display: none;
-}
-
-.step-details {
-  flex: 1;
-  padding-bottom: 32px;
-}
-
-.step-title {
-  font-weight: 700;
-  font-size: 1rem;
-  margin-bottom: 4px;
-  color: #333;
-}
-
-.step-desc {
-  font-size: 0.9rem;
-  color: #666;
-  line-height: 1.4;
-  margin-bottom: 12px;
-}
-
-/* Small hint about barcode placement on the kit box */
-.barcode-hint {
-  font-size: 0.85rem;
-  color: #495057;
-  margin-bottom: 10px;
-  font-style: italic;
-}
-
-.barcode-instruction {
-  font-size: 0.9rem;
-  color: #333;
-  margin-bottom: 14px;
-}
-
-.prep-list {
-  margin: 0 0 12px 18px;
-  padding: 0;
-  color: #333;
-}
-.prep-list li {
-  margin-bottom: 8px;
-}
-
-.step-card {
-  background: white;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-top: 8px;
-  border: 1px solid #eee;
-}
-
-/* URL input + link button layout used on the step card */
-.url-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.url-input {
-  flex: 1;
-  background: #fbf7f7;
-  color: #333;
-  border: 1px solid #e0e0e0;
-  padding: 12px 14px;
-  border-radius: 50px;
-  border: 1px solid #f0eaea;
-  ;
-}
-
-.link-btn {
-  background-color: #C7A1BC;
-  /* Lilac/Purple from design */
-  color: white;
-  border: none;
-  border-radius: 25px;
-  padding: 12px 20px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-.scan-cta {
-  background-color: #D27644;
-  /* Brand orange/brown */
-  color: white;
-  border: none;
-  border-radius: 25px;
-  width: 100%;
-  padding: 12px 20px;
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  margin-top: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.kit-linked-box {
-  background-color: #f0f7f4;
-  border: 1px solid #d1e7dd;
-  border-radius: 8px;
-  padding: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #0f5132;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.video-placeholder {
-  background-color: #242424;
-  border-radius: 12px;
-  aspect-ratio: 16/9;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 16px;
-  cursor: pointer;
-}
-
-.play-button {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  border: 2px solid white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.confirm-btn {
-  width: 100%;
-  padding: 14px;
-  background-color: #C7A1BC;
-  /* Lilac/Purple from design */
-  color: white;
-  border: none;
-  border-radius: 25px;
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.confirm-btn:hover {
-  opacity: 0.9;
-}
-
-/* Disabled state for confirm buttons */
-.confirm-btn:disabled,
-.confirm-btn[disabled] {
-  background-color: #d8c5d0; /* muted lilac */
-  color: #ffffff;
-  opacity: 0.9;
-  cursor: not-allowed;
-}
-
-.sample-shipped-box {
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.tracking-info {
-  margin-top: 4px;
-  font-size: 0.85rem;
-  color: #555;
-  font-family: monospace;
-}
-
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background-color: #eaf5ec;
-  color: #6b9b8a;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.info-card {
-  background-color: #fffaf5;
-  /* Light creamy background */
-  border: 1px solid #fcefe6;
-  border-radius: 12px;
-  padding: 16px;
-  margin-top: 10px;
-}
-
-.info-card h3 {
-  margin: 0 0 8px 0;
-  font-size: 1rem;
-  color: #333;
-}
-
-.info-card p {
-  margin: 0;
-  font-size: 0.85rem;
-  color: #666;
-  line-height: 1.5;
-}
-
-.dashboard-btn {
-  width: 100%;
-  padding: 16px;
-  background-color: #D27644;
-  /* Brand orange/brown */
-  color: white;
-  border: none;
-  border-radius: 25px;
-  font-weight: 600;
-  font-size: 1rem;
-  margin-top: 16px;
-  cursor: pointer;
-}
-
-/* Animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.step-card {
-  animation: fadeIn 0.4s ease-out;
-}
-
-/* Constrain recall textareas and other elements to parent width */
-.form-textarea,
-.step-card textarea,
-.step-card input {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  font-family: inherit;
-  overflow: auto;
-  word-break: break-word;
-  white-space: pre-wrap;
-  resize: vertical;
-}
-
-/* Ensure embedded iframe/video does not overflow */
-.step-card iframe {
-  max-width: 100%;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* Collection time row: responsive layout for date/time inputs */
-.collection-time-row {
-  display: flex;
-  gap: 8px;
-}
-
-.collection-time-row input[type="date"],
-.collection-time-row input[type="time"] {
-  flex: 1;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  box-sizing: border-box;
-  font-family: inherit;
-}
-
-@media (max-width: 480px) {
-  .steps-content {
-    padding: 12px;
-    gap: 16px;
-  }
-
-  .steps-header h1 {
-    font-size: 1rem;
-  }
-
-  .step-title {
-    font-size: 0.95rem;
-  }
-
-  .step-desc {
-    font-size: 0.85rem;
-  }
-
-  .url-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .link-btn {
-    width: 100%;
-    margin-top: 4px;
-    justify-content: center;
-  }
-
-  .step-card {
-    padding: 12px;
-  }
-
-  .instructions-modal {
-    padding: 16px;
-    margin: 10px;
-    width: 100%;
-  }
-
-  .instruction-step {
-    padding: 12px;
-  }
-
-  .instruction-step h3 {
-    font-size: 0.9rem;
-  }
-
-  .instruction-step p {
-    font-size: 0.8rem;
-  }
-}
-
-.small-plain-btn {
-  font-size: 0.9rem;
-  color: #6b9b8a;
-}
-
-.recall-summary {
-  background: #fff;
-  border-radius: 8px;
-  padding: 12px;
-  border: 1px solid #e9ecef;
-}
-
-.recall-row {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 8px;
-  align-items: center;
-}
-
-.recall-label {
-  min-width: 120px;
-  color: #666;
-  font-weight: 600;
-}
-
-.recall-value {
-  flex: 1;
-  color: #333;
-  white-space: pre-wrap;
-}
-
-.recall-edit-btn {
-  background: transparent;
-  border: none;
-  padding: 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #6b9b8a;
-}
-
-.recall-edit-btn:hover {
-  opacity: 0.9;
-}
-
-.step-manual-guide {
-  background: #f8faf9;
-  border: 1px solid #e2ece7;
-  border-radius: 10px;
-  padding: 14px 16px;
-  margin-bottom: 14px;
-}
-
-.step-manual-guide h4 {
-  margin: 0 0 10px 0;
-  font-size: 0.92rem;
-  color: #1b4332;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.manual-steps-list {
-  margin: 0;
-  padding-left: 20px;
-  color: #334155;
-  font-size: 0.88rem;
-  line-height: 1.5;
-}
-
-.manual-steps-list li {
-  margin-bottom: 8px;
-}
-
-.manual-steps-list li strong {
-  color: #1e293b;
-}
-
-.save-status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: #dcfce7;
-  color: #15803d;
-  font-size: 0.82rem;
-  font-weight: 700;
-  padding: 6px 12px;
-  border-radius: 20px;
-  margin-top: 8px;
-}
-
-.save-action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 13px 18px;
-  background-color: #6b9b8a;
-  color: white;
-  border: none;
-  border-radius: 25px;
-  font-weight: 700;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-top: 10px;
-}
-
-.save-action-btn:hover {
-  background-color: #588776;
-}
-
-.save-action-btn:disabled {
-  background-color: #c4d7cf;
-  cursor: not-allowed;
-}
-
-.save-action-btn.secondary-save {
-  background-color: #d27644;
-}
-
-.save-action-btn.secondary-save:hover {
-  background-color: #b86233;
-}
-
-.save-spinner {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.error-banner--success {
+  background: var(--optimal-soft);
+  color: var(--optimal);
 }
