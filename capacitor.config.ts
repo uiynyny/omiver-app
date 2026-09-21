@@ -7,7 +7,19 @@ const config: CapacitorConfig = {
   // Matches --bg in src/styles/tokens.css. Without this the native webview
   // shows its own background during load and behind overscroll, which reads
   // as a flash of the wrong colour.
-  backgroundColor: '#f3f6f4'
+  backgroundColor: '#f3f6f4',
+  plugins: {
+    CapacitorHttp: {
+      enabled: true,
+    },
+  },
+  android: {
+    buildOptions: {
+      keystorePath: '/Users/dexz/workspace/omiver/omiver-app/android/signoff.jks',
+      keystoreAlias: 'key0',
+      signingType: 'apksigner',
+    },
+  },
 };
 
 export default config;

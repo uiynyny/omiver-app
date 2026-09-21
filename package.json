@@ -7,14 +7,20 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:mobile": "VITE_WEB= tsc -b && VITE_WEB= vite build --mode production",
+    "build:apk": "npm run build:mobile && cap sync android && cd android && ./gradlew assembleRelease",
+    "sync:mobile": "npm run build:mobile && cap sync",
+    "ios": "npm run sync:mobile && cap open ios",
+    "android": "npm run sync:mobile && cap open android"
   },
   "dependencies": {
     "@capacitor-community/safe-area": "^8.0.0",
+    "@capacitor/android": "8.0.2",
     "@capacitor/app": "^8.0.0",
     "@capacitor/core": "^8.0.0",
     "@capacitor/haptics": "^8.0.0",
-    "@capacitor/ios": "8.0.0",
+    "@capacitor/ios": "8.0.2",
     "@capacitor/keyboard": "^8.0.0",
     "@capacitor/status-bar": "^8.0.0",
     "@stripe/react-stripe-js": "^6.2.0",
