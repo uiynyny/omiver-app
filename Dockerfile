@@ -15,6 +15,12 @@ COPY . .
 # This tell Vite to build using the /app/ path
 ENV VITE_WEB=true
 
+# Optional build-time overrides. When not passed, Vite falls back to
+# .env.production (the production API). The local Podman stack passes
+# VITE_API_URL=/api so the build talks to the local backend instead.
+ARG VITE_API_URL
+ARG VITE_APP_URL
+
 # Build the application
 RUN npm run build
 

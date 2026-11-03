@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
-import { verifyToken, getAuthToken, logout } from '../api/user';
+import { verifyToken, getAuthToken, logout, fetchClient } from '../api/user';
 
 type Props = {
   children: React.ReactNode;
@@ -63,6 +63,33 @@ const RequireAuth: React.FC<Props> = ({ children, role }) => {
       cancelled = true;
     };
   }, [dispatch, location.pathname]);
+
+  // Re-hydrate the in-memory profile after a reload or cold start. Names,
+  // biometrics and other PHI are deliberately not persisted to localStorage
+  // (see PERSISTED_REGISTRATION_FIELDS), so once the session is confirmed we
+  // fetch them back from the API. Without this, screens that read
+  // `state.registration` (provider name, profile height/weight) render empty.
+  const clientId = state.auth.clientId;
+  const needsProfile = !state.registration.first_name;
+  useEffect(() => {
+    if (status !== 'allowed' || !clientId || !needsProfile) return;
+    let cancelled = false;
+    fetchClient(clientId)
+      .then((data) => {
+        if (cancelled || !data) return;
+        const { token: _token, access_token: _accessToken, ...profile } = data;
+        dispatch({
+          type: 'UPDATE_REGISTRATION',
+          payload: { ...profile, healthConditions: data.health_conditions || '' },
+        });
+      })
+      .catch(() => {
+        // Non-fatal: screens fall back to their empty states.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [status, clientId, needsProfile, dispatch]);
 
   if (status === 'checking') {
     return (

@@ -13,6 +13,7 @@ import {
   type RecommendationResponse,
   getProviderPatients
 } from '../api/user';
+import { formatHeight, formatWeight } from '../utils/format';
 
 const PatientDetailScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -207,11 +208,11 @@ const PatientDetailScreen: React.FC = () => {
             </div>
             <div className="stack-sm">
               <div className="stat__label">Height</div>
-              <div className="stat__value">{patient.height ? `${patient.height} cm` : 'N/A'}</div>
+              <div className="stat__value">{patient.height ? formatHeight(patient.height) : 'N/A'}</div>
             </div>
             <div className="stack-sm">
               <div className="stat__label">Weight</div>
-              <div className="stat__value">{patient.weight ? `${patient.weight} kg` : 'N/A'}</div>
+              <div className="stat__value">{patient.weight ? formatWeight(patient.weight) : 'N/A'}</div>
             </div>
           </div>
         </section>
